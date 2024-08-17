@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -27,6 +27,12 @@
     </Reference>
     <Reference Include="MelonLoader">
       <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\net6\MelonLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Json">
+      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Managed\System.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Tomlet">
+      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Dependencies\SupportModules\Tomlet.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
