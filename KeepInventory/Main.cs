@@ -7,7 +7,7 @@ using Il2CppSLZ.Marrow.Pool;
 using Il2CppSLZ.Marrow;
 using MelonLoader.Utils;
 
-[assembly: MelonInfo(typeof(global::HAHOOS.KeepInventory.Main), "Keep Inventory", "1.0.0", "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/KeepInventory/")]
+[assembly: MelonInfo(typeof(global::HAHOOS.KeepInventory.Main), "Keep Inventory", "1.1.1", "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/KeepInventory/")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]
 [assembly: MelonColor(0, 255, 72, 59)]
@@ -25,7 +25,7 @@ namespace HAHOOS.KeepInventory
         #region MelonPreferences
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        
+
         // Settings
 
         private MelonPreferences_Category mp_modCategory;
@@ -285,7 +285,7 @@ namespace HAHOOS.KeepInventory
                 CommonBarcodes.Maps.MainMenu,
             };
             mp_modCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Settings");
-            mp_itemsaving = mp_modCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving", 
+            mp_itemsaving = mp_modCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
                 description: "If true, will save and load items in inventory");
             mp_ammosaving = mp_modCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
                 description: "If true, will save and load ammo in inventory");
@@ -297,14 +297,14 @@ namespace HAHOOS.KeepInventory
             mp_saveCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Save");
             mp_itemslots = mp_saveCategory.CreateEntry<Dictionary<string, string>>("ItemSlots",
                 new Dictionary<string, string>(), "Item Slots", description: "Saved items in the inventory");
-            mp_ammolight = mp_saveCategory.CreateEntry<int>("AmmoLight", 0, "Ammo Light", 
+            mp_ammolight = mp_saveCategory.CreateEntry<int>("AmmoLight", 0, "Ammo Light",
                 description: "Saved ammo of type Light");
-            mp_ammomedium = mp_saveCategory.CreateEntry<int>("AmmoMedium", 0, "Ammo Medium", 
+            mp_ammomedium = mp_saveCategory.CreateEntry<int>("AmmoMedium", 0, "Ammo Medium",
                 description: "Saved ammo of type Medium");
-            mp_ammoheavy = mp_saveCategory.CreateEntry<int>("AmmoHeavy", 0, "Ammo Heavy", 
+            mp_ammoheavy = mp_saveCategory.CreateEntry<int>("AmmoHeavy", 0, "Ammo Heavy",
                 description: "Saved ammo of type Heavy");
 
-            mp_saveCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory,"KeepInventory_Save.cfg"));
+            mp_saveCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg"));
 
             if ((bool)mp_persistentsave.BoxedValue)
             {
