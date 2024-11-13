@@ -22,9 +22,9 @@ namespace KeepInventory
 
         public Dictionary<string, Barcode> Slots { get; } = [];
 
-        public Save CurrentSave;
+        public Save CurrentSave { get; internal set; }
 
-        private readonly static List<string> defaultBlacklistedLevels = [
+        public readonly static List<string> defaultBlacklistedLevels = [
                 CommonBarcodes.Maps.Home,
                 CommonBarcodes.Maps.Ascent,
                 CommonBarcodes.Maps.Descent,
