@@ -12,10 +12,9 @@ using System.IO;
 using System.Threading.Tasks;
 using MelonLoader.Preferences;
 using KeepInventory.Helper;
-using System;
 using Il2CppSLZ.Marrow.Utilities;
 using KeepInventory.SaveSlot;
-using Il2CppSystem;
+using System;
 
 namespace KeepInventory
 {
@@ -48,6 +47,8 @@ namespace KeepInventory
             ];
 
         #region MelonPreferences
+
+        private bool quitting = false;
 
         // Categories
 
@@ -109,6 +110,7 @@ namespace KeepInventory
         /// </summary>
         public void OnQuit()
         {
+            quitting = true;
             if ((bool)mp_persistentsave.BoxedValue)
             {
                 LoggerInstance.Msg("Saving Preferences");
@@ -123,6 +125,7 @@ namespace KeepInventory
         /// </summary>
         private void LevelUnloadedEvent()
         {
+            if (quitting) return;
             var list = new List<string>(mp_blacklistedLevels.BoxedValue as List<string>);
             if ((bool)mp_blacklistBONELABlevels.BoxedValue) list.AddRange(defaultBlacklistedLevels);
             if (!list.Contains(levelInfo.barcode))
@@ -226,24 +229,38 @@ namespace KeepInventory
                                         var gun = receiver._weaponHost.GetTransform().GetComponent<Gun>();
                                         if (gun != null)
                                         {
-                                            LoggerInstance.Msg("BIC");
-                                            if (item.GunInfo.IsBulletInChamber) gun.SpawnCartridge(gun.defaultCartridge.cartridgeSpawnable);
-                                            LoggerInstance.Msg("IM");
-                                            if (item.GunInfo.IsMag && item.GunInfo.MagazineState != null)
+                                            LoggerInstance.Msg($"Writing gun info in slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
+                                            try
                                             {
-                                                // For some reason it does not take rounds into consideration
-                                                gun.ammoSocket.ForceLoadAsync(item.GunInfo.GetMagazineData(gun));
+                                                if (item.GunInfo.IsBulletInChamber) gun.SpawnCartridge(gun.defaultCartridge.cartridgeSpawnable);
+                                                if (item.GunInfo.IsMag && item.GunInfo.MagazineState != null && gun.defaultMagazine != null && gun.defaultCartridge != null)
+                                                {
+                                                    var task = gun.ammoSocket.ForceLoadAsync(item.GunInfo.GetMagazineData(gun));
+                                                    var awaiter = task.GetAwaiter();
+                                                    Action action1 = () =>
+                                                    {
+                                                        gun.MagazineState.SetCartridge(item.GunInfo.MagazineState.Count);
+                                                        gun.MagazineState.Initialize(gun.MagazineState.cartridgeData, item.GunInfo.MagazineState.Count);
 
-                                                gun.MagazineState.magazineData.rounds = item.GunInfo.MagazineState.Count;
-                                                while (gun.MagazineState.magazineData.rounds > item.GunInfo.MagazineState.Count) gun.EjectCartridge();
+                                                        gun.fireMode = item.GunInfo.FireMode;
+                                                        gun.slideState = item.GunInfo.SlideState;
+                                                        gun.hammerState = item.GunInfo.HammerState;
+                                                    };
+                                                    awaiter.OnCompleted(action1);
+                                                }
+                                                else
+                                                {
+                                                    gun.fireMode = item.GunInfo.FireMode;
+                                                    gun.slideState = item.GunInfo.SlideState;
+                                                    gun.hammerState = item.GunInfo.HammerState;
+                                                }
                                             }
-                                            LoggerInstance.Msg("FM");
-                                            gun.fireMode = item.GunInfo.FireMode;
-                                            LoggerInstance.Msg("SS");
-                                            gun.slideState = item.GunInfo.SlideState;
-                                            LoggerInstance.Msg("HS");
-                                            gun.hammerState = item.GunInfo.HammerState;
+                                            catch (Exception ex)
+                                            {
+                                                LoggerInstance.Error($"An unexpected error has occured while writing gun info: \n{ex}");
+                                            }
                                         }
+                                        LoggerInstance.Msg($"Spawnend to slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
                                     }
                                 };
 
@@ -256,6 +273,7 @@ namespace KeepInventory
                             {
                                 LoggerInstance.Msg($"Spawning to slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
                                 receiver.SpawnInSlotAsync(crate.Barcode);
+                                LoggerInstance.Msg($"Spawned to slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
                             }
                         }
                         else
