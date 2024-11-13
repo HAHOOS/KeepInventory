@@ -188,16 +188,6 @@ namespace HAHOOS.KeepInventory
                             }
                         }
                     }
-                    else
-                    {
-                        // Despawns all items in slots that might have been inserted by a save
-                        var list = Player.RigManager.inventory.bodySlots.ToList();
-                        foreach (SlotContainer item in list)
-                        {
-                            var receiver = item.inventorySlotReceiver;
-                            receiver?.DestroyContents();
-                        }
-                    }
                 }
                 if ((bool)mp_ammosaving.BoxedValue)
                 {
@@ -220,7 +210,7 @@ namespace HAHOOS.KeepInventory
         }
 
         /// <summary>
-        /// Setup the BoneLib menu <br/>
+        /// Setup the BoneMenu<br/>
         /// Makes it able to manage settings within the game
         /// </summary>
         private void SetupMenu()
