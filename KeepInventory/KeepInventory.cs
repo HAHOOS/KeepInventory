@@ -6,56 +6,71 @@ using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow.Pool;
 using Il2CppSLZ.Marrow;
 using MelonLoader.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using System.Threading.Tasks;
+using MelonLoader.Preferences;
+using KeepInventory.Helper;
+using System;
 
-[assembly: MelonInfo(typeof(global::HAHOOS.KeepInventory.Main), "Keep Inventory", "1.2.0", "HAHOOS", "https://github.com/HAHOOS/KeepInventory")]
-[assembly: MelonGame("Stress Level Zero", "BONELAB")]
-[assembly: MelonAuthorColor(0, 255, 165, 0)]
-[assembly: MelonColor(0, 255, 72, 59)]
-
-namespace HAHOOS.KeepInventory
+namespace KeepInventory
 {
-    public class Main : MelonMod
+    public class KeepInventory : MelonMod
     {
-        public Dictionary<string, Barcode> Slots { get; private set; } = new Dictionary<string, Barcode>();
+        public const string Version = "1.2.0";
 
-        public int LightAmmo;
-        public int MediumAmmo;
-        public int HeavyAmmo;
+        public Dictionary<string, Barcode> Slots { get; } = [];
+
+        public Save CurrentSave;
+
+        private readonly static List<string> defaultBlacklistedLevels = [
+                CommonBarcodes.Maps.Home,
+                CommonBarcodes.Maps.Ascent,
+                CommonBarcodes.Maps.Descent,
+                CommonBarcodes.Maps.MineDive,
+                CommonBarcodes.Maps.LongRun,
+                CommonBarcodes.Maps.BigAnomaly,
+                CommonBarcodes.Maps.BigAnomaly2,
+                CommonBarcodes.Maps.StreetPuncher,
+                CommonBarcodes.Maps.SprintBridge,
+                CommonBarcodes.Maps.MagmaGate,
+                CommonBarcodes.Maps.Moonbase,
+                CommonBarcodes.Maps.MonogonMotorway,
+                CommonBarcodes.Maps.PillarClimb,
+                CommonBarcodes.Maps.ContainerYard,
+                CommonBarcodes.Maps.FantasyArena,
+                CommonBarcodes.Maps.TunnelTipper,
+                CommonBarcodes.Maps.DropPit,
+                CommonBarcodes.Maps.NeonTrial,
+                CommonBarcodes.Maps.MainMenu,
+            ];
 
         #region MelonPreferences
 
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        // Categories
+
+        internal static MelonPreferences_Category PrefsCategory;
+
+        internal static MelonPreferences_ReflectiveCategory SaveCategory;
 
         // Settings
 
-        private MelonPreferences_Category mp_modCategory;
+        private MelonPreferences_Entry<bool> mp_itemsaving;
+        private MelonPreferences_Entry<bool> mp_ammosaving;
 
-        private MelonPreferences_Entry mp_itemsaving;
-        private MelonPreferences_Entry mp_ammosaving;
+        private MelonPreferences_Entry<bool> mp_persistentsave;
 
-        private MelonPreferences_Entry mp_persistentsave;
+        private MelonPreferences_Entry<List<string>> mp_blacklistedLevels;
 
-        private MelonPreferences_Entry mp_blacklistedLevels;
-
-        // Save
-
-        private MelonPreferences_Category mp_saveCategory;
-
-        private MelonPreferences_Entry mp_itemslots;
-
-        private MelonPreferences_Entry mp_ammolight;
-        private MelonPreferences_Entry mp_ammomedium;
-        private MelonPreferences_Entry mp_ammoheavy;
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+        private MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
 
         #endregion MelonPreferences
 
         /// <summary>
         /// Variable of element in BoneMenu responsible for showing if level is blacklisted or not
         /// </summary>
-#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         private FunctionElement statusElement;
-#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
         /// <summary>
         /// Current Level Info
@@ -93,13 +108,10 @@ namespace HAHOOS.KeepInventory
             if ((bool)mp_persistentsave.BoxedValue)
             {
                 LoggerInstance.Msg("Saving Preferences");
-                Dictionary<string, string> slots_id = new();
+                Dictionary<string, string> slots_id = [];
                 foreach (KeyValuePair<string, Barcode> item in Slots) slots_id.Add(item.Key, item.Value.ID);
-                mp_itemslots.BoxedValue = slots_id;
-                mp_ammolight.BoxedValue = LightAmmo;
-                mp_ammomedium.BoxedValue = MediumAmmo;
-                mp_ammoheavy.BoxedValue = HeavyAmmo;
-                mp_saveCategory.SaveToFile();
+                CurrentSave.InventorySlots = slots_id;
+                SaveCategory.SaveToFile();
                 LoggerInstance.Msg("Saved Preferences successfully");
             }
         }
@@ -113,9 +125,6 @@ namespace HAHOOS.KeepInventory
             if (!((List<string>)mp_blacklistedLevels.BoxedValue).Contains(levelInfo.barcode))
             {
                 Slots.Clear();
-                HeavyAmmo = 0;
-                MediumAmmo = 0;
-                LightAmmo = 0;
                 LoggerInstance.Msg("Saving inventory...");
                 if (Player.RigManager == null)
                 {
@@ -144,20 +153,16 @@ namespace HAHOOS.KeepInventory
                             }
                         }
                     }
-                    Dictionary<string, string> slots_id = new();
+                    Dictionary<string, string> slots_id = [];
                     foreach (KeyValuePair<string, Barcode> item in Slots) slots_id.Add(item.Key, item.Value.ID);
-                    mp_itemslots.BoxedValue = slots_id;
+                    CurrentSave.InventorySlots = slots_id;
                 }
                 if ((bool)mp_ammosaving.BoxedValue)
                 {
                     var ammoInventory = AmmoInventory.Instance;
-                    LightAmmo = ammoInventory.GetCartridgeCount("light");
-                    MediumAmmo = ammoInventory.GetCartridgeCount("medium");
-                    HeavyAmmo = ammoInventory.GetCartridgeCount("heavy");
-
-                    mp_ammolight.BoxedValue = LightAmmo;
-                    mp_ammomedium.BoxedValue = MediumAmmo;
-                    mp_ammoheavy.BoxedValue = HeavyAmmo;
+                    CurrentSave.LightAmmo = ammoInventory.GetCartridgeCount("light");
+                    CurrentSave.MediumAmmo = ammoInventory.GetCartridgeCount("medium");
+                    CurrentSave.HeavyAmmo = ammoInventory.GetCartridgeCount("heavy");
                 }
                 LoggerInstance.Msg("Successfully saved inventory");
             }
@@ -191,7 +196,7 @@ namespace HAHOOS.KeepInventory
         {
             LabFusion.Utilities.PooleeUtilities.RequestSpawn(
                                     barcode, new LabFusion.Data.SerializedTransform
-                                    (Player.Head.position + Player.Head.forward * 1.5f,
+                                    (Player.Head.position + (Player.Head.forward * 1.5f),
                                      Quaternion.identity), LabFusion.Player.PlayerIdManager.LocalSmallId);
         }
 
@@ -221,37 +226,67 @@ namespace HAHOOS.KeepInventory
         private async void LevelLoadedEvent(LevelInfo obj)
         {
             levelInfo = obj;
-            if (!((List<string>)mp_blacklistedLevels.BoxedValue).Contains(obj.barcode))
+            var list = new List<string>(mp_blacklistedLevels.BoxedValue as List<string>);
+            if ((bool)mp_blacklistBONELABlevels.BoxedValue) list.AddRange(defaultBlacklistedLevels);
+            if (!list.Contains(obj.barcode))
             {
-                statusElement.ElementName = "Current level is not blacklisted";
-                statusElement.ElementColor = Color.green;
-                LoggerInstance.Msg("Loading inventory...");
-                if (HasFusion)
+                try
                 {
-                    FusionFunction();
-                }
-                else
-                {
-                    if ((bool)mp_itemsaving.BoxedValue)
+                    statusElement.ElementName = "Current level is not blacklisted";
+                    statusElement.ElementColor = Color.green;
+                    LoggerInstance.Msg("Loading inventory...");
+                    if (HasFusion)
                     {
-                        SpawnSavedItems();
+                        FusionFunction();
                     }
+                    else
+                    {
+                        if ((bool)mp_itemsaving.BoxedValue)
+                        {
+                            SpawnSavedItems();
+                        }
+                    }
+                    if ((bool)mp_ammosaving.BoxedValue)
+                    {
+                        // Adds saved ammo
+                        while (AmmoInventory.Instance == null) await Task.Delay(50); // Waits till AmmoInventory is not null
+                        var ammoInventory = AmmoInventory.Instance;
+                        ammoInventory.ClearAmmo();
+                        ammoInventory.AddCartridge(ammoInventory.lightAmmoGroup, CurrentSave.LightAmmo);
+                        ammoInventory.AddCartridge(ammoInventory.mediumAmmoGroup, CurrentSave.MediumAmmo);
+                        ammoInventory.AddCartridge(ammoInventory.heavyAmmoGroup, CurrentSave.HeavyAmmo);
+                    }
+                    LoggerInstance.Msg("Loaded inventory");
+                    BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
+                    {
+                        Title = "Success",
+                        Message = "Successfully loaded the inventory",
+                        ShowTitleOnPopup = true,
+                        PopupLength = 2.5f,
+                    });
                 }
-                if ((bool)mp_ammosaving.BoxedValue)
+                catch (Exception ex)
                 {
-                    // Adds saved ammo
-                    while (AmmoInventory.Instance == null) await Task.Delay(50); // Waits till AmmoInventory is not null
-                    var ammoInventory = AmmoInventory.Instance;
-                    ammoInventory.ClearAmmo();
-                    ammoInventory.AddCartridge(ammoInventory.lightAmmoGroup, LightAmmo);
-                    ammoInventory.AddCartridge(ammoInventory.mediumAmmoGroup, MediumAmmo);
-                    ammoInventory.AddCartridge(ammoInventory.heavyAmmoGroup, HeavyAmmo);
+                    LoggerInstance.Error("An error occurred while loading the inventory", ex);
+                    BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
+                    {
+                        Title = "Failure",
+                        Message = "Failed to load the inventory, check the logs or console for more details",
+                        ShowTitleOnPopup = true,
+                        PopupLength = 5f,
+                    });
                 }
-                LoggerInstance.Msg("Loaded inventory");
             }
             else
             {
                 LoggerInstance.Msg("Not loading inventory because level is blacklisted");
+                BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
+                {
+                    Message = "This level is blacklisted from loading/saving inventory",
+                    Title = "Blacklisted",
+                    ShowTitleOnPopup = true,
+                    PopupLength = 5
+                });
                 statusElement.ElementName = "Current level is blacklisted";
                 statusElement.ElementColor = Color.red;
             }
@@ -265,23 +300,13 @@ namespace HAHOOS.KeepInventory
         {
             var mainPage = Page.Root.CreatePage("HAHOOS", Color.white);
             var modPage = mainPage.CreatePage("KeepInventory", new Color(255, 72, 59));
-            modPage.CreateBool("Save Items", Color.white, (bool)mp_itemsaving.BoxedValue, (value) =>
+            modPage.CreateBoolPref("Save Items", Color.white, ref mp_itemsaving, prefDefaultValue: true);
+            modPage.CreateBoolPref("Save Ammo", Color.white, ref mp_ammosaving, prefDefaultValue: true);
+            modPage.CreateBoolPref("Persistent Save", Color.magenta, ref mp_persistentsave, prefDefaultValue: true);
+            modPage.CreateBoolPref("Blacklist BONELAB Levels", Color.cyan, ref mp_blacklistBONELABlevels, prefDefaultValue: true);
+            statusElement = modPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
             {
-                mp_itemsaving.BoxedValue = value;
-                mp_itemsaving.Save();
-            });
-            modPage.CreateBool("Save Ammo", Color.white, (bool)mp_ammosaving.BoxedValue, (value) =>
-            {
-                mp_ammosaving.BoxedValue = value;
-                mp_ammosaving.Save();
-            });
-            modPage.CreateBool("Persistent Save", Color.magenta, (bool)mp_persistentsave.BoxedValue, (value) =>
-            {
-                mp_persistentsave.BoxedValue = value;
-                mp_persistentsave.Save();
-            });
-            modPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
-            {
+                if (defaultBlacklistedLevels.Contains(levelInfo.barcode)) return;
                 List<string> blacklistList = (List<string>)mp_blacklistedLevels.BoxedValue;
                 if (blacklistList.Contains(levelInfo.barcode))
                 {
@@ -300,7 +325,6 @@ namespace HAHOOS.KeepInventory
                     statusElement.ElementColor = Color.red;
                 }
             });
-            statusElement = modPage.CreateFunction("Current Level is not blacklisted", Color.green, () => { });
         }
 
         /// <summary>
@@ -309,68 +333,36 @@ namespace HAHOOS.KeepInventory
         /// </summary>
         private void SetupPreferences()
         {
-            List<string> defaultBlacklistedLevels = new(){
-                CommonBarcodes.Maps.Home,
-                CommonBarcodes.Maps.Ascent,
-                CommonBarcodes.Maps.Descent,
-                CommonBarcodes.Maps.MineDive,
-                CommonBarcodes.Maps.LongRun,
-                CommonBarcodes.Maps.BigAnomaly,
-                CommonBarcodes.Maps.BigAnomaly2,
-                CommonBarcodes.Maps.StreetPuncher,
-                CommonBarcodes.Maps.SprintBridge,
-                CommonBarcodes.Maps.MagmaGate,
-                CommonBarcodes.Maps.Moonbase,
-                CommonBarcodes.Maps.MonogonMotorway,
-                CommonBarcodes.Maps.PillarClimb,
-                CommonBarcodes.Maps.ContainerYard,
-                CommonBarcodes.Maps.FantasyArena,
-                CommonBarcodes.Maps.TunnelTipper,
-                CommonBarcodes.Maps.DropPit,
-                CommonBarcodes.Maps.NeonTrial,
-                CommonBarcodes.Maps.MainMenu,
-            };
+            PrefsCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Settings");
+            PrefsCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory.cfg"));
 
-            mp_modCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Settings");
-            mp_itemsaving = mp_modCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
+            mp_itemsaving = PrefsCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
                 description: "If true, will save and load items in inventory");
-            mp_ammosaving = mp_modCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
+            mp_ammosaving = PrefsCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
                 description: "If true, will save and load ammo in inventory");
-            mp_persistentsave = mp_modCategory.CreateEntry<bool>("PersistentSave", true, "Persistent Save",
+            mp_persistentsave = PrefsCategory.CreateEntry<bool>("PersistentSave", true, "Persistent Save",
                 description: "If true, will save and load inventory in a KeepInventory_Save.cfg file to be used between sessions");
-            mp_blacklistedLevels = mp_modCategory.CreateEntry<List<string>>("BlacklistedLevels", defaultBlacklistedLevels, "Blacklisted Levels",
+            mp_blacklistBONELABlevels = PrefsCategory.CreateEntry<bool>("BlacklistBONELABLevels", true, "Blacklist BONELAB Levels",
+                description: "If true, most of the BONELAB levels (except VoidG114 and BONELAB Hub) will be blacklisted from saving/loading inventory");
+            mp_blacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
                 description: "List of levels that will not save/load inventory");
 
-            mp_saveCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Save");
-            mp_itemslots = mp_saveCategory.CreateEntry<Dictionary<string, string>>("ItemSlots",
-                new Dictionary<string, string>(), "Item Slots", description: "Saved items in the inventory");
-            mp_ammolight = mp_saveCategory.CreateEntry<int>("AmmoLight", 0, "Ammo Light",
-                description: "Saved ammo of type Light");
-            mp_ammomedium = mp_saveCategory.CreateEntry<int>("AmmoMedium", 0, "Ammo Medium",
-                description: "Saved ammo of type Medium");
-            mp_ammoheavy = mp_saveCategory.CreateEntry<int>("AmmoHeavy", 0, "Ammo Heavy",
-                description: "Saved ammo of type Heavy");
+            PrefsCategory.SaveToFile(false);
 
-            mp_saveCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg"));
+            SaveCategory = MelonPreferences.CreateCategory<Save>("KeepInventory_Save", "Keep Inventory Save");
+            SaveCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg"));
+            SaveCategory.SaveToFile(false);
+            CurrentSave = SaveCategory.GetValue<Save>();
 
             if ((bool)mp_persistentsave.BoxedValue)
             {
                 Slots.Clear();
-                foreach (KeyValuePair<string, string> id in (Dictionary<string, string>)mp_itemslots.BoxedValue)
+                if (CurrentSave?.InventorySlots != null)
                 {
-                    Slots.Add(id.Key, new Barcode(id.Value.ToString()));
-                }
-                try
-                {
-#pragma warning disable CS8604 // Possible null reference argument.
-                    LightAmmo = int.Parse(mp_ammolight.BoxedValue.ToString());
-                    MediumAmmo = int.Parse(mp_ammomedium.BoxedValue.ToString());
-                    HeavyAmmo = int.Parse(mp_ammoheavy.BoxedValue.ToString());
-#pragma warning restore CS8604 // Possible null reference argument.
-                }
-                catch (Exception)
-                {
-                    LoggerInstance.Error("Could not parse saved data from String to Int, don't tell me you tried to modify the file yourself..");
+                    foreach (KeyValuePair<string, string> id in (Dictionary<string, string>)CurrentSave.InventorySlots)
+                    {
+                        Slots.Add(id.Key, new Barcode(id.Value));
+                    }
                 }
             }
         }
