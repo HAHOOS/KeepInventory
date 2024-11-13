@@ -5,6 +5,8 @@ VisualStudioVersion = 17.10.35004.147
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeepInventory", "KeepInventory\KeepInventory.csproj", "{982D6000-0B26-4D26-ADB7-7DAF2E4FA14F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeepInventory.Fusion", "KeepInventory.Fusion\KeepInventory.Fusion.csproj", "{4C0AE321-CD6F-421E-83B0-469BA0706A39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{982D6000-0B26-4D26-ADB7-7DAF2E4FA14F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{982D6000-0B26-4D26-ADB7-7DAF2E4FA14F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{982D6000-0B26-4D26-ADB7-7DAF2E4FA14F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4C0AE321-CD6F-421E-83B0-469BA0706A39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4C0AE321-CD6F-421E-83B0-469BA0706A39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4C0AE321-CD6F-421E-83B0-469BA0706A39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4C0AE321-CD6F-421E-83B0-469BA0706A39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,10 @@
-# Keep Inventory
+<div align="center">
+<h1 align="center">Keep Inventory</h1>
+<h3>A BONELAB code mod</h3>
+</div>
+<img alt="Dynamic JSON Badge" src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fthunderstore.io%2Fapi%2Fv1%2Fpackage-metrics%2FHAHOOS%2FKeepInventory%2F&query=%24.downloads&style=for-the-badge&label=THUNDERSTORE%20DOWNLOADS">
+
+
 
 **WARNING: This mod was not tested for Fusion and might cause issues**
 

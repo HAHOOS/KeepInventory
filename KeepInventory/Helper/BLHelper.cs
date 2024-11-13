@@ -15,7 +15,7 @@ namespace KeepInventory.Helper
         //Replace instances of "Main" with your desired class
         //Additionally you would need some method to save your preferences (Main.SavePreferences here)
 
-        private readonly static MelonPreferences_Category prefs = KeepInventory.PrefsCategory;
+        private readonly static MelonPreferences_Category prefs = Core.PrefsCategory;
 
         internal static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
         {
@@ -105,10 +105,10 @@ namespace KeepInventory.Helper
 
         public static void SendNotification(string message, string title = null, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
-            if ((bool?)KeepInventory.mp_showNotifications?.BoxedValue != true) return;
+            if (Core.mp_showNotifications?.Value != true) return;
             Notifier.Send(new Notification()
             {
-                Title = title,
+                Title = $"KeepInventory | {title}",
                 Message = message,
                 ShowTitleOnPopup = showTitleOnPopup,
                 CustomIcon = customIcon,
@@ -119,16 +119,22 @@ namespace KeepInventory.Helper
 
         public static void SendNotification(NotificationText message, NotificationText title, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
-            if ((bool?)KeepInventory.mp_showNotifications?.BoxedValue != true) return;
+            if (Core.mp_showNotifications?.Value != true) return;
             Notifier.Send(new Notification()
             {
-                Title = title,
+                Title = $"KeepInventory | {title}",
                 Message = message,
                 ShowTitleOnPopup = showTitleOnPopup,
                 CustomIcon = customIcon,
                 PopupLength = popupLength,
                 Type = type
             });
+        }
+
+        public static void SendNotification(Notification notification)
+        {
+            if (Core.mp_showNotifications?.Value != true) return;
+            Notifier.Send(notification);
         }
 
         #endregion Notifications

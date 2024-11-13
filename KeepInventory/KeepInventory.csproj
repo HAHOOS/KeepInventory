@@ -7,6 +7,12 @@
 	<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
 	<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
+
+	<GenerateDocumentationFile>True</GenerateDocumentationFile>
+
+	<SignAssembly>True</SignAssembly>
+
+	<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +37,9 @@
     <Reference Include="LabFusion">
       <HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
     </Reference>
+	  <Reference Include="KeepInventory.Fusion">
+		  <HintPath>$(GameDirectory)\UserData\KeepInventory\KeepInventory.Fusion.dll</HintPath>
+	  </Reference>
     <Reference Include="MelonLoader">
       <HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
@@ -40,6 +49,9 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+	  <Reference Include="UnityEngine.AnimationModule">
+		  <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath>
+	  </Reference>
 
 
   </ItemGroup>

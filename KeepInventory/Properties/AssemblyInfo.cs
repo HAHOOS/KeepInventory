@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 #region MelonLoader
 
-[assembly: MelonInfo(typeof(KeepInventory.KeepInventory), "Keep Inventory", KeepInventory.KeepInventory.Version, "HAHOOS", "https://github.com/HAHOOS/KeepInventory")]
+[assembly: MelonInfo(typeof(KeepInventory.Core), "KeepInventory", KeepInventory.Core.Version, "HAHOOS", "https://github.com/HAHOOS/KeepInventory")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]
 [assembly: MelonColor(0, 255, 72, 59)]
@@ -23,9 +23,9 @@ using System.Runtime.InteropServices;
 
 #region Version
 
-[assembly: AssemblyVersion(KeepInventory.KeepInventory.Version)]
-[assembly: AssemblyFileVersion(KeepInventory.KeepInventory.Version)]
-[assembly: AssemblyInformationalVersion(KeepInventory.KeepInventory.Version)]
+[assembly: AssemblyVersion(KeepInventory.Core.Version)]
+[assembly: AssemblyFileVersion(KeepInventory.Core.Version)]
+[assembly: AssemblyInformationalVersion(KeepInventory.Core.Version)]
 
 #endregion Version
 
