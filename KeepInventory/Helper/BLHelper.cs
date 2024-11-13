@@ -105,6 +105,7 @@ namespace KeepInventory.Helper
 
         public static void SendNotification(string message, string title = null, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
+            if ((bool?)KeepInventory.mp_showNotifications?.BoxedValue != true) return;
             Notifier.Send(new Notification()
             {
                 Title = title,
@@ -118,6 +119,7 @@ namespace KeepInventory.Helper
 
         public static void SendNotification(NotificationText message, NotificationText title, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
+            if ((bool?)KeepInventory.mp_showNotifications?.BoxedValue != true) return;
             Notifier.Send(new Notification()
             {
                 Title = title,

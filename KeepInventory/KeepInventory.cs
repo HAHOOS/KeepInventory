@@ -56,14 +56,16 @@ namespace KeepInventory
 
         // Settings
 
-        private MelonPreferences_Entry<bool> mp_itemsaving;
-        private MelonPreferences_Entry<bool> mp_ammosaving;
+        internal static MelonPreferences_Entry<bool> mp_itemsaving;
+        internal static MelonPreferences_Entry<bool> mp_ammosaving;
 
-        private MelonPreferences_Entry<bool> mp_persistentsave;
+        internal static MelonPreferences_Entry<bool> mp_persistentsave;
 
-        private MelonPreferences_Entry<List<string>> mp_blacklistedLevels;
+        internal static MelonPreferences_Entry<List<string>> mp_blacklistedLevels;
 
-        private MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
+        internal static MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
+
+        internal static MelonPreferences_Entry<bool> mp_showNotifications;
 
         #endregion MelonPreferences
 
@@ -122,7 +124,9 @@ namespace KeepInventory
         /// </summary>
         private void LevelUnloadedEvent()
         {
-            if (!((List<string>)mp_blacklistedLevels.BoxedValue).Contains(levelInfo.barcode))
+            var list = new List<string>(mp_blacklistedLevels.BoxedValue as List<string>);
+            if ((bool)mp_blacklistBONELABlevels.BoxedValue) list.AddRange(defaultBlacklistedLevels);
+            if (!list.Contains(levelInfo.barcode))
             {
                 Slots.Clear();
                 LoggerInstance.Msg("Saving inventory...");
@@ -156,17 +160,32 @@ namespace KeepInventory
                         }
                     }
                     Dictionary<string, string> slots_id = [];
-                    foreach (KeyValuePair<string, Barcode> item in Slots) slots_id.Add(item.Key, item.Value.ID);
+                    foreach (KeyValuePair<string, Barcode> item in Slots)
+                    {
+                        LoggerInstance.Msg($"Slot: {item.Key} / Barcode: {item.Value}");
+                        slots_id.Add(item.Key, item.Value.ID);
+                    }
+                    if (Slots.Count == 0)
+                    {
+                        LoggerInstance.Msg("No spawnables were found in slots");
+                    }
                     CurrentSave.InventorySlots = slots_id;
                 }
                 if ((bool)mp_ammosaving.BoxedValue)
                 {
                     var ammoInventory = AmmoInventory.Instance;
                     CurrentSave.LightAmmo = ammoInventory.GetCartridgeCount("light");
+                    LoggerInstance.Msg("Saved Light Ammo: " + CurrentSave.LightAmmo);
                     CurrentSave.MediumAmmo = ammoInventory.GetCartridgeCount("medium");
+                    LoggerInstance.Msg("Saved Medium Ammo: " + CurrentSave.MediumAmmo);
                     CurrentSave.HeavyAmmo = ammoInventory.GetCartridgeCount("heavy");
+                    LoggerInstance.Msg("Saved Heavy Ammo: " + CurrentSave.LightAmmo);
                 }
                 LoggerInstance.Msg("Successfully saved inventory");
+            }
+            else
+            {
+                LoggerInstance.Msg("Not saving due to the level being blacklisted");
             }
         }
 
@@ -288,6 +307,7 @@ namespace KeepInventory
             modPage.CreateBoolPref("Save Ammo", Color.white, ref mp_ammosaving, prefDefaultValue: true);
             modPage.CreateBoolPref("Persistent Save", Color.magenta, ref mp_persistentsave, prefDefaultValue: true);
             modPage.CreateBoolPref("Blacklist BONELAB Levels", Color.cyan, ref mp_blacklistBONELABlevels, prefDefaultValue: true);
+            modPage.CreateBoolPref("Show Notifications", Color.green, ref mp_showNotifications, prefDefaultValue: true);
             statusElement = modPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
             {
                 if (defaultBlacklistedLevels.Contains(levelInfo.barcode)) return;
@@ -330,6 +350,8 @@ namespace KeepInventory
                 description: "If true, most of the BONELAB levels (except VoidG114 and BONELAB Hub) will be blacklisted from saving/loading inventory");
             mp_blacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
                 description: "List of levels that will not save/load inventory");
+            mp_showNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
+                description: "If true, notifications will be shown in-game regarding errors or other things");
 
             PrefsCategory.SaveToFile(false);
 
