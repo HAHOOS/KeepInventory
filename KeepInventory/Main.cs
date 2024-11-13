@@ -187,7 +187,7 @@ namespace HAHOOS.KeepInventory
 
         [System.Runtime.CompilerServices.MethodImpl(
     System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-        private void RequestItemSpawn(string barcode)
+        private static void RequestItemSpawn(string barcode)
         {
             LabFusion.Utilities.PooleeUtilities.RequestSpawn(
                                     barcode, new LabFusion.Data.SerializedTransform
