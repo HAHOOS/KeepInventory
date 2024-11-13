@@ -281,7 +281,8 @@ namespace HAHOOS.KeepInventory
                 CommonBarcodes.Maps.FantasyArena,
                 CommonBarcodes.Maps.TunnelTipper,
                 CommonBarcodes.Maps.DropPit,
-                CommonBarcodes.Maps.NeonTrial
+                CommonBarcodes.Maps.NeonTrial,
+                CommonBarcodes.Maps.MainMenu,
             };
             mp_modCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Settings");
             mp_itemsaving = mp_modCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving", 
