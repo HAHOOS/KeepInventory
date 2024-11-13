@@ -2,8 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	<LangVersion>latest</LangVersion>
+
+	<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+
 	<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
   </PropertyGroup>
 
@@ -38,12 +40,12 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
-	  
-	  
+
+
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="ECHO Copying KeepInventory.dll to $(GameDirectory)\Mods&#xD;&#xA;COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods\$(ProjectName).dll&quot;" />
+		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods&quot;" />
 	</Target>
 
 </Project>
