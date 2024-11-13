@@ -33,7 +33,7 @@ using System.Runtime.InteropServices;
 
 #region Other
 
-[assembly: ComVisible(false)]
+[assembly: ComVisible(true)]
 [assembly: Guid("b45d7a48-e5c2-49b2-a7a2-331de9c55d26")]
 
 #endregion Other
