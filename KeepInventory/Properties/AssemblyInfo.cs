@@ -14,8 +14,8 @@ using System.Runtime.InteropServices;
 
 #region General
 
-[assembly: AssemblyTitle("Keep your inventory when switching between mod levels, aswell as when quitting the game!")]
-[assembly: AssemblyDescription("Keep your inventory when switching between mod levels, aswell as when quitting the game!")]
+[assembly: AssemblyTitle("Keep your inventory when switching between mod levels, as well as when quitting the game!")]
+[assembly: AssemblyDescription("Keep your inventory when switching between mod levels, as well as when quitting the game!")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HAHOOS")]
 [assembly: AssemblyProduct("KeepInventory")]
