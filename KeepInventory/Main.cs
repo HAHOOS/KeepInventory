@@ -63,6 +63,11 @@ namespace HAHOOS.KeepInventory
         private LevelInfo levelInfo;
 
         /// <summary>
+        /// Boolean value indicating if user has Fusion
+        /// </summary>
+        private bool HasFusion;
+
+        /// <summary>
         /// Calls when MelonLoader loads all Mods/Plugins
         /// </summary>
         public override void OnInitializeMelon()
@@ -70,6 +75,9 @@ namespace HAHOOS.KeepInventory
             LoggerInstance.Msg("Setting up KeepInventory");
             SetupPreferences();
             SetupMenu();
+
+            HasFusion = HelperMethods.CheckIfAssemblyLoaded("labfusion");
+
             Application.quitting += (Il2CppSystem.Action)OnQuit; // Currently does not support Android, will be fixed when LemonLoader is updated
             Hooking.OnLevelLoaded += LevelLoadedEvent;
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
@@ -155,6 +163,56 @@ namespace HAHOOS.KeepInventory
             }
         }
 
+        private void SpawnSavedItems()
+        {
+            if (Slots.Count >= 1)
+            {
+                // Adds saved items to inventory slots
+                var list = Player.RigManager.inventory.bodySlots.ToList();
+                foreach (KeyValuePair<string, Barcode> item in Slots)
+                {
+                    var slot = list.Find((slot) => slot.name == item.Key);
+                    if (slot != null)
+                    {
+                        var receiver = slot.inventorySlotReceiver;
+                        if (receiver != null)
+                        {
+                            receiver.DestroyContents();
+                            receiver.SpawnInSlotAsync(item.Value);
+                        }
+                    }
+                }
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(
+    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private void RequestItemSpawn(string barcode)
+        {
+            LabFusion.Utilities.PooleeUtilities.RequestSpawn(
+                                    barcode, new LabFusion.Data.SerializedTransform
+                                    (Player.Head.position + Player.Head.forward * 1.5f,
+                                     Quaternion.identity), LabFusion.Player.PlayerIdManager.LocalSmallId);
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(
+    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private void FusionFunction()
+        {
+            if (LabFusion.Network.NetworkInfo.HasServer)
+            {
+                foreach (KeyValuePair<string, Barcode> value in Slots)
+                    RequestItemSpawn(value.Value.ID);
+            }
+            else
+            {
+                if ((bool)mp_itemsaving.BoxedValue)
+                {
+                    SpawnSavedItems();
+                }
+            }
+        }
+
         /// <summary>
         /// Called when a BONELAB Level is loaded<br/>
         /// Mostly used to load the inventory as of now
@@ -168,25 +226,15 @@ namespace HAHOOS.KeepInventory
                 statusElement.ElementName = "Current level is not blacklisted";
                 statusElement.ElementColor = Color.green;
                 LoggerInstance.Msg("Loading inventory...");
-                if ((bool)mp_itemsaving.BoxedValue)
+                if (HasFusion)
                 {
-                    if (Slots.Count >= 1)
+                    FusionFunction();
+                }
+                else
+                {
+                    if ((bool)mp_itemsaving.BoxedValue)
                     {
-                        // Adds saved items to inventory slots
-                        var list = Player.RigManager.inventory.bodySlots.ToList();
-                        foreach (KeyValuePair<string, Barcode> item in Slots)
-                        {
-                            var slot = list.Find((slot) => slot.name == item.Key);
-                            if (slot != null)
-                            {
-                                var receiver = slot.inventorySlotReceiver;
-                                if (receiver != null)
-                                {
-                                    receiver.DestroyContents();
-                                    receiver.SpawnInSlotAsync(item.Value);
-                                }
-                            }
-                        }
+                        SpawnSavedItems();
                     }
                 }
                 if ((bool)mp_ammosaving.BoxedValue)
