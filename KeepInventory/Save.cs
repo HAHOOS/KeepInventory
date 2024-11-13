@@ -15,6 +15,9 @@ namespace KeepInventory
         public int HeavyAmmo;
 
         [TomlPrecedingComment("List of all slots & the spawnables stored in them")]
-        public Dictionary<string, string> InventorySlots = [];
+        public List<SaveSlot.SaveSlot> InventorySlots = [];
+
+        public Save()
+        { }
     }
 }

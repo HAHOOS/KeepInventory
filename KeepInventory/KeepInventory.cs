@@ -13,14 +13,15 @@ using System.Threading.Tasks;
 using MelonLoader.Preferences;
 using KeepInventory.Helper;
 using System;
+using Il2CppSLZ.Marrow.Utilities;
+using KeepInventory.SaveSlot;
+using Il2CppSystem;
 
 namespace KeepInventory
 {
     public class KeepInventory : MelonMod
     {
         public const string Version = "1.2.0";
-
-        public Dictionary<string, Barcode> Slots { get; } = [];
 
         public Save CurrentSave { get; internal set; }
 
@@ -95,6 +96,7 @@ namespace KeepInventory
 
             HasFusion = HelperMethods.CheckIfAssemblyLoaded("labfusion");
 
+            // Well fuck now I have to update for LemonLoader
             Application.quitting += (Il2CppSystem.Action)OnQuit; // Currently does not support Android, will be fixed when LemonLoader is updated
             Hooking.OnLevelLoaded += LevelLoadedEvent;
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
@@ -110,9 +112,6 @@ namespace KeepInventory
             if ((bool)mp_persistentsave.BoxedValue)
             {
                 LoggerInstance.Msg("Saving Preferences");
-                Dictionary<string, string> slots_id = [];
-                foreach (KeyValuePair<string, Barcode> item in Slots) slots_id.Add(item.Key, item.Value.ID);
-                CurrentSave.InventorySlots = slots_id;
                 SaveCategory.SaveToFile();
                 LoggerInstance.Msg("Saved Preferences successfully");
             }
@@ -128,7 +127,7 @@ namespace KeepInventory
             if ((bool)mp_blacklistBONELABlevels.BoxedValue) list.AddRange(defaultBlacklistedLevels);
             if (!list.Contains(levelInfo.barcode))
             {
-                Slots.Clear();
+                CurrentSave.InventorySlots.Clear();
                 LoggerInstance.Msg("Saving inventory...");
                 if (Player.RigManager == null)
                 {
@@ -151,25 +150,32 @@ namespace KeepInventory
                     {
                         if (item.inventorySlotReceiver?._weaponHost != null)
                         {
+                            var gun = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Gun>();
+                            GunInfo gunInfo = null;
+                            if (gun != null)
+                            {
+                                gunInfo = GunInfo.Parse(gun);
+                            }
                             var poolee = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Poolee>();
                             if (poolee != null)
                             {
                                 var barcode = poolee.SpawnableCrate.Barcode;
-                                Slots.Add(item.name, barcode);
+                                LoggerInstance.Msg($"Slot: {item.name} / Barcode: {poolee.SpawnableCrate.name} {poolee.SpawnableCrate.Barcode.ID}");
+                                if (gunInfo != null)
+                                {
+                                    CurrentSave.InventorySlots.Add(new SaveSlot.SaveSlot(item.name, barcode, gunInfo));
+                                }
+                                else
+                                {
+                                    CurrentSave.InventorySlots.Add(new SaveSlot.SaveSlot(item.name, barcode));
+                                }
                             }
                         }
                     }
-                    Dictionary<string, string> slots_id = [];
-                    foreach (KeyValuePair<string, Barcode> item in Slots)
-                    {
-                        LoggerInstance.Msg($"Slot: {item.Key} / Barcode: {item.Value}");
-                        slots_id.Add(item.Key, item.Value.ID);
-                    }
-                    if (Slots.Count == 0)
+                    if (CurrentSave.InventorySlots.Count == 0)
                     {
                         LoggerInstance.Msg("No spawnables were found in slots");
                     }
-                    CurrentSave.InventorySlots = slots_id;
                 }
                 if ((bool)mp_ammosaving.BoxedValue)
                 {
@@ -191,21 +197,75 @@ namespace KeepInventory
 
         private void SpawnSavedItems()
         {
-            if (Slots.Count >= 1)
+            if (CurrentSave.InventorySlots.Count >= 1)
             {
                 // Adds saved items to inventory slots
                 var list = Player.RigManager.inventory.bodySlots.ToList();
-                foreach (KeyValuePair<string, Barcode> item in Slots)
+                foreach (var item in CurrentSave.InventorySlots)
                 {
-                    var slot = list.Find((slot) => slot.name == item.Key);
+                    // Check for a slot with the same name and one that is for spawnables, not ammo
+                    var slot = list.Find((slot) => slot.name == item.SlotName && slot.inventorySlotReceiver != null);
                     if (slot != null)
                     {
                         var receiver = slot.inventorySlotReceiver;
-                        if (receiver != null)
+                        receiver.DespawnContents();
+                        if (MarrowGame.assetWarehouse.HasCrate(new Barcode(item.Barcode)))
                         {
-                            receiver.DestroyContents();
-                            receiver.SpawnInSlotAsync(item.Value);
+                            // There was an issue with items not loading models in slots, i cant replicate the issue, but adding this to be sure
+                            var crate = new SpawnableCrateReference(item.Barcode);
+                            crate?.Crate.PreloadAssets();
+
+                            if (item.Type == SaveSlot.SaveSlot.SpawnableType.Gun)
+                            {
+                                LoggerInstance.Msg($"Attempting to load in slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
+                                // Settings properties for the gun, this is horrible
+                                System.Action action = () =>
+                                {
+                                    if (item.GunInfo != null)
+                                    {
+                                        var gun = receiver._weaponHost.GetTransform().GetComponent<Gun>();
+                                        if (gun != null)
+                                        {
+                                            LoggerInstance.Msg("BIC");
+                                            if (item.GunInfo.IsBulletInChamber) gun.SpawnCartridge(gun.defaultCartridge.cartridgeSpawnable);
+                                            LoggerInstance.Msg("IM");
+                                            if (item.GunInfo.IsMag && item.GunInfo.MagazineState != null)
+                                            {
+                                                // For some reason it does not take rounds into consideration
+                                                gun.ammoSocket.ForceLoadAsync(item.GunInfo.GetMagazineData(gun));
+
+                                                gun.MagazineState.magazineData.rounds = item.GunInfo.MagazineState.Count;
+                                                while (gun.MagazineState.magazineData.rounds > item.GunInfo.MagazineState.Count) gun.EjectCartridge();
+                                            }
+                                            LoggerInstance.Msg("FM");
+                                            gun.fireMode = item.GunInfo.FireMode;
+                                            LoggerInstance.Msg("SS");
+                                            gun.slideState = item.GunInfo.SlideState;
+                                            LoggerInstance.Msg("HS");
+                                            gun.hammerState = item.GunInfo.HammerState;
+                                        }
+                                    }
+                                };
+
+                                LoggerInstance.Msg($"Spawning to slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
+                                var task = receiver.SpawnInSlotAsync(crate.Barcode);
+                                var awaiter = task.GetAwaiter();
+                                awaiter.OnCompleted(action);
+                            }
+                            else
+                            {
+                                LoggerInstance.Msg($"Spawning to slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
+                                receiver.SpawnInSlotAsync(crate.Barcode);
+                            }
                         }
+                        else
+                        {
+                            LoggerInstance.Warning($"Could not find crate with the following barcode: {item.Barcode}");
+                        }
+                    }
+                    else
+                    {
+                        LoggerInstance.Warning($"No slot with the name '{item.SlotName}' was found. It is possible that an avatar that was used during the saving had more slots than the current one");
                     }
                 }
             }
@@ -213,8 +273,10 @@ namespace KeepInventory
 
         [System.Runtime.CompilerServices.MethodImpl(
     System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-        private static void RequestItemSpawn(string barcode)
+        private void RequestItemSpawn(string barcode)
         {
+            var crate = new SpawnableCrateReference(barcode);
+            LoggerInstance.Msg($"Sending request to spawn item in front of player: {crate.Crate.name} ({barcode})");
             LabFusion.Utilities.PooleeUtilities.RequestSpawn(
                                     barcode, new LabFusion.Data.SerializedTransform
                                     (Player.Head.position + (Player.Head.forward * 1.5f),
@@ -227,11 +289,13 @@ namespace KeepInventory
         {
             if (LabFusion.Network.NetworkInfo.HasServer)
             {
-                foreach (KeyValuePair<string, Barcode> value in Slots)
-                    RequestItemSpawn(value.Value.ID);
+                LoggerInstance.Msg("Client is connected to a server");
+                foreach (var value in CurrentSave.InventorySlots)
+                    RequestItemSpawn(value.Barcode);
             }
             else
             {
+                LoggerInstance.Msg("Client is not connected to a server, spawning locally");
                 if ((bool)mp_itemsaving.BoxedValue)
                 {
                     SpawnSavedItems();
@@ -258,29 +322,36 @@ namespace KeepInventory
                     LoggerInstance.Msg("Loading inventory...");
                     if (HasFusion)
                     {
+                        // Spawns the saved items by sending messages to the Fusion server
+                        LoggerInstance.Msg("Checking if client is connected to a Fusion server");
                         FusionFunction();
                     }
                     else
                     {
                         if ((bool)mp_itemsaving.BoxedValue)
                         {
+                            LoggerInstance.Msg("Spawning in slots saved items");
                             SpawnSavedItems();
                         }
                     }
                     if ((bool)mp_ammosaving.BoxedValue)
                     {
                         // Adds saved ammo
+                        LoggerInstance.Msg("Waiting for Ammo Inventory to be initialized");
                         while (AmmoInventory.Instance == null) await Task.Delay(50); // Waits till AmmoInventory is not null
                         var ammoInventory = AmmoInventory.Instance;
                         ammoInventory.ClearAmmo();
+                        LoggerInstance.Msg($"Adding light ammo: {CurrentSave.LightAmmo}");
                         ammoInventory.AddCartridge(ammoInventory.lightAmmoGroup, CurrentSave.LightAmmo);
+                        LoggerInstance.Msg($"Adding medium ammo: {CurrentSave.MediumAmmo}");
                         ammoInventory.AddCartridge(ammoInventory.mediumAmmoGroup, CurrentSave.MediumAmmo);
+                        LoggerInstance.Msg($"Adding heavy ammo: {CurrentSave.HeavyAmmo}");
                         ammoInventory.AddCartridge(ammoInventory.heavyAmmoGroup, CurrentSave.HeavyAmmo);
                     }
                     LoggerInstance.Msg("Loaded inventory");
                     BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
                     LoggerInstance.Error("An error occurred while loading the inventory", ex);
                     BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
@@ -301,7 +372,7 @@ namespace KeepInventory
         /// </summary>
         private void SetupMenu()
         {
-            var mainPage = Page.Root.CreatePage("HAHOOS", Color.white);
+            var mainPage = BoneLib.BoneMenu.Page.Root.CreatePage("HAHOOS", Color.white);
             var modPage = mainPage.CreatePage("KeepInventory", new Color(255, 72, 59));
             modPage.CreateBoolPref("Save Items", Color.white, ref mp_itemsaving, prefDefaultValue: true);
             modPage.CreateBoolPref("Save Ammo", Color.white, ref mp_ammosaving, prefDefaultValue: true);
@@ -358,19 +429,7 @@ namespace KeepInventory
             SaveCategory = MelonPreferences.CreateCategory<Save>("KeepInventory_Save", "Keep Inventory Save");
             SaveCategory.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg"));
             SaveCategory.SaveToFile(false);
-            CurrentSave = SaveCategory.GetValue<Save>();
-
-            if ((bool)mp_persistentsave.BoxedValue)
-            {
-                Slots.Clear();
-                if (CurrentSave?.InventorySlots != null)
-                {
-                    foreach (KeyValuePair<string, string> id in CurrentSave.InventorySlots)
-                    {
-                        Slots.Add(id.Key, new Barcode(id.Value));
-                    }
-                }
-            }
+            CurrentSave = (bool)mp_persistentsave.BoxedValue ? SaveCategory.GetValue<Save>() : new Save();
         }
     }
 }
