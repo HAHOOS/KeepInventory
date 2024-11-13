@@ -4,48 +4,49 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BoneLib">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\Mods\BoneLib.dll</HintPath>
+      <HintPath>$(GameDirectory)\Mods\BoneLib.dll</HintPath>
     </Reference>
     <Reference Include="Il2CppInterop.Runtime">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Il2Cppmscorlib">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
     </Reference>
     <Reference Include="Il2CppSLZ.Marrow">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
     </Reference>
     <Reference Include="Il2CppUniTask">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
     </Reference>
     <Reference Include="LabFusion">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\Mods\LabFusion.dll</HintPath>
+      <HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
     </Reference>
     <Reference Include="MelonLoader">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\net6\MelonLoader.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
     <Reference Include="System.Json">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Managed\System.Json.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Managed\System.Json.dll</HintPath>
     </Reference>
     <Reference Include="Tomlet">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Dependencies\SupportModules\Tomlet.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\net6\Tomlet.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
 	  
 	  
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="ECHO Copying KeepInventory.dll to G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\Mods&#xD;&#xA;COPY &quot;$(TargetPath)&quot; &quot;G:\OculusLibrary\Software\stress-level-zero-inc-bonelab\Mods\$(ProjectName).dll&quot;" />
+		<Exec Command="ECHO Copying KeepInventory.dll to $(GameDirectory)\Mods&#xD;&#xA;COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods\$(ProjectName).dll&quot;" />
 	</Target>
 
 </Project>
