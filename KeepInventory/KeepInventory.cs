@@ -68,7 +68,7 @@ namespace KeepInventory
         #endregion MelonPreferences
 
         /// <summary>
-        /// Variable of element in BoneMenu responsible for showing if level is blacklisted or not
+        /// Variable of element in BoneMenu responsible for showing if level is blacklisted or not, and changing it
         /// </summary>
         private FunctionElement statusElement;
 
@@ -128,28 +128,30 @@ namespace KeepInventory
                 LoggerInstance.Msg("Saving inventory...");
                 if (Player.RigManager == null)
                 {
-                    LoggerInstance.Msg("RigManager does not exist");
+                    LoggerInstance.Error("RigManager does not exist");
                     return;
                 }
                 if (Player.RigManager.inventory == null)
                 {
-                    LoggerInstance.Msg("Inventory does not exist");
+                    LoggerInstance.Error("Inventory does not exist");
+                    return;
+                }
+                if (Player.RigManager.inventory.bodySlots == null)
+                {
+                    LoggerInstance.Error("Body slots do not exist");
                     return;
                 }
                 if ((bool)mp_itemsaving.BoxedValue)
                 {
                     foreach (var item in Player.RigManager.inventory.bodySlots)
                     {
-                        if (item.inventorySlotReceiver != null)
+                        if (item.inventorySlotReceiver?._weaponHost != null)
                         {
-                            if (item.inventorySlotReceiver._weaponHost != null)
+                            var poolee = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Poolee>();
+                            if (poolee != null)
                             {
-                                var poolee = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Poolee>();
-                                if (poolee != null)
-                                {
-                                    var barcode = poolee.SpawnableCrate.Barcode;
-                                    Slots.Add(item.name, barcode);
-                                }
+                                var barcode = poolee.SpawnableCrate.Barcode;
+                                Slots.Add(item.name, barcode);
                             }
                         }
                     }
@@ -257,36 +259,18 @@ namespace KeepInventory
                         ammoInventory.AddCartridge(ammoInventory.heavyAmmoGroup, CurrentSave.HeavyAmmo);
                     }
                     LoggerInstance.Msg("Loaded inventory");
-                    BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
-                    {
-                        Title = "Success",
-                        Message = "Successfully loaded the inventory",
-                        ShowTitleOnPopup = true,
-                        PopupLength = 2.5f,
-                    });
+                    BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
                 }
                 catch (Exception ex)
                 {
                     LoggerInstance.Error("An error occurred while loading the inventory", ex);
-                    BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
-                    {
-                        Title = "Failure",
-                        Message = "Failed to load the inventory, check the logs or console for more details",
-                        ShowTitleOnPopup = true,
-                        PopupLength = 5f,
-                    });
+                    BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
                 }
             }
             else
             {
-                LoggerInstance.Msg("Not loading inventory because level is blacklisted");
-                BoneLib.Notifications.Notifier.Send(new BoneLib.Notifications.Notification()
-                {
-                    Message = "This level is blacklisted from loading/saving inventory",
-                    Title = "Blacklisted",
-                    ShowTitleOnPopup = true,
-                    PopupLength = 5
-                });
+                LoggerInstance.Warning("Not loading inventory because level is blacklisted");
+                BLHelper.SendNotification("This level is blacklisted from loading/saving inventory", "Blacklisted", true, 5f, BoneLib.Notifications.NotificationType.Warning);
                 statusElement.ElementName = "Current level is blacklisted";
                 statusElement.ElementColor = Color.red;
             }
@@ -359,7 +343,7 @@ namespace KeepInventory
                 Slots.Clear();
                 if (CurrentSave?.InventorySlots != null)
                 {
-                    foreach (KeyValuePair<string, string> id in (Dictionary<string, string>)CurrentSave.InventorySlots)
+                    foreach (KeyValuePair<string, string> id in CurrentSave.InventorySlots)
                     {
                         Slots.Add(id.Key, new Barcode(id.Value));
                     }

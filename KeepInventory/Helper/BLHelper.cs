@@ -3,11 +3,14 @@ using BoneLib.BoneMenu;
 using MelonLoader;
 using UnityEngine;
 using System;
+using BoneLib.Notifications;
 
 namespace KeepInventory.Helper
 {
-    internal static class MenuHelper
+    internal static class BLHelper
     {
+        #region BoneMenu (Code shared by @camobiwon on Discord)
+
         //You will need a PrefsCategory someone in your main class to reference here
         //Replace instances of "Main" with your desired class
         //Additionally you would need some method to save your preferences (Main.SavePreferences here)
@@ -95,5 +98,37 @@ namespace KeepInventory.Helper
             element.Value = value.Value; //BoneMenu temp hack fix
             return element;
         }
+
+        #endregion BoneMenu (Code shared by @camobiwon on Discord)
+
+        #region Notifications
+
+        public static void SendNotification(string message, string title = null, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
+        {
+            Notifier.Send(new Notification()
+            {
+                Title = title,
+                Message = message,
+                ShowTitleOnPopup = showTitleOnPopup,
+                CustomIcon = customIcon,
+                PopupLength = popupLength,
+                Type = type
+            });
+        }
+
+        public static void SendNotification(NotificationText message, NotificationText title, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
+        {
+            Notifier.Send(new Notification()
+            {
+                Title = title,
+                Message = message,
+                ShowTitleOnPopup = showTitleOnPopup,
+                CustomIcon = customIcon,
+                PopupLength = popupLength,
+                Type = type
+            });
+        }
+
+        #endregion Notifications
     }
 }
