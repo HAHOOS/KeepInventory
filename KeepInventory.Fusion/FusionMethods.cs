@@ -5,7 +5,6 @@ using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
 using KeepInventory.Fusion.Messages;
 using KeepInventory.SaveSlot;
-using LabFusion.Data;
 using LabFusion.Entities;
 using LabFusion.Network;
 using LabFusion.Player;
@@ -81,6 +80,27 @@ namespace KeepInventory.Fusion
         }
 
         /// <summary>
+        /// Gets <see cref="RigManager"/> for the local player
+        /// <para>Use this instead of <see cref="Player.RigManager"/> as when connected to a server, the value is <see langword="null"/></para>
+        /// </summary>
+        /// <returns>A <see cref="RigManager"/> of the local player</returns>
+        public static RigManager GetRigManager()
+        {
+            if (!IsConnected)
+            {
+                return Player.RigManager;
+            }
+            else
+            {
+                var networkPlayer = LocalPlayer.GetNetworkPlayer();
+                if (networkPlayer == null) return null;
+                networkPlayer.FindRigManager();
+                if (!networkPlayer.HasRig || networkPlayer.RigRefs == null) return null;
+                return networkPlayer.RigRefs.RigManager;
+            }
+        }
+
+        /// <summary>
         /// Spawns a <see cref="Spawnable"/> from provided <see cref="Barcode"/> to an <see cref="InventorySlot"/>
         /// </summary>
         /// <param name="receiver">The <see cref="InventorySlotReceiver"/> to spawn the <see cref="Spawnable"/> in</param>
@@ -120,41 +140,6 @@ namespace KeepInventory.Fusion
                         {
                             returned = true;
                             return;
-                        }
-
-                        // HACK: Avoid errors caused by inserting items in slot without gripping
-
-                        var gun = callbackInfo.spawned.GetComponent<Gun>();
-                        bool gripped = false;
-                        if (gun != null)
-                        {
-                            if (gun.triggerGrip != null)
-                            {
-                                var grab = new SerializedEntityGrab();
-                                grab.RequestGrab(LocalPlayer.GetNetworkPlayer(), Il2CppSLZ.Marrow.Interaction.Handedness.RIGHT, gun.triggerGrip);
-                                gripped = true;
-                            }
-                        }
-
-                        if (!gripped)
-                        {
-                            var grip = callbackInfo.spawned.GetComponent<Grip>();
-                            if (grip != null)
-                            {
-                                var grab = new SerializedEntityGrab();
-                                grab.RequestGrab(LocalPlayer.GetNetworkPlayer(), Il2CppSLZ.Marrow.Interaction.Handedness.RIGHT, grip);
-                                gripped = true;
-                            }
-                            else
-                            {
-                                grip = callbackInfo.spawned.GetComponentInChildren<Grip>();
-                                if (grip != null)
-                                {
-                                    var grab = new SerializedEntityGrab();
-                                    grab.RequestGrab(LocalPlayer.GetNetworkPlayer(), Il2CppSLZ.Marrow.Interaction.Handedness.RIGHT, grip);
-                                    gripped = true;
-                                }
-                            }
                         }
 
                         using var writer = FusionWriter.Create(InventorySlotInsertData.Size);

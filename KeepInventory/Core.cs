@@ -34,6 +34,11 @@ namespace KeepInventory
         public static Save CurrentSave { get; internal set; }
 
         /// <summary>
+        /// Instance of the <see cref="Core"/> class
+        /// </summary>
+        public static Core Instance { get; internal set; }
+
+        /// <summary>
         /// List of all default blacklisted BONELAB levels
         /// </summary>
         public readonly static List<string> defaultBlacklistedLevels = [
@@ -107,12 +112,12 @@ namespace KeepInventory
         /// <summary>
         /// Boolean value indicating if user has Fusion
         /// </summary>
-        internal static bool HasFusion;
+        public static bool HasFusion { get; private set; }
 
         /// <summary>
         /// Boolean value indicating if user is connected to a server
         /// </summary>
-        internal static bool IsConnected;
+        public static bool IsConnected { get; private set; }
 
         /// <summary>
         /// Calls when MelonLoader loads all Mods/Plugins
@@ -153,8 +158,6 @@ namespace KeepInventory
                 }
             }
 
-            // Well fuck now I have to update for LemonLoader
-            Application.quitting += (Il2CppSystem.Action)OnQuit; // Currently does not support Android, will be fixed when LemonLoader is updated
             Hooking.OnLevelLoaded += LevelLoadedEvent;
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
@@ -170,11 +173,19 @@ namespace KeepInventory
         }
 
         /// <summary>
+        /// Runs when application is about to quit
+        /// </summary>
+        public override void OnApplicationQuit()
+        {
+            SavePreferences();
+        }
+
+        /// <summary>
         /// Triggers when application is being quit <br/>
         /// Used to save inventory if PersistentSave is turned on<br/>
         /// <b>Will not trigger when trying to close MelonLoader, rather than the game</b>
         /// </summary>
-        private void OnQuit()
+        public void SavePreferences()
         {
             quitting = true;
             if (mp_persistentsave.Value)
@@ -198,24 +209,25 @@ namespace KeepInventory
             {
                 CurrentSave.InventorySlots?.Clear();
                 LoggerInstance.Msg("Saving inventory...");
-                if (Player.RigManager == null)
+                var rigManager = FindRigManager();
+                if (rigManager == null)
                 {
                     LoggerInstance.Error("RigManager does not exist");
                     return;
                 }
-                if (Player.RigManager.inventory == null)
+                if (rigManager.inventory == null)
                 {
                     LoggerInstance.Error("Inventory does not exist");
                     return;
                 }
-                if (Player.RigManager.inventory.bodySlots == null)
+                if (rigManager.inventory.bodySlots == null)
                 {
                     LoggerInstance.Error("Body slots do not exist");
                     return;
                 }
                 if (mp_itemsaving.Value)
                 {
-                    foreach (var item in Player.RigManager.inventory.bodySlots)
+                    foreach (var item in rigManager.inventory.bodySlots)
                     {
                         if (item == null || item.inventorySlotReceiver == null || item.inventorySlotReceiver?._weaponHost == null || item.inventorySlotReceiver?._weaponHost.GetTransform() == null) continue;
                         if (item.inventorySlotReceiver?._weaponHost != null)
@@ -288,14 +300,44 @@ namespace KeepInventory
             }
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(
+    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static RigManager FusionFindRigManager()
+        {
+            return Fusion.FusionMethods.GetRigManager();
+        }
+
+        private static RigManager FindRigManager()
+        {
+            if (HasFusion && IsConnected) return FusionFindRigManager();
+            else return Player.RigManager;
+        }
+
         private void SpawnSavedItems()
         {
             try
             {
                 if (CurrentSave.InventorySlots.Count >= 1)
                 {
+                    var rigManager = FindRigManager();
+                    if (rigManager == null)
+                    {
+                        LoggerInstance.Error("RigManager does not exist, cannot load saved items!");
+                        return;
+                    }
+                    if (rigManager.inventory == null)
+                    {
+                        LoggerInstance.Error("Inventory does not exist, cannot load saved items!");
+                        return;
+                    }
+                    if (rigManager.inventory.bodySlots == null)
+                    {
+                        LoggerInstance.Error("Body slots do not exist, cannot load saved items!");
+                        return;
+                    }
+
                     // Adds saved items to inventory slots
-                    var list = Player.RigManager.inventory.bodySlots.ToList();
+                    var list = rigManager.inventory.bodySlots.ToList();
                     foreach (var item in CurrentSave.InventorySlots)
                     {
                         LoggerInstance.Msg($"[{item.SlotName}] Looking for slot");
@@ -317,14 +359,15 @@ namespace KeepInventory
                                 {
                                     LoggerInstance.Msg($"[{item.SlotName}] Attempting to load in slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})");
                                     LoggerInstance.Msg($"[{item.SlotName}] ^^^ Ammo: {item.GunInfo.RoundsLeft} / Has Mag: {item.GunInfo.IsMag} / Has bullet in chamber: {item.GunInfo.IsBulletInChamber} / Fire Mode: {item.GunInfo.FireMode} / Slide State: {item.GunInfo.SlideState} / Hammer state: {item.GunInfo.HammerState}");
+
                                     // Settings properties for the gun, this is horrible
-                                    void action()
+                                    void action(GameObject obj)
                                     {
-                                        if (item.GunInfo != null && receiver._weaponHost.GetTransform() != null)
+                                        if (item.GunInfo != null && obj != null)
                                         {
-                                            var gun = receiver._weaponHost.GetTransform().GetComponent<Gun>();
+                                            var gun = obj.GetComponent<Gun>();
                                             LoggerInstance.Msg($"[{item.SlotName}] Attempting to write GunInfo");
-                                            //gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode, true, false);
+                                            gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode, true, false);
                                         }
                                     }
 
@@ -332,13 +375,17 @@ namespace KeepInventory
                                     if (HasFusion && IsConnected)
                                     {
                                         var result = FusionSpawnInSlot(crate.Crate.Barcode, receiver);
-                                        action();
+                                        action(result);
                                     }
                                     else
                                     {
                                         var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
                                         var awaiter = task.GetAwaiter();
-                                        awaiter.OnCompleted((Il2CppSystem.Action)action);
+                                        void notGun()
+                                        {
+                                            action(receiver._weaponHost.GetHostGameObject());
+                                        }
+                                        awaiter.OnCompleted((Il2CppSystem.Action)notGun);
                                     }
                                 }
                                 else
@@ -380,18 +427,6 @@ namespace KeepInventory
                 LoggerInstance.Error("An error occurred while loading the inventory", ex);
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
-        }
-
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-        private void RequestItemSpawn(string barcode)
-        {
-            var crate = new SpawnableCrateReference(barcode);
-            LoggerInstance.Msg($"Sending request to spawn item in front of player: {crate.Crate.name} ({barcode})");
-            LabFusion.Utilities.PooleeUtilities.RequestSpawn(
-                                    barcode, new LabFusion.Data.SerializedTransform
-                                    (Player.Head.position + (Player.Head.forward * 1.5f),
-                                     Quaternion.identity), LabFusion.Player.PlayerIdManager.LocalSmallId);
         }
 
         [System.Runtime.CompilerServices.MethodImpl(
