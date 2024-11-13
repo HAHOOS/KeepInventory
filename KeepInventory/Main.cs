@@ -7,7 +7,7 @@ using Il2CppSLZ.Marrow.Pool;
 using Il2CppSLZ.Marrow;
 using MelonLoader.Utils;
 
-[assembly: MelonInfo(typeof(global::HAHOOS.KeepInventory.Main), "Keep Inventory", "1.1.1", "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/KeepInventory/")]
+[assembly: MelonInfo(typeof(global::HAHOOS.KeepInventory.Main), "Keep Inventory", "1.2.0", "HAHOOS", "https://github.com/HAHOOS/KeepInventory")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]
 [assembly: MelonColor(0, 255, 72, 59)]
@@ -310,11 +310,9 @@ namespace HAHOOS.KeepInventory
         private void SetupPreferences()
         {
             List<string> defaultBlacklistedLevels = new(){
-                CommonBarcodes.Maps.VoidG114,
                 CommonBarcodes.Maps.Home,
                 CommonBarcodes.Maps.Ascent,
                 CommonBarcodes.Maps.Descent,
-                CommonBarcodes.Maps.BLHub,
                 CommonBarcodes.Maps.MineDive,
                 CommonBarcodes.Maps.LongRun,
                 CommonBarcodes.Maps.BigAnomaly,
@@ -332,6 +330,7 @@ namespace HAHOOS.KeepInventory
                 CommonBarcodes.Maps.NeonTrial,
                 CommonBarcodes.Maps.MainMenu,
             };
+
             mp_modCategory = MelonPreferences.CreateCategory("HAHOOS_KeepInventory_Settings");
             mp_itemsaving = mp_modCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
                 description: "If true, will save and load items in inventory");
