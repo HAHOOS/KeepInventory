@@ -6,7 +6,7 @@
 
 
 
-**WARNING: This mod was not tested for Fusion and might cause issues**
+**WARNING: This is an outdated README**
 
 A BONELAB Mod that lets you keep items when switching between levels. This is my first ever code mod so please expect bugs, if a bug occurs, I recommend [creating an issue](https://github.com/HAHOOS/KeepInventory/issues).
 
