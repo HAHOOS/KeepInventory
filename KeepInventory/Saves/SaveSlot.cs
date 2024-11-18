@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Tomlet.Attributes;
 
-namespace KeepInventory.SaveSlot
+namespace KeepInventory.Saves
 {
     /// <summary>
     /// Class used in saving inventory slots
@@ -44,7 +44,11 @@ namespace KeepInventory.SaveSlot
 
             set
             {
-                GunInfo = JsonSerializer.Deserialize<GunInfo>(value);
+                // Check if its actually JSON to avoid errors
+                if (!string.IsNullOrWhiteSpace(value) && value != "null" && IsJSON(value))
+                {
+                    GunInfo = JsonSerializer.Deserialize<GunInfo>(value);
+                }
             }
         }
 
@@ -153,6 +157,19 @@ namespace KeepInventory.SaveSlot
             Barcode = barcode.ID;
             Type = SpawnableType.Gun;
             GunInfo_JSON = gunInfoJSON;
+        }
+
+        private static bool IsJSON(string text)
+        {
+            try
+            {
+                using var jsonDoc = JsonDocument.Parse(text);
+                return true;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
     }
 }

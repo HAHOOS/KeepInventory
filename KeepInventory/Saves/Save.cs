@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Tomlet.Attributes;
 
-namespace KeepInventory
+namespace KeepInventory.Saves
 {
     /// <summary>
     /// Class that gets serialized or deserialized, holds all saved info about inventory, ammo etc.
@@ -30,7 +30,7 @@ namespace KeepInventory
         /// List of all slots and the spawnables stored in them
         /// </summary>
         [TomlPrecedingComment("List of all slots & the spawnables stored in them")]
-        public List<SaveSlot.SaveSlot> InventorySlots = [];
+        public List<SaveSlot> InventorySlots = [];
 
         /// <summary>
         /// Create new instance of <see cref="Save"/>, exists for JSON deserializing

@@ -3,7 +3,7 @@ using Il2CppSLZ.Marrow.Data;
 using System.Text.Json;
 using static Il2CppSLZ.Marrow.Gun;
 
-namespace KeepInventory.SaveSlot
+namespace KeepInventory.Saves
 {
     /// <summary>
     /// Class that holds information regarding a <see cref="Gun"/>
@@ -41,6 +41,11 @@ namespace KeepInventory.SaveSlot
         public SlideStates SlideState { get; set; }
 
         /// <summary>
+        /// State of the cartridge
+        /// </summary>
+        public CartridgeStates CartridgeState { get; set; }
+
+        /// <summary>
         /// Was the gun fired at least once
         /// </summary>
         public bool HasFiredOnce { get; set; }
@@ -66,10 +71,12 @@ namespace KeepInventory.SaveSlot
                 HammerState = gun.hammerState,
                 SlideState = gun.slideState,
                 HasFiredOnce = gun.hasFiredOnce,
+                CartridgeState = gun.cartridgeState,
             };
+
             if (gun.MagazineState != null)
             {
-                _new.RoundsLeft = gun.AmmoCount();
+                _new.RoundsLeft = gun.MagazineState.AmmoCount;
             }
 
             return _new;
