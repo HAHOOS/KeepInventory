@@ -4,11 +4,12 @@ using System.Runtime.InteropServices;
 
 #region MelonLoader
 
-[assembly: MelonInfo(typeof(KeepInventory.Core), "KeepInventory", KeepInventory.Core.Version, "HAHOOS", "https://github.com/HAHOOS/KeepInventory")]
+[assembly: MelonInfo(typeof(KeepInventory.Core), "KeepInventory", KeepInventory.Core.Version, "HAHOOS", "https://thunderstore.io/c/bonelab/p/HAHOOS/KeepInventory/")]
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]
 [assembly: MelonColor(0, 255, 72, 59)]
-[assembly: MelonOptionalDependencies("labfusion")]
+// Make ML shut up about KeepInventory.Fusion not loaded (it gets loaded on initialization which is after the message is thrown)
+[assembly: MelonOptionalDependencies("LabFusion", "KeepInventory.Fusion")]
 
 #endregion MelonLoader
 
