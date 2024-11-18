@@ -1,6 +1,6 @@
 ﻿using Il2CppSLZ.Marrow;
 using KeepInventory.Helper;
-using KeepInventory.SaveSlot;
+using KeepInventory.Saves;
 using LabFusion.Data;
 using LabFusion.Entities;
 using LabFusion.Network;
@@ -45,7 +45,7 @@ namespace KeepInventory.Fusion.Messages
                         // Just in case going through all of components
                         foreach (var gun in extender.Components)
                         {
-                            gun.UpdateProperties(gunMessageData.gunInfo, printMessages: false, fusionMessage: true);
+                            gun.UpdateProperties(gunMessageData.gunInfo, System.Drawing.Color.White, printMessages: false, fusionMessage: true);
                         }
                     }
                 }
