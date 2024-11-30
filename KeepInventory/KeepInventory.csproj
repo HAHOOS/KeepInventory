@@ -16,6 +16,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Embedded\Dependencies\KeepInventory.Fusion.dll" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -34,12 +42,12 @@
     <Reference Include="Il2CppUniTask">
       <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
     </Reference>
+    <Reference Include="KeepInventory.Fusion">
+      <HintPath>Embedded\Dependencies\KeepInventory.Fusion.dll</HintPath>
+    </Reference>
     <Reference Include="LabFusion">
       <HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
     </Reference>
-	  <Reference Include="KeepInventory.Fusion">
-		  <HintPath>$(GameDirectory)\UserData\KeepInventory\KeepInventory.Fusion.dll</HintPath>
-	  </Reference>
     <Reference Include="MelonLoader">
       <HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
     </Reference>
@@ -51,6 +59,9 @@
     </Reference>
 	  <Reference Include="UnityEngine.AnimationModule">
 		  <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath>
+	  </Reference>
+	  <Reference Include="0Harmony">
+		  <HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
 	  </Reference>
 
 

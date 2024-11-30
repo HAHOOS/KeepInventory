@@ -57,6 +57,6 @@
 	</ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\UserData\KeepInventory&quot;" />
+	  <Exec Command="COPY &quot;$(TargetPath)&quot; &quot;C:\Users\HAHOOS\source\repos\KeepInventory\KeepInventory\Embedded\Dependencies&quot;" />
   </Target>
 </Project>

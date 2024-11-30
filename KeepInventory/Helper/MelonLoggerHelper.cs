@@ -1,7 +1,8 @@
 ﻿using MelonLoader;
-
 using MelonLoader.Pastel;
+
 using Semver;
+
 using System;
 using System.Drawing;
 
@@ -33,7 +34,9 @@ namespace KeepInventory.Helper
 
         private static void Internal_MsgPastel(MelonLogger.Instance logger, Color textColor, string text)
         {
+            if (Core.MLAssembly == null) return;
             Version MelonLoaderVersion = Core.MLAssembly.GetName().Version;
+            if (logger == null || string.IsNullOrWhiteSpace(text)) return;
             if (new SemVersion(MelonLoaderVersion.Major, MelonLoaderVersion.Minor, MelonLoaderVersion.Build) >= new SemVersion(0, 6, 5))
             {
                 UseMLMsgPastel(logger, textColor, text);
@@ -46,7 +49,7 @@ namespace KeepInventory.Helper
                 }
                 else
                 {
-                    logger.Msg(text.Pastel(textColor));
+                    logger.Msg(textColor, text);
                 }
             }
         }

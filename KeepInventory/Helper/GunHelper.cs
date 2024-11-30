@@ -1,4 +1,5 @@
 ﻿using Il2CppSLZ.Marrow;
+
 using KeepInventory.Saves;
 
 namespace KeepInventory.Helper
@@ -46,15 +47,18 @@ namespace KeepInventory.Helper
         /// <param name="fusionMessage">If <see langword="true"/>, this method will be treated as it was run by a <see cref="LabFusion.Network.FusionMessage"/>, which means it will not send a fusion message</param>
         public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true, bool fusionMessage = false)
         {
+            const bool useFusion = false;
+
             string slotName = slot == null ? "N/A" : string.IsNullOrWhiteSpace(slot.SlotName) ? "N/A" : slot.SlotName;
             if (gun == null || info == null) return;
-            if (Core.HasFusion && Core.IsConnected && !fusionMessage)
+            if (Core.HasFusion && Core.IsConnected && !fusionMessage && useFusion)
             {
                 if (!Core.IsFusionLibraryInitialized || !Core.mp_fusionSupport.Value)
                 {
-                    Core.Logger.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. To update gun properties in Fusion servers, check if you have the Fusion Library in UserData > KeepInventory (there should be a file called 'KeepInventory.Fusion.dll') or try enabling 'Fusion Support' in settings");
+                    Core.Logger.Warning($"[{slotName}] The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. To update gun properties in Fusion servers, check if you have the Fusion Library in UserData > KeepInventory (there should be a file called 'KeepInventory.Fusion.dll') or try enabling 'Fusion Support' in settings");
                     return;
                 }
+                if (printMessages) Core.MsgPrefix($"Sending request to host to edit gun data for everyone", slotName, slotColor);
                 SendFusionMessage(gun, info, slotColor, slot, name, barcode, printMessages);
             }
             else
@@ -69,21 +73,16 @@ namespace KeepInventory.Helper
                         gun.hasFiredOnce = info.HasFiredOnce;
                         if (printMessages) Core.MsgPrefix($"Setting hammer state to {info.HammerState}", slotName, slotColor);
                         gun.hammerState = info.HammerState;
-                        //if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, slotColor);
-                        //gun.slideState = info.SlideState;
+                        if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, slotColor);
+                        gun.slideState = info.SlideState;
                         if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, slotColor);
                         gun.cartridgeState = info.CartridgeState;
 
-                        if (gun.hammerState == Gun.HammerStates.COCKED)
+                        if (!gun.isCharged && info.IsBulletInChamber)
                         {
-                            if (printMessages) Core.MsgPrefix("Charging gun due to hammer state", slotName, slotColor);
+                            if (printMessages) Core.MsgPrefix("Charging gun", slotName, slotColor);
                             gun.Charge();
-                        }
-
-                        if (info.IsBulletInChamber && gun.defaultCartridge != null)
-                        {
-                            if (printMessages) Core.MsgPrefix("Loading cartridge", slotName, slotColor);
-                            gun.SpawnCartridge(gun.defaultCartridge.cartridgeSpawnable);
+                            if (gun._hasMagState) gun.MagazineState.AddCartridge(1);
                         }
 
                         // Don't ask whats happening here, because I have no idea
@@ -99,8 +98,8 @@ namespace KeepInventory.Helper
                                 gun.SlideLocked();
                                 break;
 
-                            case Gun.SlideStates.RETURNED:
-                                gun.CompleteSlideReturn();
+                            case Gun.SlideStates.PULLING:
+                                gun.CompleteSlidePull();
                                 break;
 
                             case Gun.SlideStates.RETURNING:
@@ -122,9 +121,12 @@ namespace KeepInventory.Helper
                             var awaiter = task.GetAwaiter();
                             void action1()
                             {
-                                if (printMessages) Core.MsgPrefix($"Setting rounds left ({info.RoundsLeft}/{gun.defaultMagazine?.rounds.ToString() ?? "N/A"})", slotName, slotColor);
-                                gun.MagazineState.SetCartridge(info.RoundsLeft);
-                                gun.MagazineState.Initialize(gun.MagazineState.cartridgeData, info.RoundsLeft);
+                                if (gun._hasMagState)
+                                {
+                                    if (printMessages) Core.MsgPrefix($"Setting rounds left ({info.RoundsLeft}/{gun.MagazineState?.magazineData?.rounds.ToString() ?? "N/A"})", slotName, slotColor);
+                                    gun.MagazineState.SetCartridge(info.RoundsLeft);
+                                    gun.MagazineState.Initialize(gun.MagazineState.cartridgeData, info.RoundsLeft);
+                                }
                                 other();
                             }
                             awaiter.OnCompleted((Il2CppSystem.Action)action1);

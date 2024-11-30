@@ -5,6 +5,9 @@ using LabFusion.Data;
 using LabFusion.Entities;
 using LabFusion.Network;
 using LabFusion.Player;
+using LabFusion.SDK.Modules;
+using MelonLoader.Pastel;
+using System.Drawing;
 
 namespace KeepInventory.Fusion.Messages
 {
@@ -12,7 +15,7 @@ namespace KeepInventory.Fusion.Messages
     /// Handles the messages containing <see cref="GunMessageData"/>
     /// <para>Changes data of a specified gun to provided <see cref="GunInfo"/> for all clients</para>
     /// </summary>
-    public class GunMessage : ModuleMessageHandler
+    public class GunUpdateMessage : ModuleMessageHandler
     {
         /// <summary>
         /// Handles the received message
@@ -21,33 +24,45 @@ namespace KeepInventory.Fusion.Messages
         /// <param name="isServerHandled">Honestly, I have no clue, you shouldn't be running this anyway</param>
         public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
         {
+            FusionMethods.MsgFusionPrefix($"[{"GunUpdate".Pastel(Color.Red)}] Received GunUpdateMessage");
             FusionReader reader = FusionReader.Create(bytes);
             try
             {
                 GunMessageData gunMessageData = reader.ReadFusionSerializable<GunMessageData>();
                 if (NetworkInfo.IsServer && isServerHandled)
                 {
-                    FusionMessage msg = FusionMessage.ModuleCreate<GunMessage>(bytes);
+                    FusionMessage msg = FusionMessage.ModuleCreate<GunUpdateMessage>(bytes);
                     try
                     {
-                        MessageSender.BroadcastMessageExcept(gunMessageData.playerId, 0, msg, true);
+                        FusionMethods.MsgFusionPrefix("Broadcasting the GunUpdateMessage to other players");
+                        MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, msg);
                     }
                     finally
                     {
                         msg.Dispose();
                     }
                 }
-                if (!gunMessageData.playerId.IsOwner && NetworkEntityManager.IdManager.RegisteredEntities.IdEntityLookup.TryGetValue(gunMessageData.gunID, out NetworkEntity entity))
+                if (NetworkEntityManager.IdManager.RegisteredEntities.IdEntityLookup.TryGetValue(gunMessageData.gunID, out NetworkEntity entity))
                 {
+                    FusionMethods.MsgFusionPrefix($"[{"GunUpdate".Pastel(Color.Red)}] Found entity in GunUpdateMessage");
                     var extender = entity.GetExtender<GunExtender>();
                     if (extender != null)
                     {
+                        FusionMethods.MsgFusionPrefix($"[{"GunUpdate".Pastel(Color.Red)}] Found extender, updating properties");
                         // Just in case going through all of components
                         foreach (var gun in extender.Components)
                         {
                             gun.UpdateProperties(gunMessageData.gunInfo, System.Drawing.Color.White, printMessages: false, fusionMessage: true);
                         }
                     }
+                    else
+                    {
+                        FusionMethods.Warn("[GunUpdate] Extender was not found");
+                    }
+                }
+                else
+                {
+                    FusionMethods.Warn("[GunUpdate] Entity was not found");
                 }
             }
             finally
@@ -58,7 +73,7 @@ namespace KeepInventory.Fusion.Messages
     }
 
     /// <summary>
-    /// Contains all the necessary information for <see cref="GunMessage"/>
+    /// Contains all the necessary information for <see cref="GunUpdateMessage"/>
     /// </summary>
     public class GunMessageData : IFusionSerializable
     {
@@ -78,7 +93,7 @@ namespace KeepInventory.Fusion.Messages
         public ushort gunID { get; set; }
 
         /// <summary>
-        /// Deserialize's the message so that <see cref="GunMessage"/> can read the data correctly
+        /// Deserialize's the message so that <see cref="GunUpdateMessage"/> can read the data correctly
         /// </summary>
         /// <param name="reader">Reader</param>
         public void Deserialize(FusionReader reader)
@@ -137,7 +152,7 @@ namespace KeepInventory.Fusion.Messages
         public static GunMessageData Create(Gun gun)
         {
             var entity = GunExtender.Cache.Get(gun);
-            if (entity != null || !entity.IsOwner)
+            if (entity?.IsOwner != true)
             {
                 return null;
             }
@@ -158,7 +173,7 @@ namespace KeepInventory.Fusion.Messages
         public static GunMessageData Create(Gun gun, GunInfo gunInfo)
         {
             var entity = GunExtender.Cache.Get(gun);
-            if (entity != null || !entity.IsOwner)
+            if (entity?.IsOwner != true)
             {
                 return null;
             }

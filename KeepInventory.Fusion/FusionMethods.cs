@@ -1,25 +1,28 @@
 ﻿using BoneLib;
+
 using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Data;
 using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow.Warehouse;
+
 using KeepInventory.Fusion.Messages;
 using KeepInventory.Helper;
 using KeepInventory.Saves;
-using LabFusion.Downloading;
+
 using LabFusion.Entities;
+using LabFusion.Marrow;
 using LabFusion.Network;
 using LabFusion.Player;
-using LabFusion.Preferences.Client;
 using LabFusion.RPC;
 using LabFusion.SDK.Modules;
 using LabFusion.Utilities;
+
 using MelonLoader;
 using MelonLoader.Pastel;
 
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
+
 using UnityEngine;
 
 namespace KeepInventory.Fusion
@@ -40,6 +43,11 @@ namespace KeepInventory.Fusion
         public static RigManager RigManager { get; private set; }
 
         /// <summary>
+        /// Ammo Inventory of the local player
+        /// </summary>
+        public static AmmoInventory AmmoInventory { get; private set; }
+
+        /// <summary>
         /// <see cref="NetworkPlayer"/> of the current client
         /// </summary>
         public static NetworkPlayer LocalNetworkPlayer { get; private set; }
@@ -55,11 +63,14 @@ namespace KeepInventory.Fusion
         public static bool IsConnected
         { get { return LocalNetworkPlayer != null; } set { } }
 
-        internal static MelonLogger.Instance logger;
+        internal static MelonLogger.Instance backupLogger;
+
+        internal static ModuleLogger logger;
 
         private static void RigCreated(RigManager manager)
         {
             RigManager = manager;
+            FindAmmoInventory();
             MsgFusionPrefix("Rig was created, running OnRigCreated event");
             OnRigCreated?.Invoke(manager);
         }
@@ -69,13 +80,13 @@ namespace KeepInventory.Fusion
             MsgFusionPrefix("Detected join / start server, trying to get local player");
             if (NetworkPlayerManager.TryGetPlayer(PlayerIdManager.LocalId, out NetworkPlayer player))
             {
-                MsgFusionPrefix("Found player");
+                MsgFusionPrefix($"Found player / Small ID: {PlayerIdManager.LocalSmallId}");
                 LocalNetworkPlayer = player;
                 RigManager = Player.RigManager;
             }
             else
             {
-                logger.Warning("[Fusion] Could not find player");
+                Warn("[Fusion] Could not find player");
             }
         }
 
@@ -87,21 +98,34 @@ namespace KeepInventory.Fusion
         }
 
         /// <summary>
-        /// Sets up the <see cref="MultiplayerHooking"/> and <see cref="MelonLoader.MelonLogger.Instance"/>, as well as the <see cref="BONELABContentBarcodes"/> variable
+        /// Sets up the <see cref="MultiplayerHooking"/> and <see cref="MelonLoader.MelonLogger.Instance"/>
         /// </summary>
         public static void Setup(MelonLogger.Instance _logger)
         {
-            logger = _logger;
+            backupLogger = _logger;
+            logger = FusionModule.ModuleLogger;
 
             MultiplayerHooking.OnJoinServer -= GetPlayer;
             MultiplayerHooking.OnStartServer -= GetPlayer;
             MultiplayerHooking.OnDisconnect -= OnDisconnect;
+            MultiplayerHooking.OnMainSceneInitialized -= () => FindAmmoInventory();
             LocalPlayer.OnLocalRigCreated -= RigCreated;
 
             MultiplayerHooking.OnJoinServer += GetPlayer;
             MultiplayerHooking.OnDisconnect += OnDisconnect;
+            MultiplayerHooking.OnMainSceneInitialized += () => FindAmmoInventory();
             MultiplayerHooking.OnStartServer += GetPlayer;
             LocalPlayer.OnLocalRigCreated += RigCreated;
+        }
+
+        /// <summary>
+        /// Finds the <see cref="Il2CppSLZ.Marrow.AmmoInventory"/> of local player
+        /// </summary>
+        /// <returns><see cref="Il2CppSLZ.Marrow.AmmoInventory"/> of local player</returns>
+        public static AmmoInventory FindAmmoInventory()
+        {
+            AmmoInventory = NetworkGunManager.NetworkAmmoInventory ?? Il2CppSLZ.Marrow.AmmoInventory.Instance;
+            return AmmoInventory;
         }
 
         /// <summary>
@@ -110,59 +134,114 @@ namespace KeepInventory.Fusion
         public static void LoadModule()
         {
             MsgFusionPrefix("Loading module");
-            ModuleHandler.LoadModule(Assembly.GetExecutingAssembly());
+            ModuleManager.RegisterModule<FusionModule>();
         }
 
         /// <summary>
-        /// Sends a message to the Fusion server to update the provided <see cref="Gun"/> using <see cref="GunMessage"/>
+        /// Sends a message to the Fusion server to update the provided <see cref="Gun"/> using <see cref="GunUpdateMessage"/>
         /// </summary>
         /// <param name="gun"><see cref="Gun"/> to update</param>
         /// <param name="info"><see cref="GunInfo"/> to update with</param>
-        public static void SendFusionMessage(Gun gun, GunInfo info)
+        public static async void SendFusionMessage(Gun gun, GunInfo info)
         {
             if (IsConnected)
             {
-                GunMessageData data = GunMessageData.Create(gun, info);
-                if (data == null) return;
+                MsgFusionPrefix("Attempting to send a GunUpdate message");
+                GunMessageData data = null;
+
+                int attempts = 0;
+                const int maxAttempts = 5;
+                const float interval = 0.25f * 1000;
+
+                while (attempts < maxAttempts)
+                {
+                    attempts++;
+                    var _data = GunMessageData.Create(gun, info);
+                    if (_data != null)
+                    {
+                        data = _data;
+                        break;
+                    }
+                    else
+                    {
+                        Warn($"Could not successfully create GunMessageData (Attempt {attempts}/{maxAttempts})");
+                        await Task.Delay((int)MathF.Round(interval));
+                    }
+                }
+
+                if (data == null)
+                {
+                    Warn("Data was null, cannot send message");
+                    return;
+                }
                 FusionWriter writer = FusionWriter.Create();
                 try
                 {
                     writer.Write(data);
-                    FusionMessage msg = FusionMessage.ModuleCreate<GunMessage>(writer);
+                    FusionMessage msg = FusionMessage.ModuleCreate<GunUpdateMessage>(writer);
                     try
                     {
-                        MessageSender.SendToServer(0, msg);
+                        if (PlayerIdManager.LocalSmallId != PlayerIdManager.HostSmallId)
+                        {
+                            MsgFusionPrefix("Local player is not host, sending to server");
+                            MessageSender.SendToServer(NetworkChannel.Reliable, msg);
+                        }
+                        else
+                        {
+                            MsgFusionPrefix("Local player is host, reading message");
+                            GunUpdateMessage.ReadMessage(msg.ToByteArray(), true);
+                        }
                     }
                     finally
                     {
-                        msg.Dispose();
+                        msg?.Dispose();
                     }
+                }
+                catch (Exception ex)
+                {
+                    Error($"An unexpected error occurred while sending message to host:\n{ex}");
                 }
                 finally
                 {
-                    writer.Dispose();
+                    writer?.Dispose();
                 }
             }
         }
 
         internal static void MsgFusionPrefix(string message)
         {
-            logger._MsgPastel($"[{"Fusion".Pastel(System.Drawing.Color.Cyan)}] {message}");
+            if (logger == null && backupLogger == null) return;
+            if (logger != null) logger.Log(message);
+            else MsgPrefix("Fusion", message, System.Drawing.Color.Cyan);
+        }
+
+        internal static void Warn(string message)
+        {
+            if (logger == null && backupLogger == null) return;
+            if (logger != null) logger.Warn(message);
+            else backupLogger.Warning($"[Fusion] {message}");
+        }
+
+        internal static void Error(string message)
+        {
+            if (logger == null && backupLogger == null) return;
+            if (logger != null) logger.Error(message);
+            else backupLogger.Warning($"[Fusion] {message}");
         }
 
         internal static void MsgPrefix(string prefix, string message, System.Drawing.Color color)
         {
-            logger._MsgPastel($"[{prefix.Pastel(color)}] {message}");
+            backupLogger._MsgPastel($"[{prefix.Pastel(color)}] {message}");
         }
 
         private static async Task Spawn(InventorySlotReceiver receiver, Barcode barcode, System.Drawing.Color slotColor, string slotName = "N/A", Action<GameObject> inBetween = null)
         {
             if (barcode == null || string.IsNullOrWhiteSpace(barcode.ID) || receiver == null)
             {
-                logger.Error($"[Fusion] [{slotName}] Barcode is either null or empty, or the InventorySlotReceiver was null");
+                Error($"[{slotName}] Barcode is either null or empty, or the InventorySlotReceiver was null");
                 return;
             }
-            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to spawn");
+            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to spawn {barcode.ID}");
 
             bool returned = false;
             NetworkAssetSpawner.SpawnCallbackInfo? result = null;
@@ -176,18 +255,53 @@ namespace KeepInventory.Fusion
                 rotation = head.rotation,
                 position = (head.position + (head.forward * 1.5f)),
                 spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
-                spawnCallback = (callbackInfo) =>
+                spawnCallback = async (callbackInfo) =>
                 {
-                    MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Spawned item");
+                    MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Spawned item (Coordinates: {callbackInfo.spawned.transform.position.ToString() ?? "N/A"})");
                     try
                     {
-                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Requesting ownership");
-                        NetworkEntityManager.TakeOwnership(callbackInfo.entity);
-
-                        if (!InventorySlotReceiverExtender.Cache.TryGet(receiver, out var slotEntity))
+                        if (!callbackInfo.entity.HasOwner || callbackInfo.entity.OwnerId != LocalNetworkPlayer.PlayerId)
                         {
-                            logger.Warning("Could not find the provided receiver in InventorySlotReceiverExtender Cache");
-                            returned = true;
+                            if (!callbackInfo.entity.IsOwnerLocked)
+                            {
+                                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Requesting ownership");
+                                NetworkEntityManager.TakeOwnership(callbackInfo.entity);
+                            }
+                            else
+                            {
+                                Warn($"[{slotName}] Could not claim ownership, because it was locked!");
+                            }
+                        }
+                        else
+                        {
+                            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] No need to request ownership, user is already owner");
+                        }
+
+                        int attempts = 0;
+                        const int maxAttempts = 5;
+                        const float interval = 0.25f * 1000;
+
+                        NetworkEntity slotEntity = null;
+
+                        while (attempts < maxAttempts)
+                        {
+                            attempts++;
+                            if (!InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
+                            {
+                                Warn($"Could not find the provided receiver in InventorySlotReceiverExtender Cache (Attempt {attempts}/{maxAttempts})");
+                                returned = true;
+                                await Task.Delay((int)MathF.Round(interval));
+                            }
+                            else
+                            {
+                                slotEntity = _slotEntity;
+                                break;
+                            }
+                        }
+
+                        if (slotEntity == null)
+                        {
+                            Warn("Network Entity for InventorySlotReceiver was not found, aborting");
                             return;
                         }
 
@@ -197,7 +311,7 @@ namespace KeepInventory.Fusion
 
                         if (!index.HasValue)
                         {
-                            logger.Warning($"[Fusion] [{slotName}] Could not find the extender for the provided receiver");
+                            Warn($"[{slotName}] Could not find the extender for the provided receiver");
                             returned = true;
                             return;
                         }
@@ -205,19 +319,32 @@ namespace KeepInventory.Fusion
                         MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Running in between function (if found)");
                         inBetween?.Invoke(callbackInfo.spawned);
 
-                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Gripping item to avoid Fusion throwing errors");
-
                         MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to equip");
+
                         using var writer = FusionWriter.Create(InventorySlotInsertData.Size);
                         var insertData = InventorySlotInsertData.Create(slotEntity.Id, PlayerIdManager.LocalSmallId, callbackInfo.entity.Id, index.Value);
 
                         writer.Write(insertData);
 
-                        using var message = FusionMessage.Create(NativeMessageTag.InventorySlotInsert, writer);
-                        MessageSender.SendToServer(NetworkChannel.Reliable, message);
+                        var message = FusionMessage.Create(NativeMessageTag.InventorySlotInsert, writer);
 
-                        // Put item in slot locally
-                        if (PlayerIdManager.LocalSmallId != PlayerIdManager.HostSmallId) InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), false);
+                        try
+                        {
+                            if (PlayerIdManager.LocalSmallId != PlayerIdManager.HostSmallId)
+                            {
+                                MessageSender.SendToServer(NetworkChannel.Reliable, message);
+                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), false);
+                            }
+                            else
+                            {
+                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), false);
+                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), true);
+                            }
+                        }
+                        finally
+                        {
+                            message?.Dispose();
+                        }
 
                         result = callbackInfo;
                     }
@@ -229,52 +356,11 @@ namespace KeepInventory.Fusion
                 }
             };
 
-            if (KeepInventory.BONELABContentBarcodes.Contains(barcode.ID))
-            {
-                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] {barcode.ID} is from BONELAB");
-                NetworkAssetSpawner.Spawn(info);
-            }
-            else
-            {
-                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] {barcode.ID} is a mod");
+            NetworkAssetSpawner.Spawn(info);
 
-                bool hasFile = false;
+            // For fuck's sake just now found out it will download by itself if you do a spawn request
+            // There used to be code here that I wasted hours on, because it wouldn't work
 
-                var modInfo = new NetworkModRequester.ModInstallInfo()
-                {
-                    barcode = barcode.ID,
-                    target = PlayerIdManager.HostSmallId,
-                    maxBytes = ClientSettings.Downloading.MaxFileSize.Value * 1000,
-                    beginDownloadCallback = (x) =>
-                    {
-                        hasFile = x.hasFile;
-                        if (x.hasFile)
-                        {
-                            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Host has already the mod installed, spawning");
-                            NetworkAssetSpawner.Spawn(info);
-                        }
-                    },
-                    finishDownloadCallback = (x) =>
-                    {
-                        if (x.result != ModResult.FAILED)
-                        {
-                            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Host has successfully downloaded & installed mod: {x.pallet.Title ?? "N/A"} {x.pallet.Version ?? "N/A"} by {x.pallet.Author ?? "N/A"} ({x.pallet.Barcode.ID ?? "N/A"})");
-                            NetworkAssetSpawner.Spawn(info);
-                        }
-                        else
-                        {
-                            if (!hasFile)
-                            {
-                                logger.Error($"[Fusion] [{slotName}] Downloaded for the host failed!");
-                                returned = true;
-                            }
-                        }
-                    }
-                };
-
-                // Requests for the mod to be installed
-                NetworkModRequester.RequestAndInstallMod(modInfo);
-            }
             while (result == null && !returned && exception == null) await Task.Delay(50);
             if (exception != null) throw exception;
         }
@@ -293,17 +379,17 @@ namespace KeepInventory.Fusion
             // This used to have a queue system, that's why its a separate method
             if (!IsConnected)
             {
-                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] The player is not connected to a server!");
+                Warn($"[{slotName}] The player is not connected to a server!");
                 return;
             }
 
             if (!MarrowGame.assetWarehouse.HasCrate(barcode))
             {
-                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] You do not have the mod installed!");
+                Warn($"[{slotName}] You do not have the mod installed!");
                 return;
             }
 
-            await Spawn(receiver, barcode, slotColor, slotName, inBetween);
+            await Spawn(receiver, barcode, slotColor, slotName, inBetween).ConfigureAwait(false);
         }
     }
 }

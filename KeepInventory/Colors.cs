@@ -1,4 +1,5 @@
 ﻿using BoneLib;
+
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -14,7 +15,7 @@ namespace KeepInventory
         /// </summary>
         public readonly static List<Color> SlotColors =
         [
-            Color.Turquoise,
+            Color.BlueViolet,
             Color.LightGreen,
             Color.Red,
             Color.SlateBlue,
@@ -31,13 +32,24 @@ namespace KeepInventory
             Color.Goldenrod
         ];
 
+        private static readonly List<Color> SlotColors_Blacklist = [];
+
         /// <summary>
         /// Get a random slot color from the possible ones
         /// </summary>
         /// <returns>A random <see cref="Color"/></returns>
         public static Color GetRandomSlotColor()
         {
-            return SlotColors.GetRandom();
+            if (SlotColors.Count == SlotColors_Blacklist.Count) SlotColors_Blacklist.Clear();
+            while (true)
+            {
+                var random = SlotColors.GetRandom();
+                if (!SlotColors_Blacklist.Contains(random))
+                {
+                    SlotColors_Blacklist.Add(random);
+                    return random;
+                }
+            }
         }
     }
 }

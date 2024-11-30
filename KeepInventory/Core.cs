@@ -1,22 +1,27 @@
 ﻿using MelonLoader;
+using MelonLoader.Utils;
+using MelonLoader.Preferences;
+
 using BoneLib;
 using BoneLib.BoneMenu;
+
 using UnityEngine;
+
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow.Pool;
+using Il2CppSLZ.Marrow.Utilities;
 using Il2CppSLZ.Marrow;
-using MelonLoader.Utils;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Threading.Tasks;
-using MelonLoader.Preferences;
-using KeepInventory.Helper;
-using Il2CppSLZ.Marrow.Utilities;
-using KeepInventory.Saves;
 using System;
 using System.Reflection;
+
 using MelonLoader.Pastel;
+
+using KeepInventory.Helper;
+using KeepInventory.Saves;
 
 namespace KeepInventory
 {
@@ -73,8 +78,6 @@ namespace KeepInventory
             ];
 
         internal static MelonLogger.Instance Logger { get; private set; }
-
-        private bool quitting;
 
         #region MelonPreferences
 
@@ -138,6 +141,11 @@ namespace KeepInventory
         /// </summary>
         public static bool IsFusionLibraryInitialized { get; private set; }
 
+        /// <summary>
+        /// Boolean value indicating whether or not Fusion Support Library failed to load
+        /// </summary>
+        public static bool FailedFLLoad { get; private set; }
+
         #endregion Variables
 
         #region Methods
@@ -161,31 +169,55 @@ namespace KeepInventory
 
             if (HasFusion)
             {
-                LoggerInstance.Msg("Checking for Fusion Support Library");
-                string path = Path.Combine(KI_PreferencesDirectory, "KeepInventory.Fusion.dll");
-                if (File.Exists(path))
+                LoggerInstance.Msg("Attempting to load the Fusion Support Library");
+                try
                 {
-                    LoggerInstance.Msg("Found library, loading");
-                    try
+                    var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                    if (assembly != null)
                     {
-                        System.Reflection.Assembly.LoadFile(path);
-                        LoggerInstance.Msg("Loaded library");
-                        IsFusionLibraryInitialized = true;
+                        var assemblyInfo = assembly.GetName();
+                        if (assemblyInfo != null)
+                        {
+                            var _path = $"{assemblyInfo.Name}.Embedded.Dependencies.KeepInventory.Fusion.dll";
+                            var names = assembly.GetManifestResourceNames();
+                            if (names == null || names.Length == 0 || !names.Contains(_path))
+                            {
+                                FailedFLLoad = true;
+                                LoggerInstance.Error("There were no embedded resources or dependency was not found in the list of embedded resources, cannot not load Fusion Support Library");
+                            }
+                            else
+                            {
+                                var stream = assembly.GetManifestResourceStream(_path);
+                                if (stream?.Length > 0)
+                                {
+                                    var bytes = StreamToByteArray(stream);
+                                    System.Reflection.Assembly.Load(bytes);
+                                    LoggerInstance.Msg("Loaded Fusion Support Library");
+                                    IsFusionLibraryInitialized = true;
+                                }
+                                else
+                                {
+                                    FailedFLLoad = true;
+                                    LoggerInstance.Error("Could not get stream of Fusion Support Library, cannot not load Fusion Support Library");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            FailedFLLoad = true;
+                            LoggerInstance.Error("Assembly Info was not found, cannot not load Fusion Support Library");
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        LoggerInstance.Error($"An unexpected error occurred while loading the library:\n{ex}");
+                        FailedFLLoad = true;
+                        LoggerInstance.Error("Executing assembly was somehow not found, cannot not load Fusion Support Library");
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    /*LoggerInstance.Error("KeepInventory cannot function without the Fusion Library, quitting");
-                    this.Unregister("Dependency not found", false);
-                    return;*/
-
-                    LoggerInstance.Warning("Could not find library, even tho LabFusion is present in the game, KeepInventory will not work with it");
-                    LoggerInstance.Warning("Note that without the Fusion Support Library, this mod might cause crashes or bugs when playing in servers, it is recommended that you install it");
-                    IsFusionLibraryInitialized = false;
+                    FailedFLLoad = true;
+                    LoggerInstance.Error($"An unexpected error occurred while loading the library:\n{ex}");
                 }
             }
 
@@ -193,15 +225,6 @@ namespace KeepInventory
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
             if (IsFusionLibraryInitialized) LoadFusionLibrary();
-        }
-
-        /// <summary>
-        /// Runs when application is about to quit
-        /// </summary>
-        public override void OnApplicationQuit()
-        {
-            quitting = true;
-            SavePreferences();
         }
 
         #endregion MelonLoader
@@ -213,16 +236,31 @@ namespace KeepInventory
         private static void LoadFusionLibrary()
         {
             Logger.Msg("Setting up the library");
-            //Fusion.FusionMethods.LoadModule();
-            Fusion.FusionMethods.Setup(Logger);
+            try
+            {
+                Fusion.FusionMethods.Setup(Logger);
+                Fusion.FusionMethods.LoadModule();
+            }
+            catch (Exception ex)
+            {
+                FailedFLLoad = true;
+                Logger.Error($"An unexpected error has occurred while setting up and/or loading the fusion module, exception:\n{ex}");
+            }
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(
+    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static bool FusionLibraryIsConnected()
+        {
+            return Fusion.FusionMethods.LocalNetworkPlayer != null;
+            //return LabFusion.Network.NetworkInfo.HasServer;
         }
 
         [System.Runtime.CompilerServices.MethodImpl(
     System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static bool FusionIsConnected()
         {
-            return Fusion.FusionMethods.LocalNetworkPlayer != null;
-            //return LabFusion.Network.NetworkInfo.HasServer;
+            return LabFusion.Network.NetworkInfo.HasServer;
         }
 
         [System.Runtime.CompilerServices.MethodImpl(
@@ -251,6 +289,14 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private void RemoveRigCreateEvent()
         {
             if (HasFusion && IsConnected && IsFusionLibraryInitialized) Fusion.FusionMethods.OnRigCreated -= SpawnSavedItems;
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(
+   System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        private static AmmoInventory FusionGetAmmoInventory()
+        {
+            if (HasFusion && IsFusionLibraryInitialized) return Fusion.FusionMethods.FindAmmoInventory() ?? AmmoInventory.Instance;
+            else return AmmoInventory.Instance;
         }
 
         [System.Runtime.CompilerServices.MethodImpl(
@@ -284,9 +330,33 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
             }
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(
+    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+        internal static bool FusionIsGamemodeRunning()
+        {
+            return LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted;
+        }
+
         #endregion Fusion
 
         #region Other
+
+        /// <summary>
+        /// Converts a <see cref="Stream"/> to a byte array
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> to convert</param>
+        /// <returns>A<see cref="byte"/> array of the provided <see cref="Stream"/></returns>
+        public static byte[] StreamToByteArray(Stream stream)
+        {
+            byte[] buffer = new byte[16 * 1024];
+            using MemoryStream ms = new();
+            int read;
+            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                ms.Write(buffer, 0, read);
+            }
+            return ms.ToArray();
+        }
 
         internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
         {
@@ -295,7 +365,8 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
 
         private static bool Internal_IsConnected()
         {
-            if (HasFusion) return FusionIsConnected();
+            if (HasFusion && IsFusionLibraryInitialized) return FusionLibraryIsConnected();
+            else if (HasFusion && !IsFusionLibraryInitialized) return FusionIsConnected();
             else return false;
         }
 
@@ -309,15 +380,29 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
             if (mp_persistentsave.Value && mp_automaticallySaveToFile.Value)
             {
                 LoggerInstance.Msg("Saving Preferences");
-                SaveCategory.SaveToFile();
-                LoggerInstance.Msg("Saved Preferences successfully");
+                try
+                {
+                    SaveCategory?.SaveToFile(false);
+                    PrefsCategory?.SaveToFile(false);
+                    LoggerInstance.Msg("Saved Preferences successfully");
+                }
+                catch (Exception e)
+                {
+                    LoggerInstance.Error($"An unexpected error has occurred while saving prefs\n{e}");
+                }
             }
         }
 
-        private static RigManager FindRigManager()
+        internal static RigManager FindRigManager()
         {
             if (HasFusion && IsConnected && IsFusionLibraryInitialized) return FusionFindRigManager();
             else return Player.RigManager;
+        }
+
+        internal static AmmoInventory GetAmmoInventory()
+        {
+            if (HasFusion && IsFusionLibraryInitialized) return FusionGetAmmoInventory();
+            else return AmmoInventory.Instance;
         }
 
         #endregion Other
@@ -336,7 +421,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                 bool isAmmoSaved = false;
                 if (mp_itemsaving.Value)
                 {
-                    LoggerInstance.Msg("Saving items in body slots");
+                    LoggerInstance.Msg("Saving items in inventory slots");
 
                     bool notFound = false;
                     var rigManager = FindRigManager();
@@ -345,45 +430,41 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                         LoggerInstance.Warning("RigManager does not exist");
                         notFound = true;
                     }
-                    if (rigManager.inventory == null)
-                    {
-                        LoggerInstance.Warning("Inventory does not exist");
-                        notFound = true;
-                    }
-                    if (rigManager.inventory.bodySlots == null)
-                    {
-                        LoggerInstance.Warning("Body slots do not exist");
-                        notFound = true;
-                    }
 
                     if (!notFound)
                     {
                         CurrentSave.InventorySlots?.Clear();
-                        foreach (var item in rigManager.inventory.bodySlots)
+                        var components = rigManager.GetComponentsInChildren<InventorySlotReceiver>();
+                        foreach (var item in components)
                         {
-                            if (item == null || item.inventorySlotReceiver == null || item.inventorySlotReceiver?._weaponHost == null || item.inventorySlotReceiver?._weaponHost.GetTransform() == null) continue;
-                            if (item.inventorySlotReceiver?._weaponHost != null)
+                            if (item == null || item?._weaponHost == null || item?._weaponHost.GetTransform() == null) continue;
+                            if (item?._weaponHost != null)
                             {
-                                var gun = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Gun>();
+                                var gun = item._weaponHost.GetTransform().GetComponent<Gun>();
                                 GunInfo gunInfo = null;
                                 if (gun != null)
                                 {
                                     gunInfo = GunInfo.Parse(gun);
                                 }
-                                var poolee = item.inventorySlotReceiver._weaponHost.GetTransform().GetComponent<Poolee>();
+                                var poolee = item._weaponHost.GetTransform().GetComponent<Poolee>();
                                 if (poolee != null)
                                 {
+                                    var name = item.transform.parent.name;
+                                    if (name.StartsWith("prop")) name = item.transform.parent.parent.name;
                                     var barcode = poolee.SpawnableCrate.Barcode;
-                                    LoggerInstance.Msg($"Slot: {item.name} / Barcode: {poolee.SpawnableCrate.name} ({poolee.SpawnableCrate.Barcode.ID})");
+                                    LoggerInstance.Msg($"Slot: {name} / Barcode: {poolee.SpawnableCrate.name} ({poolee.SpawnableCrate.Barcode.ID})");
                                     if (gunInfo != null && mp_saveGunData.Value)
                                     {
-                                        CurrentSave.InventorySlots.Add(new SaveSlot(item.name, barcode, gunInfo));
-                                        Logger.Msg($"^^^ Ammo: {gunInfo.RoundsLeft} / Has Mag: {gunInfo.IsMag} / Has bullet in chamber: {gunInfo.IsBulletInChamber} / Fire Mode: {gunInfo.FireMode} / Slide State: {gunInfo.SlideState} / Hammer state: {gunInfo.HammerState}");
+                                        CurrentSave.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
                                     }
                                     else
                                     {
-                                        CurrentSave.InventorySlots.Add(new SaveSlot(item.name, barcode));
+                                        CurrentSave.InventorySlots.Add(new SaveSlot(name, barcode));
                                     }
+                                }
+                                else
+                                {
+                                    Logger.Warning($"[{item.transform.parent.name}] Could not find poolee of the spawnable in the inventory slot");
                                 }
                             }
                         }
@@ -401,7 +482,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                 }
                 if (mp_ammosaving.Value)
                 {
-                    var ammoInventory = AmmoInventory.Instance;
+                    var ammoInventory = GetAmmoInventory();
                     CurrentSave.LightAmmo = ammoInventory.GetCartridgeCount("light");
                     LoggerInstance.Msg("Saved Light Ammo: " + CurrentSave.LightAmmo);
                     CurrentSave.MediumAmmo = ammoInventory.GetCartridgeCount("medium");
@@ -473,34 +554,24 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                     }
 
                     // Adds saved items to inventory slots
+                    var list2 = rigManager.GetComponentsInChildren<InventorySlotReceiver>().ToList();
                     var list = rigManager.inventory.bodySlots.ToList();
+
                     foreach (var item in CurrentSave.InventorySlots)
                     {
                         var SlotColor = Colors.GetRandomSlotColor();
                         MsgPrefix("Looking for slot", item.SlotName, SlotColor);
-                        // Check for a slot with the same name and one that is for spawnables, not ammo
-                        var slot = list.Find((slot) => slot.name == item.SlotName && slot.inventorySlotReceiver != null);
-                        if (slot != null)
+
+                        void spawn(InventorySlotReceiver receiver)
                         {
-                            MsgPrefix("Found slot", item.SlotName, SlotColor);
-                            var receiver = slot.inventorySlotReceiver;
-                            if (receiver._weaponHost?.GetHostGameObject() != null) MonoBehaviour.Destroy(receiver._weaponHost.GetHostGameObject());
                             if (MarrowGame.assetWarehouse.HasCrate(new Barcode(item.Barcode)))
                             {
-                                MsgPrefix("Mod containing the spawnable is installed", item.SlotName, SlotColor);
                                 // There was an issue with items not loading models in slots, i cant replicate the issue, but adding this to be sure
                                 var crate = new SpawnableCrateReference(item.Barcode);
                                 crate?.Crate.PreloadAssets();
 
-                                // Indicates whether or not should the mod use methods made specifically for fusion
-                                // This is used to test if without using fusion methods will the inventory sync
-                                const bool useFusionMethod = true;
-
                                 if (item.Type == SaveSlot.SpawnableType.Gun && mp_saveGunData.Value)
                                 {
-                                    MsgPrefix($"Attempting to load in slot '{item.SlotName}': {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
-                                    MsgPrefix($"^^^ Ammo: {item.GunInfo.RoundsLeft} / Has Mag: {item.GunInfo.IsMag} / Has bullet in chamber: {item.GunInfo.IsBulletInChamber} / Fire Mode: {item.GunInfo.FireMode} / Slide State: {item.GunInfo.SlideState} / Hammer state: {item.GunInfo.HammerState}", item.SlotName, SlotColor);
-
                                     // Settings properties for the gun, this is horrible
                                     void action(GameObject obj)
                                     {
@@ -514,7 +585,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
 
                                     MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
 
-                                    if (HasFusion && IsConnected && useFusionMethod)
+                                    if (HasFusion && IsConnected)
                                     {
                                         FusionSpawnInSlot(crate.Crate.Barcode, receiver, item.SlotName, SlotColor, action);
                                     }
@@ -532,7 +603,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                                 else
                                 {
                                     MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
-                                    if (HasFusion && IsConnected && useFusionMethod)
+                                    if (HasFusion && IsConnected)
                                     {
                                         FusionSpawnInSlot(crate.Crate.Barcode, receiver, item.SlotName, SlotColor);
                                         MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
@@ -550,9 +621,26 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                                 LoggerInstance.Warning($"[{item.SlotName}] Could not find crate with the following barcode: {item.Barcode}");
                             }
                         }
+
+                        // Check for a slot with the same name and one that is for spawnables, not ammo
+                        InventorySlotReceiver slot = list.Find((slot) => slot.name == item.SlotName && slot.inventorySlotReceiver != null)?.inventorySlotReceiver;
+                        if (slot != null)
+                        {
+                            var receiver = slot;
+                            //if (receiver._weaponHost?.GetHostGameObject() != null) MonoBehaviour.Destroy(receiver._weaponHost.GetHostGameObject());
+                            spawn(receiver);
+                        }
                         else
                         {
-                            LoggerInstance.Warning($"[{item.SlotName}] No slot was found with the provided name. It is possible that an avatar that was used during the saving had more slots than the current one");
+                            slot = list2.Find((slot) => (slot.transform.parent.name.StartsWith("prop") ? slot.transform.parent.parent.name : slot.transform.parent.name) == item.SlotName);
+                            if (slot != null)
+                            {
+                                spawn(slot);
+                            }
+                            else
+                            {
+                                LoggerInstance.Warning($"[{item.SlotName}] No slot was found with the provided name. It is possible that an avatar that was used during the saving had more slots than the current one");
+                            }
                         }
                     }
                 }
@@ -570,47 +658,36 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
             }
         }
 
+        internal static bool LoadAmmoOnAwake = false;
+
         /// <summary>
         /// Sets ammo from <see cref="CurrentSave"/>
         /// </summary>
         /// <param name="showNotifications">If notifications should be shown</param>
-        public void Internal_AddSavedAmmo(bool showNotifications = true)
+        public static void AddSavedAmmo(bool showNotifications = true)
         {
-            AmmoInventoryLoaded -= Internal_AddSavedAmmo;
             if (!AmmoInventory.CurrentThreadIsMainThread())
             {
-                Logger.Warning("Adding ammo not on the main thread");
+                Logger.Warning("Adding ammo not on the main thread, this may cause crashes due to protected memory");
             }
-            var ammoInventory = AmmoInventory.Instance;
+            var ammoInventory = GetAmmoInventory();
+            if (ammoInventory == null)
+            {
+                Logger.Error("Ammo inventory is null");
+                return;
+            }
             ammoInventory.ClearAmmo();
-            LoggerInstance.Msg($"Adding light ammo: {CurrentSave.LightAmmo}");
+            Logger.Msg($"Adding light ammo: {CurrentSave.LightAmmo}");
             ammoInventory.AddCartridge(ammoInventory.lightAmmoGroup, CurrentSave.LightAmmo);
-            LoggerInstance.Msg($"Adding medium ammo: {CurrentSave.MediumAmmo}");
+            Logger.Msg($"Adding medium ammo: {CurrentSave.MediumAmmo}");
             ammoInventory.AddCartridge(ammoInventory.mediumAmmoGroup, CurrentSave.MediumAmmo);
-            LoggerInstance.Msg($"Adding heavy ammo: {CurrentSave.HeavyAmmo}");
+            Logger.Msg($"Adding heavy ammo: {CurrentSave.HeavyAmmo}");
             ammoInventory.AddCartridge(ammoInventory.heavyAmmoGroup, CurrentSave.HeavyAmmo);
-            if (!mp_itemsaving.Value && showNotifications)
+            if (!mp_itemsaving.Value)
             {
-                LoggerInstance.Msg("Loaded inventory");
-                BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                Logger.Msg("Loaded inventory");
+                if (showNotifications) BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
             }
-        }
-
-        private event Action<bool> AmmoInventoryLoaded;
-
-        /// <summary>
-        /// Adds the saved ammo from <see cref="CurrentSave"/>
-        /// </summary>
-        /// <param name="showNotifications"/>If <see langword="true"/>, will display a message "Successfully loaded the inventory" if item saving is disabled, used only internally<param/>
-        public void AddSavedAmmo(bool showNotifications = true)
-        {
-            // HACK: Use events to make it run on main thread
-            AmmoInventoryLoaded += Internal_AddSavedAmmo;
-            Task.Run(async () =>
-            {
-                while (AmmoInventory.Instance == null) await Task.Delay(10);
-                AmmoInventoryLoaded?.Invoke(showNotifications);
-            });
         }
 
         /// <summary>
@@ -618,6 +695,11 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         /// </summary>
         public void LoadSavedInventory()
         {
+            if (HasFusion && IsConnected && FusionIsGamemodeRunning())
+            {
+                LoggerInstance.Warning("A gamemode is currently running, we cannot load your inventory!");
+                return;
+            }
             try
             {
                 LoggerInstance.Msg("Loading inventory...");
@@ -625,7 +707,16 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                 {
                     // Adds saved ammo
                     LoggerInstance.Msg("Waiting for Ammo Inventory to be initialized");
-                    AddSavedAmmo(true);
+                    var ammoInventory = GetAmmoInventory();
+                    if (ammoInventory != null)
+                    {
+                        AddSavedAmmo(mp_showNotifications.Value);
+                    }
+                    else
+                    {
+                        Logger.Warning("Ammo Inventory is empty, awaiting");
+                        LoadAmmoOnAwake = true;
+                    }
                 }
 
                 if (HasFusion)
@@ -660,7 +751,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         /// </summary>
         private void LevelUnloadedEvent()
         {
-            if (quitting || !mp_saveOnLevelUnload.Value) return;
+            if (!mp_saveOnLevelUnload.Value) return;
             var list = new List<string>(mp_blacklistedLevels.Value);
             if (mp_blacklistBONELABlevels.Value) list.AddRange(defaultBlacklistedLevels);
             if (!list.Contains(levelInfo.barcode))
@@ -673,6 +764,8 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
             }
         }
 
+        private bool InitialLoad = true;
+
         /// <summary>
         /// Called when a BONELAB Level is loaded<br/>
         /// Mostly used to load the inventory as of now
@@ -680,6 +773,15 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         /// <param name="obj">Contains Level Information</param>
         private void LevelLoadedEvent(LevelInfo obj)
         {
+            if (InitialLoad)
+            {
+                if (FailedFLLoad)
+                {
+                    BLHelper.SendNotification("Failure", "The Fusion Support Library has failed to load, meaning the fusion support for the mod will be disabled. If this will occur again, please report it to the developer (discord @hahoos)");
+                    IsFusionLibraryInitialized = false;
+                }
+                InitialLoad = false;
+            }
             levelInfo = obj;
             if (!mp_loadOnLevelLoad.Value) return;
             var list = new List<string>(mp_blacklistedLevels.Value);
@@ -688,7 +790,7 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
             {
                 if (HasFusion && IsConnected && (!IsFusionLibraryInitialized || !mp_fusionSupport.Value))
                 {
-                    LoggerInstance.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. To load inventory in Fusion servers, check if you have the Fusion Library in UserData > KeepInventory (there should be a file called 'KeepInventory.Fusion.dll') or try enabling 'Fusion Support' in settings");
+                    LoggerInstance.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
                     return;
                 }
                 try
@@ -751,7 +853,6 @@ System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
                     BLHelper.SendNotification("Failure", "Failed to save the current inventory to file, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
                 }
             });
-
             eventsPage.CreateFunction("Save To File", Color.white, () =>
             {
                 try

@@ -1,60 +1,69 @@
 ﻿using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Data;
-using System.Text.Json;
 using static Il2CppSLZ.Marrow.Gun;
+
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace KeepInventory.Saves
 {
     /// <summary>
     /// Class that holds information regarding a <see cref="Gun"/>
     /// </summary>
-    public class GunInfo
+    /// <remarks>
+    /// Create new instance of <see cref="GunInfo"/>, exists for JSON deserializing
+    /// </remarks>
+    [JsonSourceGenerationOptions(WriteIndented = false)]
+    [method: JsonConstructor]
+    public class GunInfo()
     {
         /// <summary>
         /// Is a magazine in the gun
         /// </summary>
+        [JsonPropertyName("IsMag")]
         public bool IsMag { get; set; }
 
         /// <summary>
         /// Is there a bullet in the chamber
         /// </summary>
+        [JsonPropertyName("IsBulletInChamber")]
         public bool IsBulletInChamber { get; set; }
 
         /// <summary>
         /// The selected fire mode example: SEMIAUTOMATIC
         /// </summary>
+        [JsonPropertyName("FireMode")]
         public FireMode FireMode { get; set; }
 
         /// <summary>
         /// Rounds left in the magazine
         /// </summary>
+        [JsonPropertyName("RoundsLeft")]
         public int RoundsLeft { get; set; }
 
         /// <summary>
         /// State of the hammer
         /// </summary>
+        [JsonPropertyName("HammerState")]
         public HammerStates HammerState { get; set; }
 
         /// <summary>
         /// State of the slide
         /// </summary>
+        [JsonPropertyName("SlideState")]
         public SlideStates SlideState { get; set; }
 
         /// <summary>
         /// State of the cartridge
         /// </summary>
+        [JsonPropertyName("CartridgeState")]
         public CartridgeStates CartridgeState { get; set; }
 
         /// <summary>
         /// Was the gun fired at least once
         /// </summary>
+        [JsonPropertyName("HasFiredOnce")]
         public bool HasFiredOnce { get; set; }
-
-        /// <summary>
-        /// Create new instance of <see cref="GunInfo"/>, exists for JSON deserializing
-        /// </summary>
-        public GunInfo()
-        { }
 
         /// <summary>
         /// Parses <see cref="Gun"/> to <see cref="GunInfo"/>
@@ -66,7 +75,7 @@ namespace KeepInventory.Saves
             var _new = new GunInfo
             {
                 IsMag = gun.HasMagazine(),
-                IsBulletInChamber = gun.chamberedCartridge != null,
+                IsBulletInChamber = gun.isCharged,
                 FireMode = gun.fireMode,
                 HammerState = gun.hammerState,
                 SlideState = gun.slideState,
