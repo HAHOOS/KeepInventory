@@ -59,6 +59,8 @@ namespace KeepInventory.Helper
         /// </summary>
         /// <param name="logger">Logger that should be used to send the message</param>
         /// <param name="obj">Object that will be converted to string to be sent</param>
+#pragma warning disable IDE1006 // Naming Styles
+
         public static void _MsgPastel(this MelonLogger.Instance logger, object obj) => Internal_MsgPastel(logger, DefaultTextColor, obj.ToString());
 
         /// <summary>
@@ -100,6 +102,8 @@ namespace KeepInventory.Helper
         /// <param name="txt">The text that will be sent</param>
         /// <param name="args">The arguments in text</param>
         public static void _MsgPastel(this MelonLogger.Instance logger, Color txt_color, string txt, params object[] args) => Internal_MsgPastel(logger, txt_color, string.Format(txt, args));
+
+#pragma warning restore IDE1006 // Naming Styles
 
         #endregion MsgPastel
     }

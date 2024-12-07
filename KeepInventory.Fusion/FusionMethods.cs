@@ -10,6 +10,7 @@ using KeepInventory.Helper;
 using KeepInventory.Saves;
 
 using LabFusion.Entities;
+using LabFusion.Extensions;
 using LabFusion.Marrow;
 using LabFusion.Network;
 using LabFusion.Player;
@@ -86,7 +87,7 @@ namespace KeepInventory.Fusion
             }
             else
             {
-                Warn("[Fusion] Could not find player");
+                Warn("Could not find player");
             }
         }
 
@@ -146,12 +147,17 @@ namespace KeepInventory.Fusion
         {
             if (IsConnected)
             {
+                if (gun == null || info == null)
+                {
+                    Warn("Some values are null, cannot send GunUpdate message");
+                    return;
+                }
                 MsgFusionPrefix("Attempting to send a GunUpdate message");
                 GunMessageData data = null;
 
                 int attempts = 0;
                 const int maxAttempts = 5;
-                const float interval = 0.25f * 1000;
+                const float interval = 0.35f * 1000;
 
                 while (attempts < maxAttempts)
                 {
@@ -189,7 +195,7 @@ namespace KeepInventory.Fusion
                         else
                         {
                             MsgFusionPrefix("Local player is host, reading message");
-                            GunUpdateMessage.ReadMessage(msg.ToByteArray(), true);
+                            MessageSender.BroadcastMessage(NetworkChannel.Reliable, msg);
                         }
                     }
                     finally
@@ -234,6 +240,15 @@ namespace KeepInventory.Fusion
             backupLogger._MsgPastel($"[{prefix.Pastel(color)}] {message}");
         }
 
+        /// <summary>
+        /// Invokes <see cref="NetworkEntity.InvokeCatchup(PlayerId)"/> for every connected player
+        /// </summary>
+        /// <param name="networkEntity"><see cref="NetworkEntity"/> to invoke the catchup on</param>
+        public static void InvokeCatchupToAll(this NetworkEntity networkEntity)
+        {
+            NetworkPlayer.Players.ForEach(x => networkEntity.InvokeCatchup(x.PlayerId));
+        }
+
         private static async Task Spawn(InventorySlotReceiver receiver, Barcode barcode, System.Drawing.Color slotColor, string slotName = "N/A", Action<GameObject> inBetween = null)
         {
             if (barcode == null || string.IsNullOrWhiteSpace(barcode.ID) || receiver == null)
@@ -255,31 +270,15 @@ namespace KeepInventory.Fusion
                 rotation = head.rotation,
                 position = (head.position + (head.forward * 1.5f)),
                 spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
+                spawnEffect = false,
                 spawnCallback = async (callbackInfo) =>
                 {
                     MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Spawned item (Coordinates: {callbackInfo.spawned.transform.position.ToString() ?? "N/A"})");
                     try
                     {
-                        if (!callbackInfo.entity.HasOwner || callbackInfo.entity.OwnerId != LocalNetworkPlayer.PlayerId)
-                        {
-                            if (!callbackInfo.entity.IsOwnerLocked)
-                            {
-                                MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Requesting ownership");
-                                NetworkEntityManager.TakeOwnership(callbackInfo.entity);
-                            }
-                            else
-                            {
-                                Warn($"[{slotName}] Could not claim ownership, because it was locked!");
-                            }
-                        }
-                        else
-                        {
-                            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] No need to request ownership, user is already owner");
-                        }
-
                         int attempts = 0;
                         const int maxAttempts = 5;
-                        const float interval = 0.25f * 1000;
+                        const float interval = 0.35f * 1000;
 
                         NetworkEntity slotEntity = null;
 
@@ -302,6 +301,16 @@ namespace KeepInventory.Fusion
                         if (slotEntity == null)
                         {
                             Warn("Network Entity for InventorySlotReceiver was not found, aborting");
+                            returned = true;
+                            return;
+                        }
+
+                        var weaponExtender = callbackInfo.entity.GetExtender<WeaponSlotExtender>();
+
+                        if (weaponExtender == null)
+                        {
+                            Warn("Weapon Slot Extender was not found, aborting");
+                            returned = true;
                             return;
                         }
 
@@ -311,12 +320,12 @@ namespace KeepInventory.Fusion
 
                         if (!index.HasValue)
                         {
-                            Warn($"[{slotName}] Could not find the extender for the provided receiver");
+                            Warn($"[{slotName}] Could not find the extender for the provided receiver, aborting");
                             returned = true;
                             return;
                         }
 
-                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Running in between function (if found)");
+                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Running in between function");
                         inBetween?.Invoke(callbackInfo.spawned);
 
                         MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to equip");
@@ -330,16 +339,11 @@ namespace KeepInventory.Fusion
 
                         try
                         {
-                            if (PlayerIdManager.LocalSmallId != PlayerIdManager.HostSmallId)
-                            {
-                                MessageSender.SendToServer(NetworkChannel.Reliable, message);
-                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), false);
-                            }
-                            else
-                            {
-                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), false);
-                                InventorySlotInsertMessage.ReadMessage(message.ToByteArray(), true);
-                            }
+                            weaponExtender.Component.interactableHost.TryDetach();
+
+                            var component = slotExtender.GetComponent(index.Value);
+
+                            component.InsertInSlot(weaponExtender.Component.interactableHost);
                         }
                         finally
                         {
@@ -389,7 +393,7 @@ namespace KeepInventory.Fusion
                 return;
             }
 
-            await Spawn(receiver, barcode, slotColor, slotName, inBetween).ConfigureAwait(false);
+            await Spawn(receiver, barcode, slotColor, slotName, inBetween);
         }
     }
 }

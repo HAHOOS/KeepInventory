@@ -47,7 +47,7 @@ namespace KeepInventory.Helper
         /// <param name="fusionMessage">If <see langword="true"/>, this method will be treated as it was run by a <see cref="LabFusion.Network.FusionMessage"/>, which means it will not send a fusion message</param>
         public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true, bool fusionMessage = false)
         {
-            const bool useFusion = false;
+            const bool useFusion = true;
 
             string slotName = slot == null ? "N/A" : string.IsNullOrWhiteSpace(slot.SlotName) ? "N/A" : slot.SlotName;
             if (gun == null || info == null) return;
@@ -58,7 +58,7 @@ namespace KeepInventory.Helper
                     Core.Logger.Warning($"[{slotName}] The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. To update gun properties in Fusion servers, check if you have the Fusion Library in UserData > KeepInventory (there should be a file called 'KeepInventory.Fusion.dll') or try enabling 'Fusion Support' in settings");
                     return;
                 }
-                if (printMessages) Core.MsgPrefix($"Sending request to host to edit gun data for everyone", slotName, slotColor);
+                if (printMessages) Core.MsgPrefix("Sending request to host to edit gun data for everyone", slotName, slotColor);
                 SendFusionMessage(gun, info, slotColor, slot, name, barcode, printMessages);
             }
             else
@@ -75,22 +75,15 @@ namespace KeepInventory.Helper
                         gun.hammerState = info.HammerState;
                         if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, slotColor);
                         gun.slideState = info.SlideState;
-                        if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, slotColor);
-                        gun.cartridgeState = info.CartridgeState;
 
                         if (!gun.isCharged && info.IsBulletInChamber)
                         {
                             if (printMessages) Core.MsgPrefix("Charging gun", slotName, slotColor);
                             gun.Charge();
-                            if (gun._hasMagState) gun.MagazineState.AddCartridge(1);
+                            if (gun._hasMagState) gun.MagazineState.AddCartridge(1, gun.defaultCartridge);
+                            if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, slotColor);
+                            gun.cartridgeState = info.CartridgeState;
                         }
-
-                        // Don't ask whats happening here, because I have no idea
-                        // Why can't this literally work, I ran the method and what
-                        // Nothing happens, it doesn't want to work like I want it to
-                        // 😭
-
-                        // I don't even know if this works, I can't get it to work properly so uh
 
                         switch (info.SlideState)
                         {
@@ -119,17 +112,14 @@ namespace KeepInventory.Helper
                         {
                             var task = gun.ammoSocket.ForceLoadAsync(info.GetMagazineData(gun));
                             var awaiter = task.GetAwaiter();
-                            void action1()
+
+                            void something()
                             {
-                                if (gun._hasMagState)
-                                {
-                                    if (printMessages) Core.MsgPrefix($"Setting rounds left ({info.RoundsLeft}/{gun.MagazineState?.magazineData?.rounds.ToString() ?? "N/A"})", slotName, slotColor);
-                                    gun.MagazineState.SetCartridge(info.RoundsLeft);
-                                    gun.MagazineState.Initialize(gun.MagazineState.cartridgeData, info.RoundsLeft);
-                                }
+                                gun.MagazineState.SetCartridge(info.RoundsLeft);
                                 other();
                             }
-                            awaiter.OnCompleted((Il2CppSystem.Action)action1);
+
+                            awaiter.OnCompleted((Il2CppSystem.Action)something);
                         }
                         else
                         {

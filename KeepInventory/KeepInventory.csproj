@@ -1,74 +1,61 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-	<LangVersion>latest</LangVersion>
-
-	<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-
-	<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
-
-	<GenerateDocumentationFile>True</GenerateDocumentationFile>
-
-	<SignAssembly>True</SignAssembly>
-
-	<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Embedded\Dependencies\KeepInventory.Fusion.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="BoneLib">
-      <HintPath>$(GameDirectory)\Mods\BoneLib.dll</HintPath>
-    </Reference>
-    <Reference Include="Il2CppInterop.Runtime">
-      <HintPath>$(GameDirectory)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Il2Cppmscorlib">
-      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
-    </Reference>
-    <Reference Include="Il2CppSLZ.Marrow">
-      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
-    </Reference>
-    <Reference Include="Il2CppUniTask">
-      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
-    </Reference>
-    <Reference Include="KeepInventory.Fusion">
-      <HintPath>Embedded\Dependencies\KeepInventory.Fusion.dll</HintPath>
-    </Reference>
-    <Reference Include="LabFusion">
-      <HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
-    </Reference>
-    <Reference Include="MelonLoader">
-      <HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
-    </Reference>
-    <Reference Include="Tomlet">
-      <HintPath>$(GameDirectory)\MelonLoader\net6\Tomlet.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-	  <Reference Include="UnityEngine.AnimationModule">
-		  <HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath>
-	  </Reference>
-	  <Reference Include="0Harmony">
-		  <HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
-	  </Reference>
-
-
-  </ItemGroup>
-
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="Embedded\Dependencies\KeepInventory.Fusion.dll" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="Assembly-CSharp">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+		</Reference>
+		<Reference Include="BoneLib">
+			<HintPath>$(GameDirectory)\Mods\BoneLib.dll</HintPath>
+		</Reference>
+		<Reference Include="Il2CppInterop.Runtime">
+			<HintPath>$(GameDirectory)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+		</Reference>
+		<Reference Include="Il2Cppmscorlib">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
+		</Reference>
+		<Reference Include="Il2CppSLZ.Marrow">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
+		</Reference>
+		<Reference Include="Il2CppUniTask">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
+		</Reference>
+		<Reference Include="KeepInventory.Fusion">
+			<HintPath>Embedded\Dependencies\KeepInventory.Fusion.dll</HintPath>
+		</Reference>
+		<Reference Include="LabFusion">
+			<HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
+		</Reference>
+		<Reference Include="MelonLoader">
+			<HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
+		</Reference>
+		<Reference Include="Tomlet">
+			<HintPath>$(GameDirectory)\MelonLoader\net6\Tomlet.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
+		</Reference>
+		<Reference Include="UnityEngine.AnimationModule">
+			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath>
+		</Reference>
+		<Reference Include="0Harmony">
+			<HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
+		</Reference>
+	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods&quot;" />
 	</Target>
-
 </Project>

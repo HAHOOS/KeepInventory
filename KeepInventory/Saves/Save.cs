@@ -10,6 +10,12 @@ namespace KeepInventory.Saves
     public class Save
     {
         /// <summary>
+        /// The version of the save
+        /// </summary>
+        [TomlPrecedingComment("The version of the save")]
+        public int Version = 1;
+
+        /// <summary>
         /// The amount of light ammo left
         /// </summary>
         [TomlPrecedingComment("The amount of light ammo left")]
@@ -34,9 +40,20 @@ namespace KeepInventory.Saves
         public List<SaveSlot> InventorySlots = [];
 
         /// <summary>
-        /// Create new instance of <see cref="Save"/>, exists for JSON deserializing
+        /// Create new instance of <see cref="Save"/>
         /// </summary>
         public Save()
         { }
+
+        /// <summary>
+        /// Create new instance of <see cref="Save"/> from an old one
+        /// </summary>
+        public Save(Save old)
+        {
+            LightAmmo = old.LightAmmo;
+            MediumAmmo = old.MediumAmmo;
+            HeavyAmmo = old.HeavyAmmo;
+            InventorySlots = new List<SaveSlot>(old.InventorySlots);
+        }
     }
 }

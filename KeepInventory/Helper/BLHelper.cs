@@ -5,6 +5,7 @@ using BoneLib.Notifications;
 using MelonLoader;
 
 using System;
+
 using UnityEngine;
 
 namespace KeepInventory.Helper
@@ -124,13 +125,13 @@ namespace KeepInventory.Helper
 
         #region Notifications
 
-        public static void SendNotification(string title, string message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
+        internal static void SendNotification(string title, string message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
             if (Core.mp_showNotifications?.Value != true) return;
             Notifier.Send(new Notification()
             {
-                Title = $"KeepInventory | {title}",
-                Message = message,
+                Title = new NotificationText($"KeepInventory | {title}", Color.white, true),
+                Message = new NotificationText(message, Color.white, true),
                 ShowTitleOnPopup = showTitleOnPopup,
                 CustomIcon = customIcon,
                 PopupLength = popupLength,
@@ -138,7 +139,7 @@ namespace KeepInventory.Helper
             });
         }
 
-        public static void SendNotification(NotificationText title, NotificationText message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
+        internal static void SendNotification(NotificationText title, NotificationText message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
             title.Text = $"KeepInventory | {title.Text}";
             if (Core.mp_showNotifications?.Value != true) return;
@@ -153,7 +154,7 @@ namespace KeepInventory.Helper
             });
         }
 
-        public static void SendNotification(Notification notification)
+        internal static void SendNotification(Notification notification)
         {
             if (Core.mp_showNotifications?.Value != true) return;
             Notifier.Send(notification);

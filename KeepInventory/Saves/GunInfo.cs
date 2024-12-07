@@ -75,7 +75,7 @@ namespace KeepInventory.Saves
             var _new = new GunInfo
             {
                 IsMag = gun.HasMagazine(),
-                IsBulletInChamber = gun.isCharged,
+                IsBulletInChamber = gun.chamberedCartridge != null,
                 FireMode = gun.fireMode,
                 HammerState = gun.hammerState,
                 SlideState = gun.slideState,

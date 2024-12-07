@@ -1,8 +1,12 @@
 ﻿using HarmonyLib;
+
 using Il2CppSLZ.Marrow;
 
 namespace KeepInventory.Patches
 {
+    /// <summary>
+    /// Class that contains patches for <see cref="AmmoInventory"/>
+    /// </summary>
     [HarmonyPatch(typeof(AmmoInventory))]
     public static class AmmoInventoryPatches
     {
@@ -12,6 +16,7 @@ namespace KeepInventory.Patches
         /// <param name="__instance">Instance of <see cref="AmmoInventory"/></param>
         [HarmonyPatch(nameof(AmmoInventory.Awake))]
         [HarmonyPostfix]
+        [HarmonyPriority(0)]
         public static void Awake(AmmoInventory __instance)
         {
             if (!Core.LoadAmmoOnAwake) return;
@@ -19,7 +24,6 @@ namespace KeepInventory.Patches
             {
                 if (__instance != Core.GetAmmoInventory())
                 {
-                    Core.Logger.Warning("Ammo inventory is not of local player!");
                     return;
                 }
                 Core.LoadAmmoOnAwake = false;

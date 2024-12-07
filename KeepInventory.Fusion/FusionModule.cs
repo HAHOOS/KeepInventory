@@ -1,5 +1,7 @@
 ﻿using KeepInventory.Fusion.Messages;
+
 using LabFusion.SDK.Modules;
+
 using System;
 
 namespace KeepInventory.Fusion
@@ -32,7 +34,6 @@ namespace KeepInventory.Fusion
         /// <summary>
         /// Runs when module is registered
         /// </summary>
-
         internal static ModuleLogger ModuleLogger { get; set; }
 
         /// <summary>
@@ -41,7 +42,7 @@ namespace KeepInventory.Fusion
         protected override void OnModuleRegistered()
         {
             ModuleLogger = LoggerInstance;
-            LoggerInstance.Log("Registering GunUpdateMessage");
+            FusionMethods.MsgFusionPrefix("Registering GunUpdateMessage");
             ModuleMessageHandler.RegisterHandler<GunUpdateMessage>();
         }
     }
