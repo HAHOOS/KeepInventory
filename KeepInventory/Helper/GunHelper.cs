@@ -19,8 +19,6 @@ namespace KeepInventory.Helper
         /// <param name="name">Name of the crate (debugging purposes)</param>
         /// <param name="barcode">Barcode of the spawnable (debugging purposes)</param>
         /// <param name="printMessages">If <see langword="true"/>, the method will print debug messages using <see cref="MelonLoader.MelonLogger.Instance"/></param>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public static void SendFusionMessage(Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
         {
             if (Core.IsConnected)

@@ -401,8 +401,6 @@ namespace KeepInventory
         /// <summary>
         /// Setup the Fusion Support Library
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static void SetupFusionLibrary()
         {
             Logger.Msg("Setting up the library");
@@ -422,8 +420,6 @@ namespace KeepInventory
         /// Check if the player is connected to a Fusion server with the Fusion Support Library
         /// </summary>
         /// <returns>A boolean value indicating whether or not is the player connected to a server</returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static bool FusionLibraryIsConnected()
         {
             return Fusion.FusionMethods.LocalNetworkPlayer != null;
@@ -434,8 +430,6 @@ namespace KeepInventory
         /// Check if the player is connected to a Fusion server without the Fusion Support Library
         /// </summary>
         /// <returns>A boolean value indicating whether or not is the player connected to a server</returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static bool FusionIsConnected()
         {
             return LabFusion.Player.LocalPlayer.GetNetworkPlayer() != null;
@@ -449,8 +443,6 @@ namespace KeepInventory
         /// <param name="slotName">Name of the slot (debug purposes)</param>
         /// <param name="slotColor">Color of the slot name (debug purposes)</param>
         /// <param name="inBetween">The <see cref="Action{GameObject}"/> that will be run between spawning and putting the spawnable into the <see cref="InventorySlotReceiver"/></param>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static void FusionSpawnInSlot(Barcode barcode, InventorySlotReceiver inventorySlotReceiver, string slotName, System.Drawing.Color slotColor, Action<GameObject> inBetween = null)
         {
             Fusion.FusionMethods.NetworkSpawnInSlotAsync(inventorySlotReceiver, barcode, slotColor, slotName, inBetween);
@@ -460,8 +452,6 @@ namespace KeepInventory
         /// Find the <see cref="RigManager"/> for the local player that is connected to a server with the Fusion Support Library
         /// </summary>
         /// <returns>The <see cref="RigManager"/> of the local player</returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static RigManager FusionFindRigManager_FSL()
         {
             return Fusion.FusionMethods.RigManager ?? Player.RigManager;
@@ -471,8 +461,6 @@ namespace KeepInventory
         /// Find the <see cref="RigManager"/> for the local player that is connected to a server
         /// </summary>
         /// <returns>The <see cref="RigManager"/> of the local player</returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static RigManager FusionFindRigManager()
         {
             if (!IsConnected)
@@ -488,8 +476,6 @@ namespace KeepInventory
         /// <summary>
         /// Removes the <see cref="SpawnSavedItems(RigManager)"/> method from the OnRigCreated event in the Fusion Support Library
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(
-   System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private void RemoveRigCreateEvent_FSL()
         {
             Fusion.FusionMethods.OnRigCreated -= SpawnSavedItems;
@@ -498,15 +484,11 @@ namespace KeepInventory
         /// <summary>
         /// Removes the <see cref="SpawnSavedItems(RigManager)"/> method from the OnRigCreated event in the Fusion Support Library
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(
-   System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private void RemoveRigCreateEvent()
         {
             if (HasFusion && IsConnected && IsFusionLibraryInitialized) RemoveRigCreateEvent_FSL();
         }
 
-        [System.Runtime.CompilerServices.MethodImpl(
-   System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static AmmoInventory FusionGetAmmoInventory_FSL()
         {
             return Fusion.FusionMethods.FindAmmoInventory();
@@ -516,8 +498,6 @@ namespace KeepInventory
         /// Find the <see cref="AmmoInventory"/> of the local player
         /// </summary>
         /// <returns></returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-   System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static AmmoInventory FusionGetAmmoInventory()
         {
             if (HasFusion) return IsFusionLibraryInitialized ? (FusionGetAmmoInventory_FSL() ?? AmmoInventory.Instance) : (LabFusion.Marrow.NetworkGunManager.NetworkAmmoInventory ?? AmmoInventory.Instance);
@@ -528,8 +508,6 @@ namespace KeepInventory
         /// Spawn the saved items, run when Fusion is detected
         /// <para>This is separate to avoid errors if Fusion Support Library is not loaded</para>
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private void FusionSpawnSavedItems_FSL()
         {
             if (Fusion.FusionMethods.RigManager == null)
@@ -547,8 +525,6 @@ namespace KeepInventory
         /// <summary>
         /// Spawn the saved items, run when Fusion is detected
         /// </summary>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private void FusionSpawnSavedItems()
         {
             if (IsConnected)
@@ -574,8 +550,6 @@ namespace KeepInventory
         /// Check if a gamemode is currently running in the server
         /// </summary>
         /// <returns>A boolean value indicating whether or not is a gamemode running</returns>
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         internal static bool FusionGamemodeCheck()
         {
             if (!IsConnected) return false;
