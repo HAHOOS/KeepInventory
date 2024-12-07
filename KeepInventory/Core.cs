@@ -1261,7 +1261,7 @@ namespace KeepInventory
             var otherPage = modPage.CreatePage("Other", Color.white);
             otherPage.CreateBoolPref("Show Notifications", Color.green, ref mp_showNotifications, prefDefaultValue: true);
             otherPage.CreateBoolPref("Fusion Support", Color.cyan, ref mp_fusionSupport, prefDefaultValue: true);
-            otherPage.CreateBoolPref("Remove initial inventory from save", Color.red, ref mp_initialInventoryRemove, prefDefaultValue: true);
+            otherPage.CreateBoolPref("Remove Initial Inventory From Save", Color.red, ref mp_initialInventoryRemove, prefDefaultValue: true);
 
             var modVersion = modPage.CreateFunction(IsLatestVersion || ThunderstorePackage == null ? $"Current Version: v{Version}" : $"Current Version: v{Version}<br>{"(Update available!)".CreateUnityColor(System.Drawing.Color.LimeGreen)}", Color.white, () => LoggerInstance.Msg($"The current version is v{Version}!!!!"));
             modVersion.SetProperty(ElementProperties.NoBorder);
@@ -1288,7 +1288,7 @@ namespace KeepInventory
             mp_ammosaving = PrefsCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
                 description: "If true, will save and load ammo in inventory");
             mp_saveGunData = PrefsCategory.CreateEntry<bool>("SaveGunData", true, "Save Gun Data",
-                description: "If true, will save data about guns stored in slots, info such as rounds left etc.");
+                description: "If true, will save and load data about guns stored in slots, info such as rounds left etc.");
             mp_persistentsave = PrefsCategory.CreateEntry<bool>("PersistentSave", true, "Persistent Save",
                 description: "If true, will save and load inventory in a KeepInventory_Save.cfg file to be used between sessions");
 
