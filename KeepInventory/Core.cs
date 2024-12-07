@@ -79,6 +79,35 @@ namespace KeepInventory
                 CommonBarcodes.Maps.MainMenu,
             ];
 
+        static readonly Dictionary<string, string> SaveNames = new()
+        {
+            { "Descent", CommonBarcodes.Maps.Descent },
+            { "Ascent", CommonBarcodes.Maps.Ascent },
+            { "LongRun", CommonBarcodes.Maps.LongRun },
+            { "Hub", CommonBarcodes.Maps.BLHub },
+            { "KartBowling", CommonBarcodes.Maps.BigBoneBowling },
+            { "Tuscany", CommonBarcodes.Maps.Tuscany },
+            { "HalfwayPark", CommonBarcodes.Maps.HalfwayPark },
+            { "MineDive", CommonBarcodes.Maps.MineDive },
+            { "BigAnomaly_A", CommonBarcodes.Maps.BigAnomaly },
+            { "StreetPuncher", CommonBarcodes.Maps.StreetPuncher },
+            { "SprintBridge", CommonBarcodes.Maps.SprintBridge },
+            { "MagmaGate", CommonBarcodes.Maps.MagmaGate },
+            { "MoonBase", CommonBarcodes.Maps.Moonbase },
+            { "MonogonMotorway", CommonBarcodes.Maps.MonogonMotorway },
+            { "Pillar", CommonBarcodes.Maps.PillarClimb },
+            { "BigAnomaly_B", CommonBarcodes.Maps.BigAnomaly2 },
+            { "Holodeck", CommonBarcodes.Maps.Holochamber },
+            { "DungeonWarrior", CommonBarcodes.Maps.DungeonWarrior },
+            { "DistrictParkour", CommonBarcodes.Maps.NeonParkour },
+            { "FantasyArena", CommonBarcodes.Maps.FantasyArena },
+            { "Baseline", CommonBarcodes.Maps.Baseline },
+            { "GunRangeSandbox", CommonBarcodes.Maps.GunRange },
+            { "MuseumSandbox", CommonBarcodes.Maps.MuseumBasement },
+            { "Mirror", CommonBarcodes.Maps.Mirror },
+            { "G114", CommonBarcodes.Maps.VoidG114 },
+        };
+
         internal static MelonLogger.Instance Logger { get; private set; }
 
         #region MelonPreferences
@@ -777,42 +806,45 @@ namespace KeepInventory
             return Il2CppSLZ.Bonelab.SaveData.DataManager.TrySaveActiveSave(Il2CppSLZ.Marrow.SaveData.SaveFlags.Progression);
         }
 
-        internal static bool RemoveInitialInventoryFromSave(string name)
+        internal static bool RemoveInitialInventoryFromSave(string barcode)
         {
             Action staged = null;
-            foreach (var item in Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState)
+            var value = SaveNames.FirstOrDefault(x => x.Value == barcode);
+            if (!string.IsNullOrWhiteSpace(value.Key))
             {
-                if (item.key != name) continue;
+                var item = Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[value.Key];
                 bool changed = false;
-                foreach (var y in item.Value)
+                foreach (var y in item)
                 {
                     if (y.Key == "SLZ.Bonelab.initial_inventory" && y.Value != null)
                     {
-                        Core.Logger.Warning($"Found initial inventory in save (Level: {item.Key}), removing");
+                        Core.Logger.Warning($"Found initial inventory in save (Level: {value.Key}), removing");
                         staged += () =>
                         {
                             changed = true;
-                            item.Value[y.Key] = null;
+                            item[y.Key] = null;
                         };
                     }
                 }
                 staged += () =>
                 {
                     if (!changed) return;
-                    Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[item.key] = item.value;
+                    Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[value.Key] = item;
                 };
+
+                staged?.Invoke();
+                return Il2CppSLZ.Bonelab.SaveData.DataManager.TrySaveActiveSave(Il2CppSLZ.Marrow.SaveData.SaveFlags.Progression);
             }
-            staged?.Invoke();
-            return Il2CppSLZ.Bonelab.SaveData.DataManager.TrySaveActiveSave(Il2CppSLZ.Marrow.SaveData.SaveFlags.Progression);
+            return false;
         }
 
-        internal static bool DoesSaveForLevelExist(string name)
+        internal static bool DoesSaveForLevelExist(string barcode)
         {
             foreach (var item in Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState)
             {
-                if (string.Equals(item.key, name, StringComparison.OrdinalIgnoreCase))
+                var value = SaveNames.FirstOrDefault(x => x.Value == barcode);
+                if (!string.IsNullOrWhiteSpace(value.Key))
                 {
-                    Logger.Msg($"Found save for level: {name}");
                     return true;
                 }
             }
@@ -1102,9 +1134,9 @@ namespace KeepInventory
             {
                 if (mp_loadOnLevelLoad.Value)
                 {
-                    if (CommonBarcodes.Maps.All.Contains(levelInfo.barcode) && DoesSaveForLevelExist(levelInfo.title))
+                    if (DoesSaveForLevelExist(levelInfo.barcode))
                     {
-                        if (mp_initialInventoryRemove.Value) RemoveInitialInventoryFromSave(levelInfo.title);
+                        if (mp_initialInventoryRemove.Value) RemoveInitialInventoryFromSave(levelInfo.barcode);
                     }
                     if (HasFusion && IsConnected && (!IsFusionLibraryInitialized || !mp_fusionSupport.Value))
                     {
