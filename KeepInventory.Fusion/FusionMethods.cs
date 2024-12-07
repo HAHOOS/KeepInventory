@@ -189,12 +189,10 @@ namespace KeepInventory.Fusion
                     {
                         if (PlayerIdManager.LocalSmallId != PlayerIdManager.HostSmallId)
                         {
-                            MsgFusionPrefix("Local player is not host, sending to server");
                             MessageSender.SendToServer(NetworkChannel.Reliable, msg);
                         }
                         else
                         {
-                            MsgFusionPrefix("Local player is host, reading message");
                             MessageSender.BroadcastMessage(NetworkChannel.Reliable, msg);
                         }
                     }
