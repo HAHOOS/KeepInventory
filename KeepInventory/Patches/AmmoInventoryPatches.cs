@@ -1,6 +1,10 @@
-﻿using HarmonyLib;
+﻿using System;
+
+using HarmonyLib;
 
 using Il2CppSLZ.Marrow;
+
+using KeepInventory.Saves.V2;
 
 namespace KeepInventory.Patches
 {
@@ -11,6 +15,14 @@ namespace KeepInventory.Patches
     public static class AmmoInventoryPatches
     {
         /// <summary>
+        /// Save that should be used when AmmoInventory has <see cref="AmmoInventory.Awake"/> triggered
+        /// <para>
+        /// Setting this to <see langword="null"/> will cause the adding to not be done. When the adding will complete, the save will return to the value of <see langword="null"/>
+        /// </para>
+        /// </summary>
+        public static Save Save { get; set; }
+
+        /// <summary>
         /// Runs after <see cref="AmmoInventory.Awake"/> is run, adds ammo if requested
         /// </summary>
         /// <param name="__instance">Instance of <see cref="AmmoInventory"/></param>
@@ -19,15 +31,25 @@ namespace KeepInventory.Patches
         [HarmonyPriority(0)]
         public static void Awake(AmmoInventory __instance)
         {
-            if (!Core.LoadAmmoOnAwake) return;
+            if (Save == null) return;
             if (Core.mp_ammosaving.Value)
             {
-                if (__instance != Core.GetAmmoInventory())
+                try
                 {
-                    return;
+                    if (__instance != Core.GetAmmoInventory())
+                    {
+                        return;
+                    }
+                    InventoryManager.AddSavedAmmo(Save, Core.mp_showNotifications.Value);
                 }
-                Core.LoadAmmoOnAwake = false;
-                Core.AddSavedAmmo(Core.mp_showNotifications.Value);
+                catch (Exception ex)
+                {
+                    Core.Logger.Error($"An unexpected error has occurred while attempting to add saved ammo, exception:\n{ex}");
+                }
+                finally
+                {
+                    Save = null;
+                }
             }
         }
     }

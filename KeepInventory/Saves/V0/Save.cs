@@ -2,7 +2,7 @@
 
 using Tomlet.Attributes;
 
-namespace KeepInventory.Saves
+namespace KeepInventory.Saves.V0
 {
     /// <summary>
     /// Class that gets serialized or deserialized, holds all saved info about inventory, ammo etc.
@@ -13,47 +13,36 @@ namespace KeepInventory.Saves
         /// The version of the save
         /// </summary>
         [TomlPrecedingComment("The version of the save")]
-        public int Version = 1;
+        public readonly int Version = 0;
 
         /// <summary>
-        /// The amount of light ammo left
+        /// Saved ammo of type Light
         /// </summary>
         [TomlPrecedingComment("The amount of light ammo left")]
-        public int LightAmmo;
+        public int AmmoLight;
 
         /// <summary>
-        /// The amount of medium ammo left
+        /// Saved ammo of type Medium
         /// </summary>
         [TomlPrecedingComment("The amount of medium ammo left")]
-        public int MediumAmmo;
+        public int AmmoMedium;
 
         /// <summary>
-        /// The amount of heavy ammo left
+        /// Saved ammo of type Heavy
         /// </summary>
         [TomlPrecedingComment("The amount of heavy ammo left")]
-        public int HeavyAmmo;
+        public int AmmoHeavy;
 
         /// <summary>
-        /// List of all slots and the spawnables stored in them
+        /// Saved items in the inventory
         /// </summary>
         [TomlPrecedingComment("List of all slots & the spawnables stored in them")]
-        public List<SaveSlot> InventorySlots = [];
+        public Dictionary<string, string> ItemSlots = [];
 
         /// <summary>
         /// Create new instance of <see cref="Save"/>
         /// </summary>
         public Save()
         { }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/> from an old one
-        /// </summary>
-        public Save(Save old)
-        {
-            LightAmmo = old.LightAmmo;
-            MediumAmmo = old.MediumAmmo;
-            HeavyAmmo = old.HeavyAmmo;
-            InventorySlots = new List<SaveSlot>(old.InventorySlots);
-        }
     }
 }

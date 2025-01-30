@@ -55,7 +55,7 @@ namespace KeepInventory.Utilities
                 var name = executing.GetName();
                 if (name != null)
                 {
-                    UserAgent = $"{name.Name} / {name.Version}";
+                    UserAgent = $"{name.Name} / {name.Version} C# Application";
                 }
             }
         }

@@ -5,7 +5,7 @@ using static Il2CppSLZ.Marrow.Gun;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace KeepInventory.Saves
+namespace KeepInventory.Saves.V1
 {
     /// <summary>
     /// Class that holds information regarding a <see cref="Gun"/>

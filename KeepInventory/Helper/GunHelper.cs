@@ -1,6 +1,11 @@
-﻿using Il2CppSLZ.Marrow;
+﻿using System;
 
-using KeepInventory.Saves;
+using BoneLib;
+
+using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Data;
+
+using KeepInventory.Saves.V2;
 
 namespace KeepInventory.Helper
 {
@@ -10,25 +15,91 @@ namespace KeepInventory.Helper
     public static class GunHelper
     {
         /// <summary>
-        /// Sends a message to the Fusion Server if connected
+        /// Loads a magazine into a gun while having full Fusion support
         /// </summary>
-        /// <param name="gun">The gun to update</param>
-        /// <param name="info">The data to update with</param>
-        /// <param name="slotColor">Color that will be used in the slot prefix</param>
-        /// <param name="slot">The save slot (debugging purposes)</param>
-        /// <param name="name">Name of the crate (debugging purposes)</param>
-        /// <param name="barcode">Barcode of the spawnable (debugging purposes)</param>
-        /// <param name="printMessages">If <see langword="true"/>, the method will print debug messages using <see cref="MelonLoader.MelonLogger.Instance"/></param>
-        public static void SendFusionMessage(Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
+        /// <param name="gun">The gun to load the magazine to</param>
+        /// <param name="rounds">The amount of rounds in the magazine, -1 will be the default max</param>
+        /// <param name="callback">Callback to be called when completed</param>
+        public static void LoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
         {
-            if (Core.IsConnected)
+            ArgumentNullException.ThrowIfNull(gun, nameof(gun));
+            if (rounds == -1) rounds = gun.defaultMagazine.rounds;
+            if (!Utilities.Fusion.IsConnected)
             {
-                Fusion.FusionMethods.SendFusionMessage(gun, info);
+                var task = gun.ammoSocket.ForceLoadAsync(new MagazineData
+                {
+                    spawnable = gun.defaultMagazine.spawnable,
+                    rounds = rounds,
+                    platform = gun.defaultMagazine.platform,
+                });
+                var awaiter = task.GetAwaiter();
+
+                void something()
+                {
+                    gun.MagazineState.SetCartridge(rounds);
+                    callback?.Invoke();
+                }
+
+                awaiter.OnCompleted((System.Action)something);
             }
             else
             {
-                // HACK: Make it seem like its a fusion message to avoid loop
-                UpdateProperties(gun, info, slotColor, slot, name, barcode, printMessages, true);
+                LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
+                {
+                    position = Player.Head.position,
+                    rotation = Player.Head.rotation,
+                    spawnable = gun.defaultMagazine.spawnable,
+                    spawnEffect = false,
+                    spawnCallback = (spawn) =>
+                    {
+                        var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
+                        if (gunExt == null)
+                            return;
+
+                        var data = new LabFusion.Network.MagazineInsertData
+                        {
+                            smallId = LabFusion.Player.PlayerIdManager.LocalSmallId,
+                            gunId = gunExt.Id,
+                            magazineId = spawn.entity.Id
+                        };
+                        using var writer = LabFusion.Network.FusionWriter.Create();
+                        writer.Write(data);
+                        using var msg = LabFusion.Network.FusionMessage.Create(LabFusion.Network.NativeMessageTag.MagazineInsert, writer);
+                        LabFusion.Network.MessageSender.SendToServer(LabFusion.Network.NetworkChannel.Reliable, msg);
+
+                        var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
+                        var mag = spawn.spawned.GetComponent<Magazine>();
+
+                        if (socketExtender == null || mag == null)
+                            return;
+
+                        // Insert mag into gun
+                        if (socketExtender.Component._magazinePlug)
+                        {
+                            var otherPlug = socketExtender.Component._magazinePlug;
+
+                            if (otherPlug != mag.magazinePlug)
+                            {
+                                LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
+
+                                if (otherPlug)
+                                {
+                                    LabFusion.Extensions.AlignPlugExtensions.ForceEject(otherPlug);
+                                }
+
+                                LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
+                            }
+                        }
+                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(mag.magazinePlug.host);
+
+                        LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
+                        mag.magazinePlug.InsertPlug(socketExtender.Component);
+                        LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
+
+                        gun.MagazineState.SetCartridge(rounds);
+                        callback?.Invoke();
+                    }
+                });
             }
         }
 
@@ -45,23 +116,13 @@ namespace KeepInventory.Helper
         /// <param name="fusionMessage">If <see langword="true"/>, this method will be treated as it was run by a <see cref="LabFusion.Network.FusionMessage"/>, which means it will not send a fusion message</param>
         public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true, bool fusionMessage = false)
         {
-            const bool useFusion = true;
-
+            if (string.IsNullOrWhiteSpace(name)) name = "N/A";
+            if (string.IsNullOrWhiteSpace(barcode)) barcode = "N/A";
             string slotName = slot == null ? "N/A" : string.IsNullOrWhiteSpace(slot.SlotName) ? "N/A" : slot.SlotName;
-            if (gun == null || info == null) return;
-            if (Core.HasFusion && Core.IsConnected && !fusionMessage && useFusion)
+
+            if (gun != null && info != null)
             {
-                if (!Core.IsFusionLibraryInitialized || !Core.mp_fusionSupport.Value)
-                {
-                    Core.Logger.Warning($"[{slotName}] The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. To update gun properties in Fusion servers, check if you have the Fusion Library in UserData > KeepInventory (there should be a file called 'KeepInventory.Fusion.dll') or try enabling 'Fusion Support' in settings");
-                    return;
-                }
-                if (printMessages) Core.MsgPrefix("Sending request to host to edit gun data for everyone", slotName, slotColor);
-                SendFusionMessage(gun, info, slotColor, slot, name, barcode, printMessages);
-            }
-            else
-            {
-                if (gun != null)
+                try
                 {
                     void other()
                     {
@@ -108,16 +169,7 @@ namespace KeepInventory.Helper
                         var mag = info.GetMagazineData(gun);
                         if (mag?.spawnable?.crateRef != null && !string.IsNullOrWhiteSpace(mag.platform))
                         {
-                            var task = gun.ammoSocket.ForceLoadAsync(info.GetMagazineData(gun));
-                            var awaiter = task.GetAwaiter();
-
-                            void something()
-                            {
-                                gun.MagazineState.SetCartridge(info.RoundsLeft);
-                                other();
-                            }
-
-                            awaiter.OnCompleted((Il2CppSystem.Action)something);
+                            LoadMagazine(gun, info.RoundsLeft, other);
                         }
                         else
                         {
@@ -129,6 +181,11 @@ namespace KeepInventory.Helper
                     {
                         other();
                     }
+                }
+                catch (Exception ex)
+                {
+                    Core.Logger.Error($"An unexpected error has occurred while applying gun info, exception:\n{ex}");
+                    BLHelper.SendNotification("Error", "Failed to successfully apply gun info to the gun, check the console or logs for more info", true, 3f, BoneLib.Notifications.NotificationType.Error);
                 }
             }
         }

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 using Tomlet.Attributes;
 
-namespace KeepInventory.Saves
+namespace KeepInventory.Saves.V1
 {
     /// <summary>
     /// Class used in saving inventory slots
@@ -41,7 +41,7 @@ namespace KeepInventory.Saves
         {
             get
             {
-                return JsonSerializer.Serialize<GunInfo>(GunInfo, new JsonSerializerOptions() { WriteIndented = false });
+                return JsonSerializer.Serialize(GunInfo, new JsonSerializerOptions() { WriteIndented = false });
             }
 
             set

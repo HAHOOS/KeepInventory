@@ -7,6 +7,7 @@
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
+		<Configurations>Debug;Release;MelonLoader;SDK</Configurations>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
@@ -54,6 +55,14 @@
 		<Reference Include="0Harmony">
 			<HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Update="SDK\Disable.cs">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Compile>
+	  <Compile Update="SDK\ForceSave.cs">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Compile>
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods&quot;" />
