@@ -1,21 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 
 using KeepInventory.Helper;
-using KeepInventory.Menu;
 using KeepInventory.Saves.V2;
-using KeepInventory.Utilities;
 
-using MelonLoader;
 using MelonLoader.Utils;
 
 using Tomlet;
-using Tomlet.Exceptions;
 using Tomlet.Models;
 
 namespace KeepInventory
@@ -50,7 +47,7 @@ namespace KeepInventory
         /// </summary>
         public static ReadOnlyCollection<Save> Saves => _Saves.AsReadOnly();
 
-        internal static FileSystemSafeWatcher FileSystemWatcher { get; private set; }
+        internal static FileSystemWatcher FileSystemWatcher { get; private set; }
 
         internal static void Setup()
         {
@@ -130,8 +127,8 @@ namespace KeepInventory
                                         }
                                     }
                                     Save save = null;
-                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", true, false, (KeepInventory.Saves.V0.Save)_value);
-                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", true, false, (KeepInventory.Saves.V1.Save)_value);
+                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (KeepInventory.Saves.V0.Save)_value);
+                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (KeepInventory.Saves.V1.Save)_value);
                                     RegisterSave(save, true);
                                     if (File.Exists(path1) && correct == 0) File.Delete(path1);
                                     if (File.Exists(path2) && correct == 1) File.Delete(path2);
@@ -302,7 +299,7 @@ namespace KeepInventory
         internal static void CreateFileWatcher()
         {
             FileSystemWatcher?.Dispose();
-            FileSystemWatcher = new FileSystemSafeWatcher(SavesDirectory)
+            FileSystemWatcher = new FileSystemWatcher(SavesDirectory)
             {
                 EnableRaisingEvents = true
             };

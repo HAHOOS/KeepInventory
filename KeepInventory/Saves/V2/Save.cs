@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using KeepInventory.Helper;
+
+using Color = System.Drawing.Color;
 
 namespace KeepInventory.Saves.V2
 {
@@ -51,6 +54,26 @@ namespace KeepInventory.Saves.V2
             {
                 _id = value;
                 OnPropertyChanged?.Invoke(nameof(ID), _id, value);
+            }
+        }
+
+        /// <summary>
+        /// Color of the text in the menu
+        /// </summary>
+        [JsonIgnore]
+        public Color Color = Color.FromArgb(255, 255, 255);
+
+        /// <summary>
+        /// HEX Color of the text in the menu
+        /// </summary>
+        [JsonPropertyName("Color")]
+        internal string HEXColor
+        {
+            get => $"{Color.R:X2}{Color.G:X2}{Color.B:X2}";
+            set
+            {
+                var translated = ColorTranslator.FromHtml(value);
+                Color = translated;
             }
         }
 
@@ -187,6 +210,7 @@ namespace KeepInventory.Saves.V2
         {
             _name = old.Name;
             _id = old.ID;
+            Color = old.Color;
             _canBeOverwrittenByPlayer = old.CanBeOverwrittenByPlayer;
             _isHidden = old.IsHidden;
             _lightAmmo = old.LightAmmo;
@@ -200,7 +224,7 @@ namespace KeepInventory.Saves.V2
         /// Create new instance of <see cref="Save"/> from an old one
         /// </summary>
         [JsonConstructor]
-        public Save(int Version, string Name, string ID, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
+        public Save(int Version, string Name, string ID, Color Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)
             {
@@ -209,6 +233,7 @@ namespace KeepInventory.Saves.V2
             this.Version = Version;
             this._name = Name;
             this._id = ID;
+            this.Color = Color;
             this._isHidden = IsHidden;
             this._canBeOverwrittenByPlayer = CanBeOverwrittenByPlayer;
             this._lightAmmo = LightAmmo;
@@ -225,10 +250,11 @@ namespace KeepInventory.Saves.V2
         /// <summary>
         /// Create new instance of <see cref="Save"/> from a V1
         /// </summary>
-        public Save(string id, string name, bool canBeOverwritten, bool isHidden, V1.Save v1save)
+        public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V1.Save v1save)
         {
             _id = id;
             _name = name;
+            Color = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v1save.LightAmmo;
@@ -241,12 +267,13 @@ namespace KeepInventory.Saves.V2
         }
 
         /// <summary>
-        /// Create new instance of <see cref="Save"/> from a V1
+        /// Create new instance of <see cref="Save"/> from a V0
         /// </summary>
-        public Save(string id, string name, bool canBeOverwritten, bool isHidden, V0.Save v0save)
+        public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V0.Save v0save)
         {
             _id = id;
             _name = name;
+            Color = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v0save.AmmoLight;
@@ -292,6 +319,7 @@ namespace KeepInventory.Saves.V2
             if (this.CanBeOverwrittenByPlayer != save.CanBeOverwrittenByPlayer) this.CanBeOverwrittenByPlayer = save.CanBeOverwrittenByPlayer;
             if (this.IsHidden != save.IsHidden) this.IsHidden = save.IsHidden;
             if (this.Name != save.Name) this.Name = save.Name;
+            if (this.Color != save.Color) this.Color = save.Color;
             if (this.InventorySlots != save.InventorySlots) this.InventorySlots = save.InventorySlots;
             if (this.HeavyAmmo != save.HeavyAmmo) this.HeavyAmmo = save.HeavyAmmo;
             if (this.MediumAmmo != save.MediumAmmo) this.MediumAmmo = save.MediumAmmo;

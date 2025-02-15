@@ -244,13 +244,16 @@ namespace KeepInventory.Menu
                 defaultSaveElements.Add(blank.Element);
             }
 
-            UpdateSavesPage();
+            UpdatePresetsPage();
         }
 
         private static readonly List<SavePage> SavePages = [];
 
-        internal static void UpdateSavesPage()
+        internal static void UpdatePresetsPage()
         {
+            if (PresetsPage == null)
+                return;
+
             PresetsPage.RemoveAll();
 
             defaultSaveElements.ForEach(element => PresetsPage.Add(element));
@@ -271,7 +274,7 @@ namespace KeepInventory.Menu
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
                 if (savePage == null)
                 {
-                    page = PresetsPage.CreatePage(save.Name, Color.white, 0, false);
+                    page = PresetsPage.CreatePage($"<color=#{save.HEXColor}>{save.Name}</color>", Color.white, 0, false);
                     savePage = new SavePage(page, save);
                     SavePages.Add(savePage);
                 }
@@ -282,7 +285,7 @@ namespace KeepInventory.Menu
 
                 FunctionElement link = null;
 
-                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"+ {save.Name} +" : save.Name, Color.white, () =>
+                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"+ <color=#{save.HEXColor}>{save.Name}</color> +" : $"<color=#{save.HEXColor}>{save}</color>", Color.white, () =>
                 {
                     if (RemoveSavesOnPress)
                     {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 using BoneLib.BoneMenu;
 
@@ -45,6 +44,8 @@ namespace KeepInventory.Menu
 
         public StringElement Name { get; set; }
 
+        public Page ColorPage { get; set; }
+
         public Page DataPage { get; set; }
         public Page AmmoPage { get; set; }
 
@@ -58,19 +59,18 @@ namespace KeepInventory.Menu
         public FunctionElement SaveInventoryFunction { get; private set; }
         public FunctionElement LoadInventoryFunction { get; private set; }
 
-        public ObservableCollection<byte> SelectedPlayers { get; }
+        public List<byte> SelectedPlayers { get; }
 
         public void Clear()
         {
             Page?.RemoveAll();
+            DataPage?.RemoveAll();
+            AmmoPage?.RemoveAll();
+            SharePage?.RemoveAll();
+            ColorPage?.RemoveAll();
 
             ID = null;
             Name = null;
-
-            DataPage = null;
-
-            AmmoPage = null;
-            SharePage = null;
 
             LightAmmo = null;
             MediumAmmo = null;
@@ -90,14 +90,21 @@ namespace KeepInventory.Menu
             Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) => CurrentSave.Name = value);
             Name.Value = CurrentSave.Name;
 
-            DataPage = Page.CreatePage("Data", Color.yellow, 0, true);
-            AmmoPage = DataPage.CreatePage("Ammo", Color.red, 0, true);
+            ColorPage ??= Page.CreatePage("Color", Color.magenta, 0, false);
+            Page.CreatePageLink(ColorPage);
+            SetupColor();
+
+            DataPage ??= Page.CreatePage("Data", Color.yellow, 0, false);
+            Page.CreatePageLink(DataPage);
+            AmmoPage ??= DataPage.CreatePage("Ammo", Color.red, 0, false);
+            Page.CreatePageLink(AmmoPage);
 
             SetupAmmo();
 
             if (Core.HasFusion && Core.IsFusionLibraryInitialized)
             {
-                SharePage = Page.CreatePage("Share", Color.cyan, 0, true);
+                SharePage ??= Page.CreatePage("Share", Color.cyan, 0, false);
+                Page.CreatePageLink(SharePage);
                 SetupFusion();
                 SetupShare();
             }
@@ -107,12 +114,12 @@ namespace KeepInventory.Menu
                 if (Core.CurrentSave != CurrentSave)
                 {
                     Core.CurrentSave = CurrentSave;
-                    BLHelper.SendNotification("Success", $"Successfully set '{CurrentSave}' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
+                    BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.HEXColor}>{CurrentSave}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
                     Setup();
                 }
                 else
                 {
-                    BLHelper.SendNotification("Warning", $"{CurrentSave} is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
+                    BLHelper.SendNotification("Warning", $"<color=#{CurrentSave.HEXColor}>{CurrentSave}</color> is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
                 }
             }) : Page.CreateLabel("Save is default", Color.white);
             if (CurrentSave.CanBeOverwrittenByPlayer)
@@ -129,6 +136,42 @@ namespace KeepInventory.Menu
                 SaveInventoryFunction.SetProperty(ElementProperties.NoBorder);
             }
             LoadInventoryFunction = Page.CreateFunction("Load inventory from save", Color.yellow, () => InventoryManager.LoadSavedInventory(CurrentSave));
+        }
+
+        private void SetupColor()
+        {
+            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.HEXColor}>{CurrentSave}</color>", Color.white, null);
+
+            const float increment = 0.05f;
+
+            Color.RGBToHSV(new Color(CurrentSave.Color.R / 255, CurrentSave.Color.G / 255, CurrentSave.Color.B / 255), out float H, out float S, out float V);
+
+            void apply()
+            {
+                var unity = Color.HSVToRGB(H, S, V);
+                var color = System.Drawing.Color.FromArgb(0,
+                    (int)Math.Round(unity.r * 255, 0),
+                    (int)Math.Round(unity.g * 255, 0),
+                    (int)Math.Round(unity.b * 255, 0));
+                CurrentSave.Color = color;
+                preview.ElementName = $"Preview: <color=#{CurrentSave.HEXColor}>{CurrentSave.Name}</color>";
+            }
+
+            ColorPage.CreateFloat("Hue", Color.red, H, increment, 0, 1, (val) =>
+            {
+                H = val;
+                apply();
+            });
+            ColorPage.CreateFloat("Saturation", Color.green, S, increment, 0, 1, (val) =>
+            {
+                S = val;
+                apply();
+            });
+            ColorPage.CreateFloat("Value", Color.blue, V, increment, 0, 1, (val) =>
+            {
+                V = val;
+                apply();
+            });
         }
 
         internal int ammoIDIndex = 0;
@@ -156,7 +199,9 @@ namespace KeepInventory.Menu
 
         internal void SetupAmmo()
         {
-            if (AmmoPage == null) throw new ArgumentNullException(nameof(AmmoPage));
+            if (AmmoPage == null)
+                throw new ArgumentNullException(nameof(AmmoPage));
+
             AmmoPage.RemoveAll();
             int id = GetIncrementDecrement();
 
