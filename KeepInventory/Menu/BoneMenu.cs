@@ -93,9 +93,12 @@ namespace KeepInventory.Menu
 
             BlacklistPage = ModPage.CreatePage("Blacklist", Color.red);
             BlacklistPage.CreateBoolPref("Blacklist BONELAB Levels", Color.cyan, ref Core.mp_blacklistBONELABlevels, prefDefaultValue: true);
+            BlacklistPage.CreateBoolPref("Blacklist LABWORKS Levels", Color.yellow, ref Core.mp_blacklistLABWORKSlevels, prefDefaultValue: true);
             Core.statusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
             {
-                if (Core.defaultBlacklistedLevels.Contains(Core.levelInfo.barcode)) return;
+                if (Core.bonelabBlacklist.Contains(Core.levelInfo.barcode) || Core.labworksBlacklist.Contains(Core.levelInfo.barcode))
+                    return;
+
                 List<string> blacklistList = Core.mp_blacklistedLevels.Value;
                 if (blacklistList.Contains(Core.levelInfo.barcode))
                 {

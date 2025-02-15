@@ -68,9 +68,9 @@ namespace KeepInventory
         internal static Assembly MLAssembly;
 
         /// <summary>
-        /// List of all default blacklisted BONELAB levels
+        /// List of all blacklisted BONELAB levels
         /// </summary>
-        public readonly static List<string> defaultBlacklistedLevels = [
+        public readonly static List<string> bonelabBlacklist = [
                 CommonBarcodes.Maps.Home,
                 CommonBarcodes.Maps.Ascent,
                 CommonBarcodes.Maps.Descent,
@@ -90,7 +90,29 @@ namespace KeepInventory
                 CommonBarcodes.Maps.DropPit,
                 CommonBarcodes.Maps.NeonTrial,
                 CommonBarcodes.Maps.MainMenu,
-            ];
+        ];
+
+        /// <summary>
+        /// List of all blacklisted LABWORKS levels
+        /// </summary>
+        public readonly static List<string> labworksBlacklist = [
+           "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
+           "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks02Museum",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks03Streets",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks08Tower",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks11Arena",
+           "volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom",
+           "volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01",
+           "volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02"
+        ];
 
         internal static MelonLogger.Instance Logger { get; private set; }
 
@@ -165,6 +187,11 @@ namespace KeepInventory
         /// An entry with a boolean value indicating whether or not should BONELAB levels (except VoidG114 and BL Hub) be blacklisted
         /// </summary>
         internal static MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
+
+        /// <summary>
+        /// An entry with a boolean value indicating whether or not should LABWORKS levels (except Sandbox levels, only campaign) be blacklisted
+        /// </summary>
+        internal static MelonPreferences_Entry<bool> mp_blacklistLABWORKSlevels;
 
         #endregion Blacklist
 
@@ -479,7 +506,8 @@ namespace KeepInventory
         {
             if (!mp_saveOnLevelUnload.Value) return;
             var list = new List<string>(mp_blacklistedLevels.Value);
-            if (mp_blacklistBONELABlevels.Value) list.AddRange(defaultBlacklistedLevels);
+            if (mp_blacklistBONELABlevels.Value) list.AddRange(bonelabBlacklist);
+            if (mp_blacklistLABWORKSlevels.Value) list.AddRange(labworksBlacklist);
             if (!list.Contains(levelInfo.barcode))
             {
                 if (CurrentSave != null)
@@ -520,7 +548,8 @@ namespace KeepInventory
             }
             levelInfo = obj;
             var list = new List<string>(mp_blacklistedLevels.Value);
-            if (mp_blacklistBONELABlevels.Value) list.AddRange(defaultBlacklistedLevels);
+            if (mp_blacklistBONELABlevels.Value) list.AddRange(bonelabBlacklist);
+            if (mp_blacklistLABWORKSlevels.Value) list.AddRange(labworksBlacklist);
             if (!list.Contains(obj.barcode))
             {
                 if (mp_loadOnLevelLoad.Value)
@@ -598,6 +627,8 @@ namespace KeepInventory
 
             mp_blacklistBONELABlevels = PrefsCategory.CreateEntry<bool>("BlacklistBONELABLevels", true, "Blacklist BONELAB Levels",
                 description: "If true, most of the BONELAB levels (except VoidG114 and BONELAB Hub) will be blacklisted from saving/loading inventory");
+            mp_blacklistLABWORKSlevels = PrefsCategory.CreateEntry<bool>("BlacklistLABWORKSLevels", true, "Blacklist LABWORKS Levels",
+                description: "If true, LABWORKS levels from the campaign (not sandbox levels) will be blacklisted from saving/loading inventory");
             mp_blacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
                 description: "List of levels that will not save/load inventory");
 
