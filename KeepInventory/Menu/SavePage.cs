@@ -9,17 +9,11 @@ using KeepInventory.Saves.V2;
 
 using UnityEngine;
 
-using static KeepInventory.Utilities.Gradient;
-
-using Gradient = KeepInventory.Utilities.Gradient;
-
 namespace KeepInventory.Menu
 {
     internal class SavePage
     {
         public readonly Page Page;
-
-        public Page ColorPage { get; private set; }
 
         private Save _save;
 
@@ -39,21 +33,17 @@ namespace KeepInventory.Menu
         public SavePage(Page page)
         {
             Page = page;
-            ColorPage = Page.CreatePage(Gradient.CreateRainbowGradient("Change Color", Gradient.GradientReturnType.UnityRichText), Color.white, 0, false);
         }
 
         public SavePage(Page page, Save save)
         {
             Page = page;
-            ColorPage = Page.CreatePage(Gradient.CreateRainbowGradient("Change Color", Gradient.GradientReturnType.UnityRichText), Color.white, 0, false);
             CurrentSave = save;
         }
 
         public FunctionElement ID { get; set; }
 
         public StringElement Name { get; set; }
-        public ColorPage SelectColor { get; set; }
-        public FunctionElement SelectColorLink { get; set; }
 
         public Page DataPage { get; set; }
         public Page AmmoPage { get; set; }
@@ -68,7 +58,7 @@ namespace KeepInventory.Menu
         public FunctionElement SaveInventoryFunction { get; private set; }
         public FunctionElement LoadInventoryFunction { get; private set; }
 
-        public ObservableCollection<byte> SelectedPlayers { get; private set; }
+        public ObservableCollection<byte> SelectedPlayers { get; }
 
         public void Clear()
         {
@@ -76,9 +66,6 @@ namespace KeepInventory.Menu
 
             ID = null;
             Name = null;
-
-            SelectColor = null;
-            SelectColorLink = null;
 
             DataPage = null;
 
@@ -103,23 +90,6 @@ namespace KeepInventory.Menu
             Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) => CurrentSave.Name = value);
             Name.Value = CurrentSave.Name;
 
-            ColorPage = Page.CreatePage(Gradient.CreateRainbowGradient("Change Color", Gradient.GradientReturnType.UnityRichText), Color.white);
-            SelectColor = new ColorPage(ColorPage, Name.Value);
-            SelectColor.Applied += (type, returned) =>
-            {
-                if (type == Menu.ColorPage.ColorType.SolidColor)
-                {
-                    CurrentSave.Gradient = null;
-                    CurrentSave.Color = (System.Drawing.Color)returned;
-                }
-                else
-                {
-                    CurrentSave.Gradient = (GradientObject)returned;
-                    CurrentSave.Color = null;
-                }
-            };
-            SelectColor.SetupPage();
-
             DataPage = Page.CreatePage("Data", Color.yellow, 0, true);
             AmmoPage = DataPage.CreatePage("Ammo", Color.red, 0, true);
 
@@ -137,12 +107,12 @@ namespace KeepInventory.Menu
                 if (Core.CurrentSave != CurrentSave)
                 {
                     Core.CurrentSave = CurrentSave;
-                    BLHelper.SendNotification("Success", $"Successfully set '{CurrentSave.GenerateRichText()}' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
+                    BLHelper.SendNotification("Success", $"Successfully set '{CurrentSave}' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
                     Setup();
                 }
                 else
                 {
-                    BLHelper.SendNotification("Warning", $"{CurrentSave.GenerateRichText()} is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
+                    BLHelper.SendNotification("Warning", $"{CurrentSave} is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
                 }
             }) : Page.CreateLabel("Save is default", Color.white);
             if (CurrentSave.CanBeOverwrittenByPlayer)

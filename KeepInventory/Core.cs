@@ -23,10 +23,6 @@ using KeepInventory.Helper;
 using KeepInventory.Utilities;
 using KeepInventory.Menu;
 
-using KeepInventory.SDK;
-using Save = KeepInventory.Saves.V2.Save;
-using static KeepInventory.Utilities.Gradient;
-
 namespace KeepInventory
 {
     /// <summary>
@@ -65,8 +61,6 @@ namespace KeepInventory
         /// Instance of the <see cref="Core"/> class
         /// </summary>
         public static Core Instance { get; internal set; }
-
-        internal static Action Update;
 
         /// <summary>
         /// Assembly of MelonLoader
@@ -379,13 +373,13 @@ namespace KeepInventory
         /// </summary>
         public override void OnUpdate()
         {
-            Update?.Invoke();
             var inv = Core.GetAmmoInventory();
             if (inv != null)
             {
-                if (inv._groupCounts.ContainsKey("light")) _lastAmmoCount_light = inv._groupCounts["light"];
-                if (inv._groupCounts.ContainsKey("medium")) _lastAmmoCount_medium = inv._groupCounts["medium"];
-                if (inv._groupCounts.ContainsKey("heavy")) _lastAmmoCount_heavy = inv._groupCounts["heavy"];
+                // HACK: For whatever reason when the level is unloading it sets the ammo to 10000000
+                if (inv._groupCounts.ContainsKey("light") && inv._groupCounts["light"] != 10000000) _lastAmmoCount_light = inv._groupCounts["light"];
+                if (inv._groupCounts.ContainsKey("medium") && inv._groupCounts["medium"] != 10000000) _lastAmmoCount_medium = inv._groupCounts["medium"];
+                if (inv._groupCounts.ContainsKey("heavy") && inv._groupCounts["heavy"] != 10000000) _lastAmmoCount_heavy = inv._groupCounts["heavy"];
             }
         }
 
@@ -517,7 +511,7 @@ namespace KeepInventory
                 {
                     BLHelper.SendNotification(
                         "Update!",
-                        new NotificationText($"There is a new version of KeepInventory. Go to Thunderstore and download the latest version which is {$"v{ThunderstorePackage.Latest.Version}".CreateUnityColor(System.Drawing.Color.LimeGreen)}", Color.white, true),
+                        new NotificationText($"There is a new version of KeepInventory. Go to Thunderstore and download the latest version which is <color=#00FF00>v{ThunderstorePackage.Latest.Version}</color>", Color.white, true),
                         true,
                         5f,
                         NotificationType.Warning);
@@ -546,50 +540,7 @@ namespace KeepInventory
                             statusElement.ElementName = "Current level is not blacklisted";
                             statusElement.ElementColor = Color.green;
 
-                            if (ForceSave.Instance == null)
-                            {
-                                InventoryManager.LoadSavedInventory(CurrentSave);
-                            }
-                            else
-                            {
-                                var save = SaveManager.Saves.FirstOrDefault(x => x.ID == ForceSave.Instance.ID);
-                                if (save != null)
-                                {
-                                    if (CurrentSave != null)
-                                        InventoryManager.LoadSavedInventory(save);
-                                    else
-                                        Core.Logger.Warning("No default save is set, cannot load");
-                                }
-                                else
-                                {
-                                    var slots = new List<Saves.V2.SaveSlot>();
-                                    ForceSave.Instance.Default.SaveSlots.ForEach(x => slots.Add(x));
-                                    save = new Save()
-                                    {
-                                        ID = ForceSave.Instance.ID,
-                                        Name = ForceSave.Instance.Name,
-                                        Color = !ForceSave.Instance.UseGradient ? ForceSave.Instance.Color : null,
-                                        Gradient = null,
-                                        HeavyAmmo = ForceSave.Instance.Default.HeavyAmmo,
-                                        MediumAmmo = ForceSave.Instance.Default.MediumAmmo,
-                                        LightAmmo = ForceSave.Instance.Default.LightAmmo,
-                                        CanBeOverwrittenByPlayer = ForceSave.Instance.CanBeOverwrittenByPlayer,
-                                        IsHidden = ForceSave.Instance.IsHidden,
-                                        IsFileWatcherEnabled = true,
-                                        InventorySlots = slots,
-                                    };
-                                    if (ForceSave.Instance.UseGradient)
-                                    {
-                                        var gradient = new GradientObject
-                                        {
-                                            UnityGradient = ForceSave.Instance.Gradient
-                                        };
-                                        save.Gradient = gradient;
-                                    }
-                                    SaveManager.RegisterSave(save, true);
-                                    InventoryManager.LoadSavedInventory(save);
-                                }
-                            }
+                            InventoryManager.LoadSavedInventory(CurrentSave);
                         }
                         catch (System.Exception ex)
                         {

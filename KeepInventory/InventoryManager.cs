@@ -13,7 +13,6 @@ using Il2CppSLZ.Marrow.Utilities;
 using KeepInventory.Utilities;
 using UnityEngine;
 
-using KeepInventory.SDK;
 using KeepInventory.Patches;
 
 namespace KeepInventory
@@ -466,16 +465,7 @@ namespace KeepInventory
                 Core.Logger.Error("Cannot load an empty save!");
                 return;
             }
-            if (Disable.Instance?.Disabled == true)
-            {
-                Core.Logger.Warning("Cannot load inventory from save due to the level having KeepInventory disabled");
-                return;
-            }
-            if (ForceSave.Instance != null && save != SaveManager.Saves.FirstOrDefault(x => x.ID == ForceSave.Instance.ID))
-            {
-                Core.Logger.Warning("Cannot load inventory from save due to the level forcing other save to be used");
-                return;
-            }
+
             if (Core.HasFusion && Utilities.Fusion.IsConnected && Utilities.Fusion.GamemodeCheck() && !Utilities.Fusion.DoesGamemodeAllow())
             {
                 Core.Logger.Warning("A gamemode is currently running, we cannot load your inventory!");

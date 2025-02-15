@@ -138,9 +138,8 @@ namespace KeepInventory.Menu
             OtherPage.CreateBoolPref("Fusion Support", Color.cyan, ref Core.mp_fusionSupport, prefDefaultValue: true);
             OtherPage.CreateBoolPref("Remove Initial Inventory From Save", Color.red, ref Core.mp_initialInventoryRemove, prefDefaultValue: true);
 
-            var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br>{"(Update available!)".CreateUnityColor(System.Drawing.Color.LimeGreen)}", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
+            var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
             modVersion.SetProperty(ElementProperties.NoBorder);
-            modVersion.SetTooltip("Version of KeepInventory");
             IsSetup = true;
         }
 
@@ -199,16 +198,15 @@ namespace KeepInventory.Menu
             SavingConfigPage.CreateBoolPref("Save Ammo", Color.white, ref Core.mp_ammosaving, prefDefaultValue: true);
             SavingConfigPage.CreateBoolPref("Save Gun Data", Color.white, ref Core.mp_saveGunData, prefDefaultValue: true);
 
-            PresetsPage ??= SavesPage.CreatePage("Presets".CreateUnityColor(System.Drawing.Color.LimeGreen), Color.white);
+            PresetsPage ??= SavesPage.CreatePage("<color=#00FF00>Presets</color>", Color.white);
             PresetsPage.RemoveAll();
 
             var nameElement = PresetsPage.CreateString("Name", Color.white, string.Empty, null);
-            var createElement = PresetsPage.CreateFunction("Create".CreateUnityColor(System.Drawing.Color.LimeGreen), Color.white, () =>
+            var createElement = PresetsPage.CreateFunction("<color=#00FF00>Create</color>", Color.white, () =>
             {
                 SaveManager.RegisterSave(new Saves.V2.Save()
                 {
                     Name = nameElement.Value,
-                    Color = System.Drawing.Color.White,
                     InventorySlots = [],
                     HeavyAmmo = 0,
                     LightAmmo = 0,
@@ -270,7 +268,7 @@ namespace KeepInventory.Menu
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
                 if (savePage == null)
                 {
-                    page = PresetsPage.CreatePage(save.GenerateRichText(), Color.white, 0, false);
+                    page = PresetsPage.CreatePage(save.Name, Color.white, 0, false);
                     savePage = new SavePage(page, save);
                     SavePages.Add(savePage);
                 }
@@ -281,7 +279,7 @@ namespace KeepInventory.Menu
 
                 FunctionElement link = null;
 
-                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"+ {save.GenerateRichText()} +" : save.GenerateRichText(), Color.white, () =>
+                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"+ {save.Name} +" : save.Name, Color.white, () =>
                 {
                     if (RemoveSavesOnPress)
                     {

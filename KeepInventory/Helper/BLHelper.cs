@@ -39,7 +39,6 @@ namespace KeepInventory.Helper
                 category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
@@ -60,7 +59,6 @@ namespace KeepInventory.Helper
                 category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
@@ -81,7 +79,6 @@ namespace KeepInventory.Helper
                 category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
@@ -102,7 +99,6 @@ namespace KeepInventory.Helper
                 category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 
@@ -124,7 +120,6 @@ namespace KeepInventory.Helper
                 callback?.InvokeActionSafe(x);
             });
             element.Value = value.Value; //BoneMenu temp hack fix
-            if (!string.IsNullOrWhiteSpace(value.Description)) element.SetTooltip(value.Description);
             return element;
         }
 

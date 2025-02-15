@@ -62,7 +62,7 @@ namespace KeepInventory.Utilities
                             Title = "KeepInventory | Save shared!",
                             SaveToMenu = true,
                             ShowPopup = true,
-                            Message = $"{player.Username} has shared a save with you called '{save.GenerateRichText()}'. Press accept to add save, decline will disregard this",
+                            Message = $"{player.Username} has shared a save with you called '{save.Name}'. Press accept to add save, decline will disregard this",
                             PopupLength = 15f,
                             Type = LabFusion.Utilities.NotificationType.INFORMATION,
                             OnAccepted = () => SaveManager.RegisterSave(save),
@@ -117,7 +117,7 @@ namespace KeepInventory.Utilities
         /// <returns></returns>
         public static List<FusionPlayer> GetShareablePlayers()
         {
-            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) return Internal_GetShareablePlayers().ToList();
+            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) return [.. Internal_GetShareablePlayers()];
             else return [];
         }
 
@@ -135,7 +135,7 @@ namespace KeepInventory.Utilities
         /// <returns></returns>
         public static List<FusionPlayer> GetPlayers()
         {
-            if (Core.HasFusion && IsConnected) return Internal_GetPlayers().ToList();
+            if (Core.HasFusion && IsConnected) return [.. Internal_GetPlayers()];
             else return [];
         }
 

@@ -5,13 +5,6 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-using System.Drawing;
-
-using KeepInventory.Utilities;
-using Gradient = KeepInventory.Utilities.Gradient;
-
-using static KeepInventory.Utilities.Gradient;
-
 using KeepInventory.Helper;
 
 namespace KeepInventory.Saves.V2
@@ -28,7 +21,7 @@ namespace KeepInventory.Saves.V2
         public readonly int Version = 2;
 
         [JsonIgnore]
-        public string _name;
+        private string _name;
 
         /// <summary>
         /// Name identifying the save
@@ -72,54 +65,6 @@ namespace KeepInventory.Saves.V2
         /// </summary>
         [JsonIgnore]
         public string FilePath { get; internal set; }
-
-        [JsonIgnore]
-        private Color? _drawingColor;
-
-        /// <summary>
-        /// Color as HEX that the name of the save will be displayed in BoneMenu
-        /// </summary>
-        [JsonIgnore]
-        public Color? DrawingColor
-        {
-            get { return _drawingColor; }
-            internal set
-            {
-                _drawingColor = value;
-                OnPropertyChanged?.Invoke(nameof(Color), _drawingColor, value);
-            }
-        }
-
-        /// <summary>
-        /// <see cref="Color"/> in a structure made for JSON serialization/deserialization
-        /// </summary>
-        [JsonPropertyName("Color")]
-        public JSONColor? Color
-        {
-            get { return _drawingColor; }
-            set
-            {
-                _drawingColor = value;
-                OnPropertyChanged?.Invoke(nameof(Color), _drawingColor, value);
-            }
-        }
-
-        [JsonIgnore]
-        private GradientObject? _gradient;
-
-        /// <summary>
-        /// Gradient for the name of the gradient, if <see langword="null"/> will use <see cref="Color"/> instead
-        /// </summary>
-        [JsonPropertyName("Gradient")]
-        public GradientObject? Gradient
-        {
-            get { return _gradient; }
-            set
-            {
-                _gradient = value;
-                OnPropertyChanged?.Invoke(nameof(Gradient), Gradient, value);
-            }
-        }
 
         [JsonIgnore]
         private bool _isHidden;
@@ -225,10 +170,6 @@ namespace KeepInventory.Saves.V2
         private void PostCreate()
         {
             // Currently empty
-            OnPropertyChanged += (name, oldval, newval) =>
-            {
-                //if (!string.IsNullOrEmpty(FilePath) && !Saving) TrySaveToFile(true);
-            };
         }
 
         /// <summary>
@@ -246,13 +187,12 @@ namespace KeepInventory.Saves.V2
         {
             _name = old.Name;
             _id = old.ID;
-            _drawingColor = old.Color;
             _canBeOverwrittenByPlayer = old.CanBeOverwrittenByPlayer;
             _isHidden = old.IsHidden;
             _lightAmmo = old.LightAmmo;
             _mediumAmmo = old.MediumAmmo;
             _heavyAmmo = old.HeavyAmmo;
-            _inventorySlots = new List<SaveSlot>(old.InventorySlots);
+            _inventorySlots = [.. old.InventorySlots];
             PostCreate();
         }
 
@@ -260,7 +200,7 @@ namespace KeepInventory.Saves.V2
         /// Create new instance of <see cref="Save"/> from an old one
         /// </summary>
         [JsonConstructor]
-        public Save(int Version, string Name, string ID, JSONColor? Color, GradientObject? Gradient, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
+        public Save(int Version, string Name, string ID, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)
             {
@@ -269,8 +209,6 @@ namespace KeepInventory.Saves.V2
             this.Version = Version;
             this._name = Name;
             this._id = ID;
-            this._drawingColor = Color;
-            this._gradient = Gradient;
             this._isHidden = IsHidden;
             this._canBeOverwrittenByPlayer = CanBeOverwrittenByPlayer;
             this._lightAmmo = LightAmmo;
@@ -287,11 +225,10 @@ namespace KeepInventory.Saves.V2
         /// <summary>
         /// Create new instance of <see cref="Save"/> from a V1
         /// </summary>
-        public Save(string id, string name, System.Drawing.Color color, bool canBeOverwritten, bool isHidden, V1.Save v1save)
+        public Save(string id, string name, bool canBeOverwritten, bool isHidden, V1.Save v1save)
         {
             _id = id;
             _name = name;
-            _drawingColor = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v1save.LightAmmo;
@@ -306,11 +243,10 @@ namespace KeepInventory.Saves.V2
         /// <summary>
         /// Create new instance of <see cref="Save"/> from a V1
         /// </summary>
-        public Save(string id, string name, System.Drawing.Color color, bool canBeOverwritten, bool isHidden, V0.Save v0save)
+        public Save(string id, string name, bool canBeOverwritten, bool isHidden, V0.Save v0save)
         {
             _id = id;
             _name = name;
-            _drawingColor = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v0save.AmmoLight;
@@ -333,23 +269,6 @@ namespace KeepInventory.Saves.V2
         /// </summary>
         public event Action<string, object, object> OnPropertyChanged;
 
-        /// <summary>
-        /// Generate rich text for the save, which uses the name and <see cref="Color"/> or <see cref="Gradient"/>
-        /// </summary>
-        /// <returns>Save name with specified in the properties colors</returns>
-        public string GenerateRichText()
-        {
-            if (string.IsNullOrWhiteSpace(Name)) return Name;
-            if (Gradient.HasValue && Gradient != null && Gradient.Value.TryGenerateGradient(Name, out string returned))
-            {
-                return string.IsNullOrWhiteSpace(returned) ? Name : returned;
-            }
-            else
-            {
-                return Color != null ? Name.CreateUnityColor((Color)Color) : Name;
-            }
-        }
-
         internal void Update(Save save)
         {
             ArgumentNullException.ThrowIfNull(save);
@@ -370,7 +289,6 @@ namespace KeepInventory.Saves.V2
                 Core.Logger.Error("The new ID is null or empty, will not overwrite");
                 throw new ArgumentException("The new ID is null or empty, will not overwrite");
             }
-            if (this.Color != save.Color) this.Color = save.Color;
             if (this.CanBeOverwrittenByPlayer != save.CanBeOverwrittenByPlayer) this.CanBeOverwrittenByPlayer = save.CanBeOverwrittenByPlayer;
             if (this.IsHidden != save.IsHidden) this.IsHidden = save.IsHidden;
             if (this.Name != save.Name) this.Name = save.Name;
