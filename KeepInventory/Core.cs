@@ -233,7 +233,7 @@ namespace KeepInventory
         /// <summary>
         /// Boolean value indicating if user has Fusion
         /// </summary>
-        public static bool HasFusion => HelperMethods.CheckIfAssemblyLoaded("labfusion");
+        public static bool HasFusion => FindMelon("LabFusion", "Lakatrazz") != null;
 
         /// <summary>
         /// Boolean value indicating whether or not was the Fusion Library for KeepInventory loaded/initialized
