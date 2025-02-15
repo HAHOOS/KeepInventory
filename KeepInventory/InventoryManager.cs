@@ -107,7 +107,7 @@ namespace KeepInventory
                                 {
                                     string name = item.GetSlotName();
                                     var barcode = poolee.SpawnableCrate.Barcode;
-                                    Core.Logger.Msg($"Slot: {name} / Barcode: {poolee.SpawnableCrate.name} ({poolee.SpawnableCrate.Barcode.ID})");
+                                    //Core.Logger.Msg($"Slot: {name} / Barcode: {poolee.SpawnableCrate.name} ({poolee.SpawnableCrate.Barcode.ID})");
                                     if (gunInfo != null && Core.mp_saveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
                                     {
                                         save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
@@ -301,7 +301,7 @@ namespace KeepInventory
                     foreach (var item in save.InventorySlots)
                     {
                         var SlotColor = Colors.GetRandomSlotColor();
-                        Core.MsgPrefix("Looking for slot", item.SlotName, SlotColor);
+                        //Core.MsgPrefix("Looking for slot", item.SlotName, SlotColor);
 
                         void spawn(InventorySlotReceiver receiver)
                         {
@@ -317,13 +317,13 @@ namespace KeepInventory
                                         if (item.GunInfo != null && obj != null)
                                         {
                                             var guns = obj.GetComponents<Gun>();
-                                            Core.MsgPrefix("Attempting to write GunInfo", item.SlotName, SlotColor);
+                                            //Core.MsgPrefix("Attempting to write GunInfo", item.SlotName, SlotColor);
                                             foreach (var gun in guns)
                                                 gun.UpdateProperties(item.GunInfo, SlotColor, item, crate.Crate.name, item.Barcode, false, false);
                                         }
                                     }
 
-                                    Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
+                                    //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
 
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
@@ -339,17 +339,17 @@ namespace KeepInventory
                                 }
                                 else
                                 {
-                                    Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
+                                    //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
                                         Utilities.Fusion.SpawnInSlot(crate.Crate.Barcode, receiver, item.SlotName, SlotColor);
-                                        Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
+                                        //Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     }
                                     else
                                     {
                                         var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
-                                        Action complete = () => Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
-                                        task.GetAwaiter().OnCompleted(complete);
+                                        //Action complete = () => Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
+                                        //task.GetAwaiter().OnCompleted(complete);
                                     }
                                 }
                             }
