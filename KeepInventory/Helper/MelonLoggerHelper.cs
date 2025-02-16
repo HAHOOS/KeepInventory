@@ -17,8 +17,6 @@ namespace KeepInventory.Helper
 
         #region MsgPastel
 
-        [System.Runtime.CompilerServices.MethodImpl(
-    System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         private static void UseMLMsgPastel(MelonLogger.Instance logger, Color textColor, string text)
         {
             if (logger == null) return;
