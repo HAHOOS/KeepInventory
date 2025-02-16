@@ -113,8 +113,7 @@ namespace KeepInventory.Helper
         /// <param name="name">Name of the crate (debugging purposes)</param>
         /// <param name="barcode">Barcode of the spawnable (debugging purposes)</param>
         /// <param name="printMessages">If <see langword="true"/>, the method will print debug messages using <see cref="MelonLoader.MelonLogger.Instance"/></param>
-        /// <param name="fusionMessage">If <see langword="true"/>, this method will be treated as it was run by a <see cref="LabFusion.Network.FusionMessage"/>, which means it will not send a fusion message</param>
-        public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true, bool fusionMessage = false)
+        public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
         {
             if (string.IsNullOrWhiteSpace(name)) name = "N/A";
             if (string.IsNullOrWhiteSpace(barcode)) barcode = "N/A";

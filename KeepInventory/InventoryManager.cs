@@ -319,7 +319,7 @@ namespace KeepInventory
                                             var guns = obj.GetComponents<Gun>();
                                             //Core.MsgPrefix("Attempting to write GunInfo", item.SlotName, SlotColor);
                                             foreach (var gun in guns)
-                                                gun.UpdateProperties(item.GunInfo, SlotColor, item, crate.Crate.name, item.Barcode, false, false);
+                                                gun.UpdateProperties(item.GunInfo, SlotColor, item, crate.Crate.name, item.Barcode, false);
                                         }
                                     }
 
