@@ -274,7 +274,7 @@ namespace KeepInventory.Menu
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
                 if (savePage == null)
                 {
-                    page = PresetsPage.CreatePage($"<color=#{save.HEXColor}>{save.Name}</color>", Color.white, 0, false);
+                    page = PresetsPage.CreatePage($"<color=#{save.Color}>{save.Name}</color>", Color.white, 0, false);
                     savePage = new SavePage(page, save);
                     SavePages.Add(savePage);
                 }
@@ -285,7 +285,7 @@ namespace KeepInventory.Menu
 
                 FunctionElement link = null;
 
-                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"+ <color=#{save.HEXColor}>{save.Name}</color> +" : $"<color=#{save.HEXColor}>{save}</color>", Color.white, () =>
+                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"<color=#{save.Color}>+ {save.Name} +</color>" : $"<color=#{save.Color}>{save}</color>", Color.white, () =>
                 {
                     if (RemoveSavesOnPress)
                     {

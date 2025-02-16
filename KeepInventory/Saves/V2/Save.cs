@@ -61,19 +61,22 @@ namespace KeepInventory.Saves.V2
         /// Color of the text in the menu
         /// </summary>
         [JsonIgnore]
-        public Color Color = Color.FromArgb(255, 255, 255);
+        public Color DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
 
         /// <summary>
         /// HEX Color of the text in the menu
         /// </summary>
         [JsonPropertyName("Color")]
-        internal string HEXColor
+        public string Color
         {
-            get => $"{Color.R:X2}{Color.G:X2}{Color.B:X2}";
+            get => $"{DrawingColor.R:X2}{DrawingColor.G:X2}{DrawingColor.B:X2}";
             set
             {
+                if (string.IsNullOrWhiteSpace(value))
+                    DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
+
                 var translated = ColorTranslator.FromHtml(value);
-                Color = translated;
+                DrawingColor = translated;
             }
         }
 
@@ -224,7 +227,7 @@ namespace KeepInventory.Saves.V2
         /// Create new instance of <see cref="Save"/> from an old one
         /// </summary>
         [JsonConstructor]
-        public Save(int Version, string Name, string ID, Color Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
+        public Save(int Version, string Name, string ID, string Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)
             {
@@ -254,7 +257,7 @@ namespace KeepInventory.Saves.V2
         {
             _id = id;
             _name = name;
-            Color = color;
+            DrawingColor = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v1save.LightAmmo;
@@ -273,7 +276,7 @@ namespace KeepInventory.Saves.V2
         {
             _id = id;
             _name = name;
-            Color = color;
+            DrawingColor = color;
             _canBeOverwrittenByPlayer = canBeOverwritten;
             _isHidden = isHidden;
             _lightAmmo = v0save.AmmoLight;

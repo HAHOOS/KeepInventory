@@ -84,10 +84,16 @@ namespace KeepInventory.Menu
         public void Setup()
         {
             if (Page == null) throw new ArgumentNullException(nameof(Page));
+            Page.Name = $"<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
             Clear();
 
             ID = Page.CreateLabel($"ID: {CurrentSave.ID}", Color.white);
-            Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) => CurrentSave.Name = value);
+            Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) =>
+            {
+                CurrentSave.Name = value;
+                CurrentSave.TrySaveToFile(false);
+                BoneMenu.UpdatePresetsPage();
+            });
             Name.Value = CurrentSave.Name;
 
             ColorPage ??= Page.CreatePage("Color", Color.magenta, 0, false);
@@ -114,12 +120,12 @@ namespace KeepInventory.Menu
                 if (Core.CurrentSave != CurrentSave)
                 {
                     Core.CurrentSave = CurrentSave;
-                    BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.HEXColor}>{CurrentSave}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
+                    BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.Color}>{CurrentSave}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
                     Setup();
                 }
                 else
                 {
-                    BLHelper.SendNotification("Warning", $"<color=#{CurrentSave.HEXColor}>{CurrentSave}</color> is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
+                    BLHelper.SendNotification("Warning", $"<color=#{CurrentSave.Color}>{CurrentSave}</color> is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
                 }
             }) : Page.CreateLabel("Save is default", Color.white);
             if (CurrentSave.CanBeOverwrittenByPlayer)
@@ -140,11 +146,11 @@ namespace KeepInventory.Menu
 
         private void SetupColor()
         {
-            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.HEXColor}>{CurrentSave}</color>", Color.white, null);
+            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.Color}>{CurrentSave.Name}</color>", Color.white, null);
 
             const float increment = 0.05f;
 
-            Color.RGBToHSV(new Color(CurrentSave.Color.R / 255, CurrentSave.Color.G / 255, CurrentSave.Color.B / 255), out float H, out float S, out float V);
+            Color.RGBToHSV(new Color(CurrentSave.DrawingColor.R / 255, CurrentSave.DrawingColor.G / 255, CurrentSave.DrawingColor.B / 255), out float H, out float S, out float V);
 
             void apply()
             {
@@ -153,8 +159,10 @@ namespace KeepInventory.Menu
                     (int)Math.Round(unity.r * 255, 0),
                     (int)Math.Round(unity.g * 255, 0),
                     (int)Math.Round(unity.b * 255, 0));
-                CurrentSave.Color = color;
-                preview.ElementName = $"Preview: <color=#{CurrentSave.HEXColor}>{CurrentSave.Name}</color>";
+                CurrentSave.DrawingColor = color;
+                CurrentSave.TrySaveToFile(false);
+                BoneMenu.UpdatePresetsPage();
+                preview.ElementName = $"Preview: <color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
             }
 
             ColorPage.CreateFloat("Hue", Color.red, H, increment, 0, 1, (val) =>
@@ -226,7 +234,7 @@ namespace KeepInventory.Menu
         {
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect += () =>
             {
-                SelectedPlayers.Clear();
+                SelectedPlayers?.Clear();
                 SetupShare();
             };
             LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetupShare;
@@ -234,18 +242,21 @@ namespace KeepInventory.Menu
             LabFusion.Utilities.MultiplayerHooking.OnPlayerJoin += (_) => SetupShare();
             LabFusion.Utilities.MultiplayerHooking.OnPlayerLeave += (player) =>
             {
-                SelectedPlayers.Remove(player.SmallId);
+                SelectedPlayers?.Remove(player.SmallId);
                 SetupShare();
             };
         }
 
         internal void SetupShare()
         {
+            if (SharePage == null)
+                return;
+
             SharePage?.RemoveAll();
             SharePage.CreateFunction("Refresh", Color.yellow, SetupShare);
             SharePage.CreateFunction("Share", Color.cyan, () =>
             {
-                if (SelectedPlayers.Count == 0) return;
+                if (SelectedPlayers == null || SelectedPlayers.Count == 0) return;
                 try
                 {
                     SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));
