@@ -151,7 +151,11 @@ namespace KeepInventory.Menu
         internal static void SetupSharing()
         {
             SharingPage ??= ModPage.CreatePage("Sharing", Color.cyan);
-            SharingPage.CreateBoolPref("Enabled", Color.red, ref Fusion.ShareManager.Entry_SharingEnabled, KeepInventory.Fusion.ShareManager.Category);
+            SharingPage.CreateBool("Enabled", Color.red, Fusion.ShareManager.Entry_SharingEnabled.Value, (val) =>
+            {
+                Fusion.ShareManager.Entry_SharingEnabled.Value = val;
+                Fusion.ShareManager.Category.SaveToFile(false);
+            });
             SharingBlacklistPage ??= SharingPage.CreatePage("Blacklist", Color.red);
             SetupSharingBlacklist();
             LabFusion.Utilities.MultiplayerHooking.OnDisconnect += SetupSharingBlacklist;

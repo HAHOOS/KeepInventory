@@ -29,11 +29,20 @@ namespace KeepInventory.Fusion
         /// </summary>
         public static event Action<Save, byte> OnShared;
 
-        public static MelonPreferences_Category Category;
+        /// <summary>
+        /// Category for <see cref="MelonPreferences_Category"/>
+        /// </summary>
+        public static MelonPreferences_Category Category { get; private set; }
 
-        public static MelonPreferences_Entry<bool> Entry_SharingEnabled;
+        /// <summary>
+        /// An entry that decides if you can share with others or others can share with you saves
+        /// </summary>
+        public static MelonPreferences_Entry<bool> Entry_SharingEnabled { get; private set; }
 
-        public static MelonPreferences_Entry<List<ulong>> Entry_SharingBlacklist;
+        /// <summary>
+        /// List of long IDs of players that you do not wish for them to share saves with you
+        /// </summary>
+        public static MelonPreferences_Entry<List<ulong>> Entry_SharingBlacklist { get; private set; }
 
         private static bool IsSetup;
 
@@ -131,6 +140,10 @@ namespace KeepInventory.Fusion
 
         private const int Timeout = 200;
 
+        /// <summary>
+        /// Get all players that you can share a save with
+        /// </summary>
+        /// <returns>A list of Small IDs of players</returns>
         public async static Task<List<byte>> GetAllShareablePlayers()
         {
             if (!IsSetup)

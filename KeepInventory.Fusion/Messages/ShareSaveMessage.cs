@@ -10,15 +10,35 @@ using LabFusion.SDK.Modules;
 
 namespace KeepInventory.Fusion.Messages
 {
+    /// <summary>
+    /// Data for <see cref="ShareSaveMessage"/>
+    /// </summary>
     public class ShareSaveMessageData : IFusionSerializable
     {
+        /// <summary>
+        /// The sender of the message
+        /// </summary>
         public PlayerId Sender;
+
+        /// <summary>
+        /// The target of the message
+        /// </summary>
         public PlayerId Target;
 
+        /// <summary>
+        /// Serialized <see cref="Save"/>
+        /// </summary>
         public string Data;
 
+        /// <summary>
+        /// <see cref="Saves.V2.Save"/> that should be shared
+        /// </summary>
         public Save Save => JsonSerializer.Deserialize<Save>(Data, SaveManager.SerializeOptions);
 
+        /// <summary>
+        /// Deserialize from a <see cref="FusionReader"/>
+        /// </summary>
+        /// <param name="reader">The <see cref="FusionReader"/></param>
         public void Deserialize(FusionReader reader)
         {
             Sender = PlayerIdManager.GetPlayerId(reader.ReadByte());
@@ -26,6 +46,10 @@ namespace KeepInventory.Fusion.Messages
             Data = reader.ReadString();
         }
 
+        /// <summary>
+        /// Serialize to a <see cref="FusionWriter"/>
+        /// </summary>
+        /// <param name="writer">The <see cref="FusionWriter"/></param>
         public void Serialize(FusionWriter writer)
         {
             writer.Write(Sender.SmallId);
@@ -34,8 +58,12 @@ namespace KeepInventory.Fusion.Messages
         }
     }
 
+    /// <summary>
+    /// Message responsible for sharing saves
+    /// </summary>
     public class ShareSaveMessage : ModuleMessageHandler
     {
+        /// <inheritdoc cref="HandleMessage(byte[], bool)"/>
         public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
         {
             if (isServerHandled)
