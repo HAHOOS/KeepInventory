@@ -50,6 +50,7 @@ namespace KeepInventory.Helper
         /// Get name of a slot
         /// </summary>
         /// <param name="slotReceiver">The <see cref="InventorySlotReceiver"/> to get name of</param>
+        /// <param name="useAliases">Should it check also for aliases, and if found, it will return the alias</param>
         /// <returns>Slot name of the provided <see cref="InventorySlotReceiver"/></returns>
         public static string GetSlotName(this InventorySlotReceiver slotReceiver, bool useAliases = true)
         {
