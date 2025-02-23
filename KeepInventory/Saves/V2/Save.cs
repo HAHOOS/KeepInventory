@@ -73,10 +73,23 @@ namespace KeepInventory.Saves.V2
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
-                    DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
-
-                var translated = ColorTranslator.FromHtml(value);
-                DrawingColor = translated;
+                {
+                    DrawingColor = System.Drawing.Color.White;
+                }
+                else
+                {
+                    Color translated;
+                    try
+                    {
+                        translated = ColorTranslator.FromHtml(value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Core.Logger.Error($"Failed to convert HEX color to Drawing Color, defaulting to white, exception:\n{ex}");
+                        translated = System.Drawing.Color.White;
+                    }
+                    DrawingColor = translated;
+                }
             }
         }
 
