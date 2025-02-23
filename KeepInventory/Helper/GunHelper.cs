@@ -14,6 +14,66 @@ namespace KeepInventory.Helper
     /// </summary>
     public static class GunHelper
     {
+        internal static void FusionLoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
+        {
+            LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
+            {
+                position = Player.Head.position,
+                rotation = Player.Head.rotation,
+                spawnable = gun.defaultMagazine.spawnable,
+                spawnEffect = false,
+                spawnCallback = (spawn) =>
+                {
+                    var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
+                    if (gunExt == null)
+                        return;
+
+                    var data = new LabFusion.Network.MagazineInsertData
+                    {
+                        smallId = LabFusion.Player.PlayerIdManager.LocalSmallId,
+                        gunId = gunExt.Id,
+                        magazineId = spawn.entity.Id
+                    };
+                    using var writer = LabFusion.Network.FusionWriter.Create();
+                    writer.Write(data);
+                    using var msg = LabFusion.Network.FusionMessage.Create(LabFusion.Network.NativeMessageTag.MagazineInsert, writer);
+                    LabFusion.Network.MessageSender.SendToServer(LabFusion.Network.NetworkChannel.Reliable, msg);
+
+                    var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
+                    var mag = spawn.spawned.GetComponent<Magazine>();
+
+                    if (socketExtender == null || mag == null)
+                        return;
+
+                    // Insert mag into gun
+                    if (socketExtender.Component._magazinePlug)
+                    {
+                        var otherPlug = socketExtender.Component._magazinePlug;
+
+                        if (otherPlug != mag.magazinePlug)
+                        {
+                            LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
+
+                            if (otherPlug)
+                            {
+                                LabFusion.Extensions.AlignPlugExtensions.ForceEject(otherPlug);
+                            }
+
+                            LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
+                        }
+                    }
+                    LabFusion.Extensions.InteractableHostExtensions.TryDetach(mag.magazinePlug.host);
+
+                    LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
+                    mag.magazinePlug.InsertPlug(socketExtender.Component);
+                    LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
+
+                    gun.MagazineState.SetCartridge(rounds);
+                    callback?.Invoke();
+                }
+            });
+        }
+
         /// <summary>
         /// Loads a magazine into a gun while having full Fusion support
         /// </summary>
@@ -44,62 +104,7 @@ namespace KeepInventory.Helper
             }
             else
             {
-                LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
-                {
-                    position = Player.Head.position,
-                    rotation = Player.Head.rotation,
-                    spawnable = gun.defaultMagazine.spawnable,
-                    spawnEffect = false,
-                    spawnCallback = (spawn) =>
-                    {
-                        var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
-                        if (gunExt == null)
-                            return;
-
-                        var data = new LabFusion.Network.MagazineInsertData
-                        {
-                            smallId = LabFusion.Player.PlayerIdManager.LocalSmallId,
-                            gunId = gunExt.Id,
-                            magazineId = spawn.entity.Id
-                        };
-                        using var writer = LabFusion.Network.FusionWriter.Create();
-                        writer.Write(data);
-                        using var msg = LabFusion.Network.FusionMessage.Create(LabFusion.Network.NativeMessageTag.MagazineInsert, writer);
-                        LabFusion.Network.MessageSender.SendToServer(LabFusion.Network.NetworkChannel.Reliable, msg);
-
-                        var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
-                        var mag = spawn.spawned.GetComponent<Magazine>();
-
-                        if (socketExtender == null || mag == null)
-                            return;
-
-                        // Insert mag into gun
-                        if (socketExtender.Component._magazinePlug)
-                        {
-                            var otherPlug = socketExtender.Component._magazinePlug;
-
-                            if (otherPlug != mag.magazinePlug)
-                            {
-                                LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
-
-                                if (otherPlug)
-                                {
-                                    LabFusion.Extensions.AlignPlugExtensions.ForceEject(otherPlug);
-                                }
-
-                                LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
-                            }
-                        }
-                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(mag.magazinePlug.host);
-
-                        LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
-                        mag.magazinePlug.InsertPlug(socketExtender.Component);
-                        LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
-
-                        gun.MagazineState.SetCartridge(rounds);
-                        callback?.Invoke();
-                    }
-                });
+                FusionLoadMagazine(gun, rounds, callback);
             }
         }
 
