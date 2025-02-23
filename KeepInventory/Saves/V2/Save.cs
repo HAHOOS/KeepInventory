@@ -81,7 +81,7 @@ namespace KeepInventory.Saves.V2
                     Color translated;
                     try
                     {
-                        translated = ColorTranslator.FromHtml(value);
+                        translated = ColorTranslator.FromHtml(value.StartsWith("#") ? value : $"#{value}");
                     }
                     catch (Exception ex)
                     {
