@@ -53,7 +53,7 @@ namespace KeepInventory.Saves.V1
             LightAmmo = old.LightAmmo;
             MediumAmmo = old.MediumAmmo;
             HeavyAmmo = old.HeavyAmmo;
-            InventorySlots = new List<SaveSlot>(old.InventorySlots);
+            InventorySlots = [.. old.InventorySlots];
         }
     }
 }
