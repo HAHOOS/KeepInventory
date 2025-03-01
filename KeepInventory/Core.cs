@@ -54,8 +54,14 @@ namespace KeepInventory
                 }
                 mp_defaultSave.Value = value.ID;
                 Core.PrefsCategory.SaveToFile(false);
+                DefaultSaveChanged?.Invoke();
             }
         }
+
+        /// <summary>
+        /// Run when <see cref="CurrentSave"/> gets changed
+        /// </summary>
+        public static Action DefaultSaveChanged;
 
         /// <summary>
         /// Instance of the <see cref="Core"/> class
