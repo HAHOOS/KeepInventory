@@ -35,8 +35,9 @@ namespace KeepInventory.Saves.V2
             get { return _name; }
             set
             {
+                var old = _name;
                 _name = value;
-                OnPropertyChanged?.Invoke(nameof(Name), _name, value);
+                OnPropertyChanged?.Invoke(nameof(Name), old, value);
             }
         }
 
@@ -52,8 +53,9 @@ namespace KeepInventory.Saves.V2
             get { return _id; }
             set
             {
+                var old = _id;
                 _id = value;
-                OnPropertyChanged?.Invoke(nameof(ID), _id, value);
+                OnPropertyChanged?.Invoke(nameof(ID), old, value);
             }
         }
 
@@ -79,6 +81,7 @@ namespace KeepInventory.Saves.V2
                 else
                 {
                     Color translated;
+                    var old = DrawingColor;
                     try
                     {
                         translated = ColorTranslator.FromHtml(value.StartsWith("#") ? value : $"#{value}");
@@ -89,6 +92,7 @@ namespace KeepInventory.Saves.V2
                         translated = System.Drawing.Color.White;
                     }
                     DrawingColor = translated;
+                    OnPropertyChanged?.Invoke(nameof(Color), old, DrawingColor);
                 }
             }
         }
@@ -99,11 +103,23 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         public bool IsFileWatcherEnabled { get; set; } = true;
 
+        [JsonIgnore]
+        private string _filePath;
+
         /// <summary>
         /// Path to the save file
         /// </summary>
         [JsonIgnore]
-        public string FilePath { get; internal set; }
+        public string FilePath
+        {
+            get => _filePath;
+            internal set
+            {
+                var old = _filePath;
+                _filePath = value;
+                OnPropertyChanged?.Invoke(nameof(FilePath), old, value);
+            }
+        }
 
         [JsonIgnore]
         private bool _isHidden;
@@ -117,8 +133,9 @@ namespace KeepInventory.Saves.V2
             get { return _isHidden; }
             set
             {
+                var old = _isHidden;
                 _isHidden = value;
-                OnPropertyChanged?.Invoke(nameof(IsHidden), _isHidden, value);
+                OnPropertyChanged?.Invoke(nameof(IsHidden), old, value);
             }
         }
 
@@ -134,8 +151,9 @@ namespace KeepInventory.Saves.V2
             get { return _canBeOverwrittenByPlayer; }
             set
             {
+                var old = _canBeOverwrittenByPlayer;
                 _canBeOverwrittenByPlayer = value;
-                OnPropertyChanged?.Invoke(nameof(CanBeOverwrittenByPlayer), _canBeOverwrittenByPlayer, value);
+                OnPropertyChanged?.Invoke(nameof(CanBeOverwrittenByPlayer), old, value);
             }
         }
 
@@ -151,8 +169,9 @@ namespace KeepInventory.Saves.V2
             get { return _lightAmmo; }
             set
             {
+                var old = _lightAmmo;
                 _lightAmmo = value;
-                OnPropertyChanged?.Invoke(nameof(LightAmmo), _lightAmmo, value);
+                OnPropertyChanged?.Invoke(nameof(LightAmmo), old, value);
             }
         }
 
@@ -168,8 +187,9 @@ namespace KeepInventory.Saves.V2
             get { return _mediumAmmo; }
             set
             {
+                var old = _mediumAmmo;
                 _mediumAmmo = value;
-                OnPropertyChanged?.Invoke(nameof(MediumAmmo), _mediumAmmo, value);
+                OnPropertyChanged?.Invoke(nameof(MediumAmmo), old, value);
             }
         }
 
@@ -185,8 +205,9 @@ namespace KeepInventory.Saves.V2
             get { return _heavyAmmo; }
             set
             {
+                var old = _heavyAmmo;
                 _heavyAmmo = value;
-                OnPropertyChanged?.Invoke(nameof(HeavyAmmo), _heavyAmmo, value);
+                OnPropertyChanged?.Invoke(nameof(HeavyAmmo), old, value);
             }
         }
 
@@ -201,8 +222,9 @@ namespace KeepInventory.Saves.V2
             get { return _inventorySlots; }
             set
             {
+                var old = _inventorySlots;
                 _inventorySlots = value;
-                OnPropertyChanged?.Invoke(nameof(InventorySlots), _inventorySlots, value);
+                OnPropertyChanged?.Invoke(nameof(InventorySlots), old, value);
             }
         }
 
