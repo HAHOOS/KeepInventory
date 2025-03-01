@@ -166,9 +166,6 @@ namespace KeepInventory.Fusion.Messages
             if (msg == null)
                 return;
 
-            if (!msg.Target.IsValid || !msg.Target.IsMe)
-                return;
-
             if (!msg.Sender.IsValid || msg.Sender.IsMe)
                 return;
 

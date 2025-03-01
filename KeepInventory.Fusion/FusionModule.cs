@@ -21,7 +21,6 @@ using System;
 using UnityEngine;
 
 using KeepInventory.Helper;
-using KeepInventory.Saves.V2;
 
 using LabFusion.Extensions;
 
