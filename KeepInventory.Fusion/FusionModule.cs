@@ -20,8 +20,6 @@ using System;
 
 using UnityEngine;
 
-using KeepInventory.Helper;
-
 using LabFusion.Extensions;
 
 using System.Threading.Tasks;
@@ -54,16 +52,11 @@ namespace KeepInventory.Fusion
         public override ConsoleColor Color => ConsoleColor.Yellow;
 
         /// <summary>
-        /// Runs when module is registered
-        /// </summary>
-        internal static ModuleLogger ModuleLogger { get; set; }
-
-        /// <summary>
         /// Runs when module gets registered
         /// </summary>
         protected override void OnModuleRegistered()
         {
-            ModuleLogger = LoggerInstance;
+            logger = LoggerInstance;
             MsgFusionPrefix("Registering ShareSaveMessage");
             ModuleMessageHandler.RegisterHandler<ShareSaveMessage>();
             MsgFusionPrefix("Registering CanShareRequestMessage");
@@ -97,7 +90,6 @@ namespace KeepInventory.Fusion
         public static void Setup(MelonLogger.Instance _logger)
         {
             backupLogger = _logger;
-            logger = FusionModule.ModuleLogger;
 
             LocalPlayer.OnLocalRigCreated -= RigCreated;
 
