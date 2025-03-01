@@ -83,6 +83,7 @@ namespace KeepInventory.Menu
             ModPage = AuthorPage.CreatePage("KeepInventory", Color.yellow);
 
             SetupSaves();
+            Core.DefaultSaveChanged += UpdatePresetsPage;
 
             EventsPage = ModPage.CreatePage("Events", Color.yellow);
             EventsPage.CreateBoolPref("Save on Level Unload", Color.red, ref Core.mp_saveOnLevelUnload, prefDefaultValue: true);
