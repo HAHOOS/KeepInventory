@@ -285,11 +285,12 @@ namespace KeepInventory.Menu
                 else
                 {
                     page = savePage.Page;
+                    savePage.Setup();
                 }
 
                 FunctionElement link = null;
 
-                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"<color=#{save.Color}>+ {save.Name} +</color>" : $"<color=#{save.Color}>{save}</color>", Color.white, () =>
+                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"<color=#{save.Color}>+ {save.Name} +</color>" : $"<color=#{save.Color}>{save.Name}</color>", Color.white, () =>
                 {
                     if (RemoveSavesOnPress)
                     {
