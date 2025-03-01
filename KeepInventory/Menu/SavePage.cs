@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 using BoneLib.BoneMenu;
 
@@ -24,6 +25,8 @@ namespace KeepInventory.Menu
             }
             set
             {
+                if (_save != null)
+                    _save.OnPropertyChanged -= PropertyChanged;
                 _save = value;
                 Setup();
             }
@@ -43,6 +46,8 @@ namespace KeepInventory.Menu
         public FunctionElement ID { get; set; }
 
         public StringElement Name { get; set; }
+
+        public FunctionElement FileName { get; set; }
 
         public Page ColorPage { get; set; }
 
@@ -71,6 +76,7 @@ namespace KeepInventory.Menu
 
             ID = null;
             Name = null;
+            FileName = null;
 
             LightAmmo = null;
             MediumAmmo = null;
@@ -81,7 +87,11 @@ namespace KeepInventory.Menu
             LoadInventoryFunction = null;
 
             Core.DefaultSaveChanged -= Setup;
+            CurrentSave.OnPropertyChanged -= PropertyChanged;
         }
+
+        private void PropertyChanged(string name, object oldVal, object newVal)
+            => Setup();
 
         public void Setup()
         {
@@ -89,6 +99,7 @@ namespace KeepInventory.Menu
             Page.Name = $"<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
             Clear();
             Core.DefaultSaveChanged += Setup;
+            CurrentSave.OnPropertyChanged += PropertyChanged;
 
             ID = Page.CreateLabel($"ID: {CurrentSave.ID}", Color.white);
             Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) =>
@@ -98,6 +109,11 @@ namespace KeepInventory.Menu
                 BoneMenu.UpdatePresetsPage();
             });
             Name.Value = CurrentSave.Name;
+
+            if (!string.IsNullOrWhiteSpace(CurrentSave.FilePath))
+            {
+                FileName = Page.CreateLabel($"File Name: {Path.GetFileName(CurrentSave.FilePath)}", Color.white);
+            }
 
             ColorPage ??= Page.CreatePage("Color", Color.magenta, 0, false);
             Page.CreatePageLink(ColorPage);
