@@ -423,5 +423,9 @@ namespace KeepInventory.Saves.V2
             }
             if (!Saving) SaveManager.IgnoredFilePaths.Remove(FilePath);
         }
+
+        /// <inheritdoc cref="object.ToString"/>
+        public override string ToString()
+           => this.Name;
     }
 }
