@@ -406,7 +406,7 @@ namespace KeepInventory
         /// </summary>
         public override void OnUpdate()
         {
-            var inv = Core.GetAmmoInventory();
+            var inv = AmmoInventory.Instance;
             if (inv != null)
             {
                 // HACK: For whatever reason when the level is unloading it sets the ammo to 10000000
@@ -476,7 +476,7 @@ namespace KeepInventory
             }
             catch (Exception e)
             {
-                LoggerInstance.Error($"An unexpected error has occurred while saving prefs\n{e}");
+                LoggerInstance.Error($"An unexpected error has occurred while saving preferences\n{e}");
             }
         }
 
@@ -488,16 +488,6 @@ namespace KeepInventory
         {
             if (HasFusion && Utilities.Fusion.IsConnected && IsFusionLibraryInitialized) return Utilities.Fusion.FindRigManager();
             else return Player.RigManager;
-        }
-
-        /// <summary>
-        /// Find the <see cref="AmmoInventory"/> of the player
-        /// </summary>
-        /// <returns>The <see cref="AmmoInventory"/> of the player</returns>
-        public static Il2CppSLZ.Marrow.AmmoInventory GetAmmoInventory()
-        {
-            if (HasFusion && Utilities.Fusion.IsConnected && IsFusionLibraryInitialized) return Utilities.Fusion.GetAmmoInventory();
-            else return Il2CppSLZ.Marrow.AmmoInventory.Instance;
         }
 
         #endregion Other

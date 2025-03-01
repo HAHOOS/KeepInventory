@@ -206,16 +206,6 @@ namespace KeepInventory.Utilities
         }
 
         /// <summary>
-        /// Find the <see cref="AmmoInventory"/> of the local player
-        /// </summary>
-        /// <returns></returns>
-        internal static AmmoInventory GetAmmoInventory()
-        {
-            if (Core.HasFusion) return IsConnected ? (LabFusion.Marrow.NetworkGunManager.NetworkAmmoInventory ?? AmmoInventory.Instance) : AmmoInventory.Instance;
-            else return AmmoInventory.Instance;
-        }
-
-        /// <summary>
         /// Spawn the saved items, run when Fusion is detected
         /// <para>This is separate to avoid errors if Fusion Support Library is not loaded</para>
         /// </summary>

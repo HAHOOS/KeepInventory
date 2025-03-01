@@ -36,10 +36,9 @@ namespace KeepInventory.Patches
             {
                 try
                 {
-                    if (__instance != Core.GetAmmoInventory())
-                    {
+                    if (__instance != AmmoInventory.Instance)
                         return;
-                    }
+
                     InventoryManager.AddSavedAmmo(Save, Core.mp_showNotifications.Value);
                 }
                 catch (Exception ex)

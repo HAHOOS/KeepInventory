@@ -395,7 +395,7 @@ namespace KeepInventory
                 Core.Logger.Warning("Game contains InfiniteAmmo mod, not adding ammo");
                 return;
             }
-            var ammoInventory = Core.GetAmmoInventory() ?? throw new Exception("Ammo inventory is null");
+            var ammoInventory = AmmoInventory.Instance ?? throw new Exception("Ammo inventory is null");
             //AmmoGroup ammoGroup = type == AmmoType.Light ? ammoInventory.lightAmmoGroup : type == AmmoType.Medium ? ammoInventory.mediumAmmoGroup : ammoInventory.heavyAmmoGroup;
             //ammoInventory.AddCartridge(ammoGroup, count);
             ammoInventory._groupCounts[type.ToString().ToLower()] = count;
@@ -426,7 +426,7 @@ namespace KeepInventory
             {
                 Core.Logger.Warning("Adding ammo not on the main thread, this may cause crashes due to protected memory");
             }
-            var ammoInventory = Core.GetAmmoInventory();
+            var ammoInventory = AmmoInventory.Instance;
             if (ammoInventory == null)
             {
                 Core.Logger.Error("Ammo inventory is null");
@@ -484,7 +484,7 @@ namespace KeepInventory
                 {
                     // Adds saved ammo
                     Core.Logger.Msg("Waiting for Ammo Inventory to be initialized");
-                    var ammoInventory = Core.GetAmmoInventory();
+                    var ammoInventory = AmmoInventory.Instance;
                     if (ammoInventory != null)
                     {
                         AddSavedAmmo(save, Core.mp_showNotifications.Value);
