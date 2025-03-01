@@ -458,7 +458,7 @@ namespace KeepInventory
         /// <param name="color">The color of the prefix</param>
         internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
         {
-            Logger._MsgPastel($"[{prefix.Pastel(color)}] {message}");
+            Logger.Msg($"[{prefix.Pastel(color)}] {message}");
         }
 
         /// <summary>

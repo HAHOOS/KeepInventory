@@ -136,7 +136,7 @@ namespace KeepInventory.Fusion
 
         internal static void MsgPrefix(string prefix, string message, System.Drawing.Color color)
         {
-            backupLogger._MsgPastel($"[{prefix.Pastel(color)}] {message}");
+            backupLogger.Msg($"[{prefix.Pastel(color)}] {message}");
         }
 
         /// <summary>

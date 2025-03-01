@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 using KeepInventory.Saves.V2;
 
@@ -7,6 +6,8 @@ using LabFusion.Data;
 using LabFusion.Network;
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
+
+using MelonLoader.Pastel;
 
 namespace KeepInventory.Fusion.Messages
 {
@@ -73,19 +74,19 @@ namespace KeepInventory.Fusion.Messages
             var message = reader.ReadFusionSerializable<ShareSaveMessageData>();
             if (message == null)
             {
-                FusionModule.MsgFusionPrefix("[ShareSave] The received message could not be read or was null");
+                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] The received message could not be read or was null");
                 return;
             }
 
             if (message.Target.SmallId != PlayerIdManager.LocalSmallId)
             {
-                FusionModule.MsgFusionPrefix("[ShareSave] The target player is not the local player, ignoring");
+                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] The target player is not the local player, ignoring");
                 return;
             }
 
             if (ShareManager.Entry_SharingBlacklist?.Value.Contains(message.Target.LongId) == true)
             {
-                FusionModule.MsgFusionPrefix("[ShareSave] A blacklisted player tried to share a save with you");
+                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] A blacklisted player tried to share a save with you");
                 return;
             }
 
