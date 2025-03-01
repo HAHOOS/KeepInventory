@@ -67,12 +67,6 @@ namespace KeepInventory
             }
             try
             {
-                if (Core.HasFusion && Utilities.Fusion.IsConnected && (!Core.IsFusionLibraryInitialized || !Core.mp_fusionSupport.Value))
-                {
-                    BLHelper.SendNotification("Failure", "Could not save inventory, because either the 'Fusion Support' setting is set to Disabled or the Fusion Support Library did not load correctly", true, 3.5f, BoneLib.Notifications.NotificationType.Error);
-                    Core.Logger.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
-                    return;
-                }
                 Core.Logger.Msg("Saving inventory...");
                 bool isItemSaved = false;
                 bool isAmmoSaved = false;
@@ -272,10 +266,6 @@ namespace KeepInventory
                 Core.Logger.Error("Cannot spawn items from an empty save!");
                 return;
             }
-            if (Core.HasFusion && Utilities.Fusion.IsConnected && (!Core.IsFusionLibraryInitialized || !Core.mp_fusionSupport.Value))
-            {
-                Core.Logger.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly"); return;
-            }
 
             Utilities.Fusion.RemoveRigCreateEvent();
 
@@ -327,7 +317,7 @@ namespace KeepInventory
 
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        Utilities.Fusion.SpawnInSlot(crate.Crate.Barcode, receiver, item.SlotName, SlotColor, action);
+                                        _ = Utilities.Fusion.NetworkSpawnInSlotAsync(receiver, crate.Crate.Barcode, SlotColor, item.SlotName, action);
                                     }
                                     else
                                     {
@@ -342,7 +332,7 @@ namespace KeepInventory
                                     //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        Utilities.Fusion.SpawnInSlot(crate.Crate.Barcode, receiver, item.SlotName, SlotColor);
+                                        _ = Utilities.Fusion.NetworkSpawnInSlotAsync(receiver, crate.Crate.Barcode, SlotColor, item.SlotName);
                                         //Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     }
                                     else
@@ -473,12 +463,6 @@ namespace KeepInventory
             }
             try
             {
-                if (Core.HasFusion && Utilities.Fusion.IsConnected && (!Core.IsFusionLibraryInitialized || !Core.mp_fusionSupport.Value))
-                {
-                    BLHelper.SendNotification("Failure", "Could not load inventory, because either the 'Fusion Support' setting is set to Disabled or the Fusion Support Library did not load correctly", true, 3.5f, BoneLib.Notifications.NotificationType.Error);
-                    Core.Logger.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
-                    return;
-                }
                 Core.Logger.Msg("Loading inventory...");
                 if (Core.mp_ammosaving.Value)
                 {

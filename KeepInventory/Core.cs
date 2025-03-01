@@ -209,11 +209,6 @@ namespace KeepInventory
         internal static MelonPreferences_Entry<bool> mp_showNotifications;
 
         /// <summary>
-        /// An entry with a boolean value indicating whether or not should the mod work with Fusion (use this in case something breaks with Fusion)
-        /// </summary>
-        internal static MelonPreferences_Entry<bool> mp_fusionSupport;
-
-        /// <summary>
         /// An entry with an int value that indicates what version of config is it using (will be used for migrating configs in the future updates, if there will be any)
         /// </summary>
         internal static MelonPreferences_Entry<int> mp_configVersion;
@@ -554,7 +549,7 @@ namespace KeepInventory
                     {
                         if (mp_initialInventoryRemove.Value) InventoryManager.RemoveInitialInventoryFromSave(levelInfo.barcode);
                     }
-                    if (HasFusion && Utilities.Fusion.IsConnected && (!IsFusionLibraryInitialized || !mp_fusionSupport.Value))
+                    if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
                     {
                         LoggerInstance.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
                     }
@@ -632,8 +627,6 @@ namespace KeepInventory
 
             mp_showNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
                 description: "If true, notifications will be shown in-game regarding errors or other things");
-            mp_fusionSupport = PrefsCategory.CreateEntry<bool>("FusionSupport", true, "Fusion Support",
-                description: "If true, the mod will work with Fusion. If fusion is detected, you are connected to a server and this setting is turned off, the inventory will not be loaded");
             mp_configVersion = PrefsCategory.CreateEntry<int>("ConfigVersion", 1, "Config Version",
                 description: "DO NOT CHANGE THIS AT ALL, THIS WILL BE USED FOR MIGRATING CONFIGS AND SHOULD NOT BE CHANGED AT ALL");
             mp_initialInventoryRemove = PrefsCategory.CreateEntry<bool>("RemoveInitialInventory", true, "Remove Initial Inventory",

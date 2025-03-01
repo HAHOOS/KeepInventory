@@ -150,7 +150,6 @@ namespace KeepInventory.Menu
 
             OtherPage = ModPage.CreatePage("Other", Color.white);
             OtherPage.CreateBoolPref("Show Notifications", Color.green, ref Core.mp_showNotifications, prefDefaultValue: true);
-            OtherPage.CreateBoolPref("Fusion Support", Color.cyan, ref Core.mp_fusionSupport, prefDefaultValue: true);
             OtherPage.CreateBoolPref("Remove Initial Inventory From Save", Color.red, ref Core.mp_initialInventoryRemove, prefDefaultValue: true);
 
             var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
