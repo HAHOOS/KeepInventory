@@ -79,6 +79,8 @@ namespace KeepInventory.Menu
             SetDefaultFunction = null;
             SaveInventoryFunction = null;
             LoadInventoryFunction = null;
+
+            Core.DefaultSaveChanged -= Setup;
         }
 
         public void Setup()
@@ -86,6 +88,7 @@ namespace KeepInventory.Menu
             if (Page == null) throw new ArgumentNullException(nameof(Page));
             Page.Name = $"<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
             Clear();
+            Core.DefaultSaveChanged += Setup;
 
             ID = Page.CreateLabel($"ID: {CurrentSave.ID}", Color.white);
             Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) =>
@@ -103,7 +106,7 @@ namespace KeepInventory.Menu
             DataPage ??= Page.CreatePage("Data", Color.yellow, 0, false);
             Page.CreatePageLink(DataPage);
             AmmoPage ??= DataPage.CreatePage("Ammo", Color.red, 0, false);
-            Page.CreatePageLink(AmmoPage);
+            DataPage.CreatePageLink(AmmoPage);
 
             SetupAmmo();
 
