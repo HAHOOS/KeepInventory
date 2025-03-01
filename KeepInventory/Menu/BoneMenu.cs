@@ -4,6 +4,8 @@ using System.Linq;
 
 using BoneLib.BoneMenu;
 
+using Il2CppSLZ.Marrow.Warehouse;
+
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
 using KeepInventory.Utilities;
@@ -63,6 +65,11 @@ namespace KeepInventory.Menu
         public static Page BlacklistPage { get; private set; }
 
         /// <summary>
+        /// SubPage of <see cref="BlacklistPage"/>, which is just a list of all blacklisted levels
+        /// </summary>
+        public static Page BlacklistViewPage { get; private set; }
+
+        /// <summary>
         /// SubPage of <see cref="ModPage"/>, which has more general settings
         /// </summary>
         public static Page OtherPage { get; private set; }
@@ -93,6 +100,10 @@ namespace KeepInventory.Menu
                 SetupSharing();
 
             BlacklistPage = ModPage.CreatePage("Blacklist", Color.red);
+
+            BlacklistViewPage = BlacklistPage.CreatePage("View All", Color.magenta);
+            SetupBlacklistView();
+
             BlacklistPage.CreateBoolPref("Blacklist BONELAB Levels", Color.cyan, ref Core.mp_blacklistBONELABlevels, prefDefaultValue: true);
             BlacklistPage.CreateBoolPref("Blacklist LABWORKS Levels", Color.yellow, ref Core.mp_blacklistLABWORKSlevels, prefDefaultValue: true);
             Core.statusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
@@ -145,6 +156,34 @@ namespace KeepInventory.Menu
             var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
             modVersion.SetProperty(ElementProperties.NoBorder);
             IsSetup = true;
+        }
+
+        private static void SetupBlacklistView()
+        {
+            if (BlacklistViewPage == null)
+                return;
+
+            BlacklistViewPage.RemoveAll();
+            BlacklistViewPage.CreateFunction("Refresh", Color.yellow, SetupBlacklistView);
+            BlacklistViewPage.CreateBlank();
+            foreach (var level in Core.mp_blacklistedLevels.Value)
+            {
+                var reference = new LevelCrateReference(level);
+                if (!reference.TryGetCrate(out LevelCrate crate))
+                    continue;
+
+                FunctionElement element = null;
+                element = BlacklistViewPage.CreateFunction(crate.Title, Color.white, () =>
+                {
+                    Core.mp_blacklistedLevels.Value.Remove(level);
+                    BlacklistViewPage.Remove(element);
+                    if (Core.levelInfo.barcode == level)
+                    {
+                        Core.statusElement.ElementName = "Current level is not blacklisted";
+                        Core.statusElement.ElementColor = Color.green;
+                    }
+                });
+            }
         }
 
         private static readonly List<Element> defaultSaveElements = [];

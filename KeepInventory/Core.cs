@@ -524,6 +524,7 @@ namespace KeepInventory
         /// <param name="obj">Contains Level Information</param>
         private void LevelLoadedEvent(LevelInfo obj)
         {
+            levelInfo = obj;
             if (InitialLoad)
             {
                 if (FailedFLLoad)
@@ -542,7 +543,6 @@ namespace KeepInventory
                 }
                 InitialLoad = false;
             }
-            levelInfo = obj;
             var list = new List<string>(mp_blacklistedLevels.Value);
             if (mp_blacklistBONELABlevels.Value) list.AddRange(bonelabBlacklist);
             if (mp_blacklistLABWORKSlevels.Value) list.AddRange(labworksBlacklist);
