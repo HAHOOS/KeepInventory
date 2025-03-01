@@ -247,7 +247,7 @@ namespace KeepInventory
         internal static string ReadAllTextUsedFile(string path)
         {
             if (!File.Exists(path)) throw new FileNotFoundException($"Could not read text from '{path}', because it doesn't exist");
-            using var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             if (file != null)
             {
                 file.Position = 0;
@@ -261,7 +261,16 @@ namespace KeepInventory
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(nameof(path));
             if (!System.IO.File.Exists(path)) throw new FileNotFoundException($"Save file at '{path}' could be found");
-            var text = ReadAllTextUsedFile(path);
+            string text;
+            try
+            {
+                text = ReadAllTextUsedFile(path);
+            }
+            catch (Exception ex)
+            {
+                Core.Logger.Error($"Unable to check the integrity of the file, because an unexpected error has occurred, exception:\n{ex}");
+                return false;
+            }
             if (string.IsNullOrWhiteSpace(text) || !SaveManager.IsJSON(text) || text == "{}")
             {
                 Core.Logger.Error("The content of the file is not correct");
@@ -295,8 +304,36 @@ namespace KeepInventory
             return true;
         }
 
+        private static readonly Dictionary<string, DateTime> LastWrite = [];
+
+        /// <summary>
+        /// Checks last write time to prevent the <see cref="System.IO.FileSystemWatcher.Changed"/> from triggering twice
+        /// </summary>
+        /// <param name="file">The path to check</param>
+        /// <returns>Was it a double trigger</returns>
+        internal static bool PreventDoubleTrigger(string file)
+        {
+            if (!File.Exists(file))
+            {
+                LastWrite.Remove(file);
+                return false;
+            }
+
+            var write = File.GetLastWriteTime(file);
+            if (!LastWrite.ContainsKey(file))
+            {
+                LastWrite.Add(file, write);
+                return false;
+            }
+            else
+            {
+                return LastWrite[file] == write;
+            }
+        }
+
         internal static void CreateFileWatcher()
         {
+            LastWrite.Clear();
             FileSystemWatcher?.Dispose();
             FileSystemWatcher = new FileSystemWatcher(SavesDirectory)
             {
@@ -306,6 +343,7 @@ namespace KeepInventory
             FileSystemWatcher.Deleted += (x, y) =>
             {
                 if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                LastWrite.Remove(y.FullPath);
                 if (y.FullPath.EndsWith(".json"))
                 {
                     var saves = Saves.Where(x => x.FilePath == y.FullPath);
@@ -328,6 +366,7 @@ namespace KeepInventory
             FileSystemWatcher.Changed += (x, y) =>
             {
                 if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                if (PreventDoubleTrigger(y.FullPath)) return;
                 if (y.FullPath.EndsWith(".json"))
                 {
                     if (Check(y.FullPath))
@@ -345,6 +384,12 @@ namespace KeepInventory
             FileSystemWatcher.Renamed += (x, y) =>
             {
                 if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                if (LastWrite.ContainsKey(y.OldFullPath))
+                {
+                    var old = LastWrite[y.OldFullPath];
+                    LastWrite.Remove(y.OldFullPath);
+                    LastWrite.Add(y.FullPath, old);
+                }
                 if (y.FullPath.EndsWith(".json"))
                 {
                     Core.Logger.Msg($"{y.OldName} has been renamed to {y.Name}, updating information");
@@ -384,7 +429,8 @@ namespace KeepInventory
                 if (removeFile && !string.IsNullOrWhiteSpace(save.FilePath))
                 {
                     Core.Logger.Msg($"Removing file at '{save.FilePath}'");
-                    File.Delete(save.FilePath);
+                    if (File.Exists(save.FilePath))
+                        File.Delete(save.FilePath);
                 }
                 Core.Logger.Msg($"Unregistered save with ID '{ID}'");
             }
