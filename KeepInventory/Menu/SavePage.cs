@@ -4,10 +4,14 @@ using System.IO;
 
 using BoneLib.BoneMenu;
 
+using Il2CppSLZ.Marrow.Warehouse;
+
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
 
 using UnityEngine;
+
+using static Il2CppSLZ.Marrow.Gun;
 
 namespace KeepInventory.Menu
 {
@@ -54,6 +58,8 @@ namespace KeepInventory.Menu
         public Page DataPage { get; set; }
         public Page AmmoPage { get; set; }
 
+        public Page SlotsPage { get; set; }
+
         public Page SharePage { get; set; }
 
         public FunctionElement LightAmmo { get; private set; }
@@ -71,6 +77,7 @@ namespace KeepInventory.Menu
             Page?.RemoveAll();
             DataPage?.RemoveAll();
             AmmoPage?.RemoveAll();
+            SlotsPage?.RemoveAll();
             SharePage?.RemoveAll();
             ColorPage?.RemoveAll();
 
@@ -123,6 +130,13 @@ namespace KeepInventory.Menu
             Page.CreatePageLink(DataPage);
             AmmoPage ??= DataPage.CreatePage("Ammo", Color.red, 0, false);
             DataPage.CreatePageLink(AmmoPage);
+            SlotsPage ??= DataPage.CreatePage("<color=#00FF00>Slots</color>", Color.white, 0, false);
+            DataPage.CreatePageLink(SlotsPage);
+
+            if (AssetWarehouse.ready)
+                SetupSlots();
+            else
+                AssetWarehouse.OnReady((Action)SetupSlots);
 
             SetupAmmo();
 
@@ -161,6 +175,116 @@ namespace KeepInventory.Menu
                 SaveInventoryFunction.SetProperty(ElementProperties.NoBorder);
             }
             LoadInventoryFunction = Page.CreateFunction("Load inventory from save", Color.yellow, () => InventoryManager.LoadSavedInventory(CurrentSave));
+        }
+
+        private static List<int> IncrementValues = [1, 5, 10, 25, 100];
+        private int IncrementIndex = 0;
+
+        public int NextIncrement()
+        {
+            IncrementIndex++;
+            IncrementIndex %= IncrementValues.Count;
+
+            return IncrementValues[IncrementIndex];
+        }
+
+        private void PopulateGunInfoPage(Page page, SaveSlot slot)
+        {
+            var info = slot.GunInfo;
+            if (info == null)
+                return;
+
+            page?.RemoveAll();
+
+            if (CurrentSave.CanBeOverwrittenByPlayer)
+            {
+                page.CreateBool("Is Mag", Color.white, info.IsMag, (val) => info.IsMag = val);
+                page.CreateBool("Is Bullet In Chamber", Color.white, info.IsBulletInChamber, (val) => info.IsBulletInChamber = val);
+                page.CreateEnum("Fire Mode", Color.yellow, info.FireMode, (val) => info.FireMode = (FireMode)val);
+                page.CreateInt("Rounds Left", Color.cyan, info.RoundsLeft, IncrementValues[IncrementIndex], 0, int.MaxValue, (val) => info.RoundsLeft = val);
+                page.CreateFunction($"Increment: {IncrementValues[IncrementIndex]}", Color.magenta, () =>
+                {
+                    NextIncrement();
+                    PopulateGunInfoPage(page, slot);
+                });
+                page.CreateEnum("Hammer State", Color.yellow, info.HammerState, (val) => info.HammerState = (HammerStates)val);
+                page.CreateEnum("Slide State", Color.cyan, info.SlideState, (val) => info.SlideState = (SlideStates)val);
+                page.CreateEnum("Cartridge State", Color.magenta, info.CartridgeState, (val) => info.CartridgeState = (CartridgeStates)val);
+                page.CreateBool("Has Fired Once", Color.red, info.HasFiredOnce, (val) => info.HasFiredOnce = val);
+                page.CreateFunction("<color=#00FF00>Save updated gun info</color>", Color.white, () =>
+                {
+                    int index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName && x.Barcode == slot.Barcode);
+                    if (index == -1)
+                    {
+                        BLHelper.SendNotification("Failure", "Cannot save updated gun info, the original slot cannot be found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                    }
+                    else
+                    {
+                        var copy = CurrentSave.InventorySlots[index];
+                        copy.GunInfo = info;
+                        CurrentSave.InventorySlots[index] = copy;
+                        CurrentSave.TrySaveToFile(false);
+                        SetupSlots();
+                    }
+                });
+            }
+            else
+            {
+                page.CreateLabel($"Is Mag: {info.IsMag}", Color.white);
+                page.CreateLabel($"Is Bullet In Chamber: {info.IsBulletInChamber}", Color.white);
+                page.CreateLabel($"Fire Mode: {Enum.GetName(info.FireMode)}", Color.yellow);
+                page.CreateLabel($"Rounds Left: {info.RoundsLeft}", Color.cyan);
+                page.CreateLabel($"Hammer State: {Enum.GetName(info.HammerState)}", Color.yellow);
+                page.CreateLabel($"Slide State: {Enum.GetName(info.SlideState)}", Color.cyan);
+                page.CreateLabel($"Cartridge State: {Enum.GetName(info.CartridgeState)}", Color.magenta);
+                page.CreateLabel($"Has Fired Once: {info.HasFiredOnce}", Color.red);
+            }
+        }
+
+        private void SetupSlots()
+        {
+            SlotsPage?.RemoveAll();
+
+            var slots = CurrentSave.InventorySlots;
+            if (slots == null || slots.Count == 0)
+            {
+                SlotsPage.CreateLabel("No slots saved :(", Color.white);
+            }
+            else
+            {
+                foreach (var slot in slots)
+                {
+                    var reference = new SpawnableCrateReference(slot.Barcode);
+                    bool found = reference.TryGetCrate(out SpawnableCrate crate);
+                    var slotPage = SlotsPage.CreatePage($"{slot.SlotName}: {(found ? crate.Title : slot.Barcode)}", found ? Color.white : Color.red);
+
+                    slotPage.CreateLabel(slot.Barcode, Color.white);
+                    slotPage.CreateLabel("Slot: " + slot.SlotName, Color.white);
+                    if (slot.GunInfo != null)
+                    {
+                        var gunInfoPage = slotPage.CreatePage("Gun Info", Color.yellow);
+                        PopulateGunInfoPage(gunInfoPage, slot);
+                    }
+                    slotPage.CreateBlank();
+                    slotPage.CreateFunction("Remove", Color.red, () =>
+                    {
+                        BoneLib.BoneMenu.Menu.DisplayDialog("Destructive action", "You are about to delete an inventory slot which after done, cannot be reversed. Are you sure?", Dialog.WarningIcon, () =>
+                        {
+                            var index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName);
+                            if (index == -1)
+                            {
+                                BLHelper.SendNotification("Failure", "Cannot remove inventory slot, because it was not found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                            }
+                            else
+                            {
+                                CurrentSave.InventorySlots.RemoveAt(index);
+                                CurrentSave.TrySaveToFile(false);
+                                SetupSlots();
+                            }
+                        });
+                    });
+                }
+            }
         }
 
         private void SetupColor()
@@ -205,7 +329,7 @@ namespace KeepInventory.Menu
 
         internal readonly IReadOnlyList<int> ammoIDList =
         [
-           1, 5, 25, 100, 1000, 10000, 10000
+           1, 5, 25, 100, 1000, 10000, 100000, 1000000
         ];
 
         internal int GetIncrementDecrement()
@@ -287,8 +411,8 @@ namespace KeepInventory.Menu
                 }
             });
             SharePage.CreateBlank();
-            var players = KeepInventory.Utilities.Fusion.GetShareablePlayers();
-            players.RemoveAll(x => x.SmallId == KeepInventory.Utilities.Fusion.GetLocalPlayerSmallId());
+            var players = Utilities.Fusion.GetShareablePlayers();
+            players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
             if (players.Count == 0)
             {
                 SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);

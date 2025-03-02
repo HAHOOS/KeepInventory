@@ -7,8 +7,6 @@ using BoneLib.BoneMenu;
 using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
-using KeepInventory.Saves.V2;
-using KeepInventory.Utilities;
 
 using UnityEngine;
 
@@ -151,6 +149,35 @@ namespace KeepInventory.Menu
             OtherPage = ModPage.CreatePage("Other", Color.white);
             OtherPage.CreateBoolPref("Show Notifications", Color.green, ref Core.mp_showNotifications, prefDefaultValue: true);
             OtherPage.CreateBoolPref("Remove Initial Inventory From Save", Color.red, ref Core.mp_initialInventoryRemove, prefDefaultValue: true);
+            OtherPage.CreateBoolPref("Holster Held Weapons on Death", Color.magenta, ref Core.mp_holsterHeldWeaponsOnDeath);
+            OtherPage.CreateFunction("Clear Inventory", Color.yellow, InventoryManager.ClearInventory);
+
+            ModPage.CreateBlank();
+            ModPage.CreateFunction("Load inventory from default save", Color.yellow, () =>
+            {
+                if (Core.CurrentSave != null)
+                {
+                    InventoryManager.LoadSavedInventory(Core.CurrentSave);
+                }
+                else
+                {
+                    BLHelper.SendNotification("Failure", "There is no default save!", true, 2, BoneLib.Notifications.NotificationType.Error);
+                }
+            });
+            /*
+            ModPage.CreateBlank();
+            ModPage.CreateFunction("Save inventory to default save", Color.cyan, () =>
+            {
+                if (Core.CurrentSave != null)
+                {
+                    InventoryManager.SaveInventory(Core.CurrentSave);
+                }
+                else
+                {
+                    BLHelper.SendNotification("Failure", "There is no default save!", true, 2, BoneLib.Notifications.NotificationType.Error);
+                }
+            });
+            */
 
             var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
             modVersion.SetProperty(ElementProperties.NoBorder);
@@ -209,8 +236,8 @@ namespace KeepInventory.Menu
             SharingBlacklistPage.RemoveAll();
             SharingBlacklistPage.CreateFunction("Refresh", Color.yellow, SetupSharingBlacklist);
             SharingBlacklistPage.CreateBlank();
-            var players = KeepInventory.Utilities.Fusion.GetPlayers();
-            players.RemoveAll(x => x.SmallId == KeepInventory.Utilities.Fusion.GetLocalPlayerSmallId());
+            var players = Utilities.Fusion.GetPlayers();
+            players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
             if (players.Count == 0)
             {
                 SharingBlacklistPage.CreateLabel("Nothing to show here :(", Color.white);
@@ -222,13 +249,13 @@ namespace KeepInventory.Menu
                     var element = SharingBlacklistPage.CreateToggleFunction(player.DisplayName, Color.white, null);
                     element.Started += () =>
                     {
-                        KeepInventory.Fusion.ShareManager.Entry_SharingBlacklist.Value.Add(player.LongId);
-                        KeepInventory.Fusion.ShareManager.Category.SaveToFile(false);
+                        Fusion.ShareManager.Entry_SharingBlacklist.Value.Add(player.LongId);
+                        Fusion.ShareManager.Category.SaveToFile(false);
                     };
                     element.Cancelled += () =>
                     {
-                        KeepInventory.Fusion.ShareManager.Entry_SharingBlacklist.Value.Remove(player.LongId);
-                        KeepInventory.Fusion.ShareManager.Category.SaveToFile(false);
+                        Fusion.ShareManager.Entry_SharingBlacklist.Value.Remove(player.LongId);
+                        Fusion.ShareManager.Category.SaveToFile(false);
                     };
                 }
             }

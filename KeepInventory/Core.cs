@@ -213,7 +213,15 @@ namespace KeepInventory
         /// </summary>
         internal static MelonPreferences_Entry<int> mp_configVersion;
 
+        /// <summary>
+        /// If true, the mod will remove initial inventory found in save data in a loaded inventory
+        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_initialInventoryRemove;
+
+        /// <summary>
+        /// If true, when you die all of the weapons you were holding get holstered if possible
+        /// </summary>
+        internal static MelonPreferences_Entry<bool> mp_holsterHeldWeaponsOnDeath;
 
         #endregion Other
 
@@ -631,6 +639,8 @@ namespace KeepInventory
                 description: "DO NOT CHANGE THIS AT ALL, THIS WILL BE USED FOR MIGRATING CONFIGS AND SHOULD NOT BE CHANGED AT ALL");
             mp_initialInventoryRemove = PrefsCategory.CreateEntry<bool>("RemoveInitialInventory", true, "Remove Initial Inventory",
                 description: "If true, the mod will remove initial inventory found in save data in a loaded inventory");
+            mp_holsterHeldWeaponsOnDeath = PrefsCategory.CreateEntry<bool>("HolsterHeldWeaponsOnDeath", true, "Holster Held Weapons On Death",
+                description: "If true, when you die all of the weapons you were holding get holstered if possible");
 
             PrefsCategory.SaveToFile(false);
         }
