@@ -501,5 +501,22 @@ namespace KeepInventory
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }
+
+        /// <summary>
+        /// Clear the current player's inventory
+        /// </summary>
+        public static void ClearInventory()
+        {
+            var slots = Player.RigManager.GetAllSlots();
+            slots.ForEach(x =>
+            {
+                var host = x._weaponHost;
+                if (host != null)
+                {
+                    var poolee = host.GetTransform()?.GetComponent<Poolee>();
+                    poolee?.Despawn();
+                }
+            });
+        }
     }
 }
