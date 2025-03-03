@@ -1,14 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+
+using BoneLib.BoneMenu;
 
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
+using KeepInventory.Utilities;
 
 using MelonLoader.Utils;
 
@@ -27,7 +32,7 @@ namespace KeepInventory
         /// </summary>
         public static string SavesDirectory { get; private set; } = string.Empty;
 
-        private static readonly System.Collections.Generic.List<Save> _Saves = [];
+        private static readonly List<Save> _Saves = [];
 
         internal static List<string> IgnoredFilePaths = [];
 
@@ -47,7 +52,7 @@ namespace KeepInventory
         /// </summary>
         public static ReadOnlyCollection<Save> Saves => _Saves.AsReadOnly();
 
-        internal static FileSystemWatcher FileSystemWatcher { get; private set; }
+        internal static SynchronousFileSystemWatcher FileSystemWatcher { get; private set; }
 
         internal static void Setup()
         {
@@ -335,10 +340,7 @@ namespace KeepInventory
         {
             LastWrite.Clear();
             FileSystemWatcher?.Dispose();
-            FileSystemWatcher = new FileSystemWatcher(SavesDirectory)
-            {
-                EnableRaisingEvents = true
-            };
+            FileSystemWatcher = new SynchronousFileSystemWatcher(SavesDirectory) { EnableRaisingEvents = true };
             FileSystemWatcher.Error += (x, y) => Core.Logger.Error($"An unexpected error was thrown by the file watcher for the saves, exception:\n{y.GetException()}");
             FileSystemWatcher.Deleted += (x, y) =>
             {
@@ -369,6 +371,11 @@ namespace KeepInventory
                 if (PreventDoubleTrigger(y.FullPath)) return;
                 if (y.FullPath.EndsWith(".json"))
                 {
+                    if (!Core.Instance.IsCurrentThreadMainThread)
+                    {
+                        Core.Logger.Error("Changed event is not running on main thread");
+                        return;
+                    }
                     if (Check(y.FullPath))
                     {
                         Core.Logger.Msg($"{y.Name} has been modified, updating");
@@ -440,5 +447,33 @@ namespace KeepInventory
                 throw new KeyNotFoundException($"Save with ID '{ID}' could not be found!");
             }
         }
+    }
+
+    public class WatchOnMainThread : ISynchronizeInvoke
+    {
+        public bool InvokeRequired => true;
+
+        public IAsyncResult BeginInvoke(Delegate method, object[] args)
+        {
+            var result = Invoke(method, args);
+            return new SynchronousResult(result);
+        }
+
+        public object EndInvoke(IAsyncResult result)
+            => result.AsyncState;
+
+        public object Invoke(Delegate method, object[] args)
+            => method.DynamicInvoke(args);
+    }
+
+    public class SynchronousResult(object result) : IAsyncResult
+    {
+        public object AsyncState => result;
+
+        public WaitHandle AsyncWaitHandle => null;
+
+        public bool CompletedSynchronously => true;
+
+        public bool IsCompleted => true;
     }
 }

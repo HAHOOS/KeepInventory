@@ -22,6 +22,7 @@ using MelonLoader.Pastel;
 using KeepInventory.Helper;
 using KeepInventory.Utilities;
 using KeepInventory.Menu;
+using System.Threading;
 
 namespace KeepInventory
 {
@@ -49,11 +50,10 @@ namespace KeepInventory
             set
             {
                 if (value == null)
-                {
                     mp_defaultSave.Value = string.Empty;
-                }
+
                 mp_defaultSave.Value = value.ID;
-                Core.PrefsCategory.SaveToFile(false);
+                PrefsCategory.SaveToFile(false);
                 DefaultSaveChanged?.Invoke();
             }
         }
@@ -61,7 +61,7 @@ namespace KeepInventory
         /// <summary>
         /// Run when <see cref="CurrentSave"/> gets changed
         /// </summary>
-        public static Action DefaultSaveChanged;
+        public static event Action DefaultSaveChanged;
 
         /// <summary>
         /// Instance of the <see cref="Core"/> class
@@ -281,12 +281,26 @@ namespace KeepInventory
         #region MelonLoader
 
         /// <summary>
+        /// The thread that Unity runs on
+        /// </summary>
+        public Thread UnityThread { get; private set; }
+
+        /// <summary>
+        /// Is the current thread the unity thread
+        /// </summary>
+        public bool IsCurrentThreadMainThread
+            => Thread.CurrentThread == UnityThread;
+
+        /// <summary>
         /// Calls when MelonLoader loads all Mods/Plugins
         /// </summary>
         public override void OnInitializeMelon()
         {
+            UnityThread = Thread.CurrentThread;
             MLAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == "MelonLoader");
             Logger = LoggerInstance;
+            Instance = this;
+
             LoggerInstance.Msg("Setting up KeepInventory");
 
             ThunderstoreInstance = new Thunderstore($"KeepInventory / {Version} A BONELAB MelonLoader Mod");
@@ -404,6 +418,8 @@ namespace KeepInventory
             BoneMenu.Setup();
         }
 
+        internal static event Action Update;
+
         /// <summary>
         /// Runs every frame
         /// </summary>
@@ -417,6 +433,7 @@ namespace KeepInventory
                 if (inv._groupCounts.ContainsKey("medium") && inv._groupCounts["medium"] != 10000000) _lastAmmoCount_medium = inv._groupCounts["medium"];
                 if (inv._groupCounts.ContainsKey("heavy") && inv._groupCounts["heavy"] != 10000000) _lastAmmoCount_heavy = inv._groupCounts["heavy"];
             }
+            Update?.Invoke();
         }
 
         #endregion MelonLoader
