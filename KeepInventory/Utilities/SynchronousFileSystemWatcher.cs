@@ -228,7 +228,7 @@ namespace KeepInventory.Utilities
         /// Converts to <see cref="RenamedEventArgs"/>
         /// </summary>
         public RenamedEventArgs ToRenamedEventArgs()
-            => new(ChangeType ?? WatcherChangeTypes.All, IsFile(FullPath) ? Path.GetDirectoryName(FullPath) : FullPath, IsFile(FullPath) ? Name : null, IsFile(FullPath) ? Name : null);
+            => new(ChangeType ?? WatcherChangeTypes.All, IsFile(FullPath) ? Path.GetDirectoryName(FullPath) : FullPath, IsFile(FullPath) ? Name : null, IsFile(FullPath) ? OldName : null);
 
         /// <summary>
         /// Converts to <see cref="ErrorEventArgs"/>
