@@ -162,19 +162,19 @@ namespace KeepInventory.Utilities
         public WatcherChangeTypes? ChangeType { get; private set; }
 
         /// <inheritdoc cref="FileSystemEventArgs.Name"/>
-        public string Name { get; private set; }
+        public string Name { get; }
 
         /// <inheritdoc cref="FileSystemEventArgs.FullPath"/>
-        public string FullPath { get; private set; }
+        public string FullPath { get; }
 
         /// <inheritdoc cref="RenamedEventArgs.OldName"/>
-        public string OldName { get; private set; }
+        public string OldName { get; }
 
         /// <inheritdoc cref="RenamedEventArgs.OldFullPath"/>
-        public string OldFullPath { get; private set; }
+        public string OldFullPath { get; }
 
         /// <inheritdoc cref="ErrorEventArgs.GetException"/>
-        public Exception Exception { get; private set; }
+        public Exception Exception { get; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="WatcherEvent"/>

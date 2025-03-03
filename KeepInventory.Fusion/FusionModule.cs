@@ -1,14 +1,7 @@
-﻿using Il2CppSLZ.Marrow.Data;
-using Il2CppSLZ.Marrow.Utilities;
-using Il2CppSLZ.Marrow.Warehouse;
-using Il2CppSLZ.Marrow;
+﻿using Il2CppSLZ.Marrow;
 using KeepInventory.Fusion.Messages;
 
-using LabFusion.Data;
-using LabFusion.Entities;
-using LabFusion.Network;
 using LabFusion.Player;
-using LabFusion.RPC;
 using LabFusion.SDK.Modules;
 using LabFusion.Utilities;
 
@@ -17,12 +10,6 @@ using MelonLoader.Pastel;
 using MelonLoader;
 
 using System;
-
-using UnityEngine;
-
-using LabFusion.Extensions;
-
-using System.Threading.Tasks;
 
 namespace KeepInventory.Fusion
 {

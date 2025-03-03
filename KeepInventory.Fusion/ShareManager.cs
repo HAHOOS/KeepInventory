@@ -4,18 +4,13 @@ using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using BoneLib.BoneMenu;
-
 using KeepInventory.Fusion.Messages;
 using KeepInventory.Saves.V2;
-using KeepInventory.Helper;
 
 using LabFusion.Network;
 using LabFusion.Player;
 
 using MelonLoader;
-
-using UnityEngine;
 
 namespace KeepInventory.Fusion
 {
