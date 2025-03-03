@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using BoneLib.BoneMenu;
 
@@ -12,6 +13,8 @@ using KeepInventory.Saves.V2;
 using UnityEngine;
 
 using static Il2CppSLZ.Marrow.Gun;
+
+using Page = BoneLib.BoneMenu.Page;
 
 namespace KeepInventory.Menu
 {
@@ -102,7 +105,9 @@ namespace KeepInventory.Menu
 
         public void Setup()
         {
-            if (Page == null) throw new ArgumentNullException(nameof(Page));
+            if (Page == null)
+                throw new ArgumentNullException(nameof(Page));
+
             Page.Name = $"<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
             Clear();
             Core.DefaultSaveChanged += Setup;
@@ -118,9 +123,7 @@ namespace KeepInventory.Menu
             Name.Value = CurrentSave.Name;
 
             if (!string.IsNullOrWhiteSpace(CurrentSave.FilePath))
-            {
                 FileName = Page.CreateLabel($"File Name: {Path.GetFileName(CurrentSave.FilePath)}", Color.white);
-            }
 
             ColorPage ??= Page.CreatePage("Color", Color.magenta, 0, false);
             Page.CreatePageLink(ColorPage);
@@ -177,7 +180,7 @@ namespace KeepInventory.Menu
             LoadInventoryFunction = Page.CreateFunction("Load inventory from save", Color.yellow, () => InventoryManager.LoadSavedInventory(CurrentSave));
         }
 
-        private static List<int> IncrementValues = [1, 5, 10, 25, 100];
+        private static readonly List<int> IncrementValues = [1, 5, 10, 25, 100];
         private int IncrementIndex = 0;
 
         public int NextIncrement()
@@ -187,6 +190,8 @@ namespace KeepInventory.Menu
 
             return IncrementValues[IncrementIndex];
         }
+
+        private readonly Dictionary<string, Page> SlotPages = [];
 
         private void PopulateGunInfoPage(Page page, SaveSlot slot)
         {
@@ -256,13 +261,17 @@ namespace KeepInventory.Menu
                 {
                     var reference = new SpawnableCrateReference(slot.Barcode);
                     bool found = reference.TryGetCrate(out SpawnableCrate crate);
-                    var slotPage = SlotsPage.CreatePage($"{slot.SlotName}: {(found ? crate.Title : slot.Barcode)}", found ? Color.white : Color.red);
+                    Page slotPage = SlotPages.FirstOrDefault(x => x.Key == slot.SlotName).Value ?? SlotsPage.CreatePage($"{slot.SlotName}: {(found ? crate.Title : slot.Barcode)}", found ? Color.white : Color.red, 0, false);
+                    SlotsPage.CreatePageLink(slotPage);
+
+                    slotPage?.RemoveAll();
 
                     slotPage.CreateLabel(slot.Barcode, Color.white);
                     slotPage.CreateLabel("Slot: " + slot.SlotName, Color.white);
+                    var gunInfoPage = slotPage.SubPages.FirstOrDefault(x => x.Name == "Gun Info") ?? slotPage.CreatePage("Gun Info", Color.yellow, 0, false);
                     if (slot.GunInfo != null)
                     {
-                        var gunInfoPage = slotPage.CreatePage("Gun Info", Color.yellow);
+                        slotPage.CreatePageLink(gunInfoPage);
                         PopulateGunInfoPage(gunInfoPage, slot);
                     }
                     slotPage.CreateBlank();
@@ -280,6 +289,7 @@ namespace KeepInventory.Menu
                                 CurrentSave.InventorySlots.RemoveAt(index);
                                 CurrentSave.TrySaveToFile(false);
                                 SetupSlots();
+                                BoneLib.BoneMenu.Menu.OpenPage(SlotsPage);
                             }
                         });
                     });
@@ -293,7 +303,11 @@ namespace KeepInventory.Menu
 
             const float increment = 0.05f;
 
-            Color.RGBToHSV(new Color(CurrentSave.DrawingColor.R / 255, CurrentSave.DrawingColor.G / 255, CurrentSave.DrawingColor.B / 255), out float H, out float S, out float V);
+            Color.RGBToHSV(
+                new Color(CurrentSave.DrawingColor.R / 255, CurrentSave.DrawingColor.G / 255, CurrentSave.DrawingColor.B / 255),
+                out float H,
+                out float S,
+                out float V);
 
             void apply()
             {
@@ -305,7 +319,7 @@ namespace KeepInventory.Menu
                 CurrentSave.DrawingColor = color;
                 CurrentSave.TrySaveToFile(false);
                 BoneMenu.UpdatePresetsPage();
-                preview.ElementName = $"Preview: <color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
+                preview.ElementName = $"Preview: <color=#{CurrentSave.Color ?? "FFFFFF"}>{CurrentSave.Name}</color>";
             }
 
             ColorPage.CreateFloat("Hue", Color.red, H, increment, 0, 1, (val) =>
@@ -334,18 +348,9 @@ namespace KeepInventory.Menu
 
         internal int GetIncrementDecrement()
         {
-            if (ammoIDIndex < 0) return -1;
-            var value = ammoIDList;
-            if (value == null) return -1;
-            if (ammoIDIndex > value.Count - 1)
-            {
-                ammoIDIndex = value.Count - 1;
-                return value[ammoIDIndex];
-            }
-            else
-            {
-                return value[ammoIDIndex];
-            }
+            ammoIDIndex %= ammoIDList.Count;
+
+            return ammoIDList[ammoIDIndex];
         }
 
         internal void SetupAmmo()
@@ -367,7 +372,7 @@ namespace KeepInventory.Menu
                 }) : null,
                 CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Light Ammo", Color.green, light, id, 0, int.MaxValue, (value)=> CurrentSave.LightAmmo = value) : new LabelElement($"Light Ammo: {light}", Color.green).Element,
                 CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Medium Ammo", Color.yellow, medium, id, 0, int.MaxValue, (value)=> CurrentSave.MediumAmmo = value) : new LabelElement($"Medium Ammo: {light}", Color.yellow).Element,
-                CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Heavy Ammo", Color.red, light, id, 0, int.MaxValue, (value)=> CurrentSave.HeavyAmmo = value) : new LabelElement($"Heavy Ammo: {light}", Color.red).Element,
+                CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Heavy Ammo", Color.red, heavy, id, 0, int.MaxValue, (value)=> CurrentSave.HeavyAmmo = value) : new LabelElement($"Heavy Ammo: {light}", Color.red).Element,
             ];
 
             elements.ForEach(element => { if (element != null) AmmoPage.Add(element); });
