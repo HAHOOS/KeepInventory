@@ -2,12 +2,12 @@
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
+
 		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-		<GameDirectory>C:\Oculus\Software\stress-level-zero-inc-bonelab</GameDirectory>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
-		<Configurations>Debug;Release;MelonLoader;SDK</Configurations>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
@@ -17,54 +17,45 @@
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll</HintPath>
 		</Reference>
 		<Reference Include="BoneLib">
-			<HintPath>$(GameDirectory)\Mods\BoneLib.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\Mods\BoneLib.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppInterop.Runtime">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Il2CppInterop.Runtime.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2Cppmscorlib">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
-		</Reference>
-		<Reference Include="Il2CppSLZ.Marrow">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll</HintPath>
 		</Reference>
 		<Reference Include="Il2CppUniTask">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppUniTask.dll</HintPath>
+		</Reference>
+		<Reference Include="Il2CppSLZ.Marrow">
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\Il2CppSLZ.Marrow.dll</HintPath>
 		</Reference>
 		<Reference Include="KeepInventory.Fusion">
 			<HintPath>Embedded\Dependencies\KeepInventory.Fusion.dll</HintPath>
 		</Reference>
 		<Reference Include="LabFusion">
-			<HintPath>$(GameDirectory)\Mods\LabFusion.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\Mods\LabFusion.dll</HintPath>
 		</Reference>
 		<Reference Include="MelonLoader">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\MelonLoader.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\MelonLoader.dll</HintPath>
 		</Reference>
 		<Reference Include="Tomlet">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\Tomlet.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Tomlet.dll</HintPath>
 		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
-		</Reference>
-		<Reference Include="UnityEngine.AnimationModule">
-			<HintPath>$(GameDirectory)\MelonLoader\Il2CppAssemblies\UnityEngine.AnimationModule.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
 		<Reference Include="0Harmony">
-			<HintPath>$(GameDirectory)\MelonLoader\net6\0Harmony.dll</HintPath>
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\0Harmony.dll</HintPath>
 		</Reference>
 	</ItemGroup>
-	<ItemGroup>
-	  <Compile Update="SDK\Disable.cs">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Compile>
-	  <Compile Update="SDK\ForceSave.cs">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Compile>
-	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="COPY &quot;$(TargetPath)&quot; &quot;$(GameDirectory)\Mods&quot;" />
+		<Exec Command="ECHO Copying $(TargetName).dll to Mods folder&#xD;&#xA; COPY &quot;$(TargetPath)&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
+		<Exec Command="ECHO Copying $(TargetName).xml to Mods folder&#xD;&#xA; COPY &quot;$(TargetDir)$(TargetName).xml&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
+		<Exec Command="ECHO Copying $(TargetName).pdb to Mods folder&#xD;&#xA; COPY &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
 	</Target>
 </Project>
