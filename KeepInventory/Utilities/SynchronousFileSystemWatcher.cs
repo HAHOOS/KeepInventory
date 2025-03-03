@@ -5,6 +5,9 @@ using System.IO;
 
 namespace KeepInventory.Utilities
 {
+    /// <summary>
+    /// Class that makes the <see cref="FileSystemWatcher"/> run events on the main thread
+    /// </summary>
     public class SynchronousFileSystemWatcher : IDisposable
     {
         private readonly FileSystemWatcher _watcher = new();

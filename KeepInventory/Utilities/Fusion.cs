@@ -271,6 +271,9 @@ namespace KeepInventory.Utilities
         internal static bool Internal_GamemodeCheck()
             => LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted || LabFusion.SDK.Gamemodes.GamemodeManager.StartTimerActive || LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeReady;
 
+        /// <summary>
+        /// Is a gamemode started in the current lobby
+        /// </summary>
         public static bool IsGamemodeStarted
         {
             get
