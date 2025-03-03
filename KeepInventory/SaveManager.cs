@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-
-using BoneLib.BoneMenu;
 
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
@@ -447,33 +443,5 @@ namespace KeepInventory
                 throw new KeyNotFoundException($"Save with ID '{ID}' could not be found!");
             }
         }
-    }
-
-    public class WatchOnMainThread : ISynchronizeInvoke
-    {
-        public bool InvokeRequired => true;
-
-        public IAsyncResult BeginInvoke(Delegate method, object[] args)
-        {
-            var result = Invoke(method, args);
-            return new SynchronousResult(result);
-        }
-
-        public object EndInvoke(IAsyncResult result)
-            => result.AsyncState;
-
-        public object Invoke(Delegate method, object[] args)
-            => method.DynamicInvoke(args);
-    }
-
-    public class SynchronousResult(object result) : IAsyncResult
-    {
-        public object AsyncState => result;
-
-        public WaitHandle AsyncWaitHandle => null;
-
-        public bool CompletedSynchronously => true;
-
-        public bool IsCompleted => true;
     }
 }
