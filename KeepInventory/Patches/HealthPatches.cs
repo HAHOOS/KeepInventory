@@ -9,6 +9,9 @@ using KeepInventory.Helper;
 
 namespace KeepInventory.Patches
 {
+    /// <summary>
+    /// Class that contains patches for <see cref="Player_Health"/>
+    /// </summary>
     [HarmonyPatch(typeof(Player_Health))]
     public static class HealthPatches
     {
@@ -47,6 +50,10 @@ namespace KeepInventory.Patches
             }
         }
 
+        /// <summary>
+        /// Called on <see cref="Player_Health.Death"/>, holsters held weapons if necessary
+        /// </summary>
+        /// <param name="__instance">The <see cref="Player_Health"/> that triggered the prefix</param>
         [HarmonyPrefix]
         [HarmonyPatch(nameof(Player_Health.Death))]
         public static void Prefix(Player_Health __instance)
