@@ -122,23 +122,31 @@ namespace KeepInventory.Fusion.Messages
             if (isServerHandled)
                 throw new Exception("This message is supposed to be broadcasted, not sent to server");
 
+            FusionModule.logger.Log("Request received");
+
             using var reader = FusionReader.Create(bytes);
             var msg = reader.ReadFusionSerializable<CanShareMessageData>();
             if (msg == null)
                 return;
 
+            FusionModule.logger.Log("Msg is not null");
+
             if (!msg.Sender.IsValid || msg.Sender.IsMe)
                 return;
 
+            FusionModule.logger.Log("Sender is not me");
+
             if (!ShareManager.IsPlayerAllowed(msg.Sender))
                 return;
+
+            FusionModule.logger.Log("Sender is allowed");
 
             var responseData = CanShareMessageData.Create(msg.Sender.SmallId, msg.ID);
 
             using var writer = FusionWriter.Create();
             writer.Write(responseData);
             using var message = FusionMessage.ModuleCreate<CanShareResponseMessage>(bytes);
-            MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, message);
+            MessageSender.BroadcastMessage(NetworkChannel.Reliable, message);
         }
     }
 
@@ -150,7 +158,7 @@ namespace KeepInventory.Fusion.Messages
         /// <summary>
         /// The last time a <see cref="CanShareResponseMessage"/> message was sent
         /// </summary>
-        public static DateTime LastMessage { get; private set; } = DateTime.Now;
+        public static DateTime LastMessage { get; internal set; } = DateTime.Now;
 
         /// <inheritdoc cref="HandleMessage(byte[], bool)"/>
         public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
@@ -158,22 +166,34 @@ namespace KeepInventory.Fusion.Messages
             if (isServerHandled)
                 throw new Exception("This message is supposed to be broadcasted, not sent to server");
 
+            FusionModule.logger.Log("Response received");
+
             using var reader = FusionReader.Create(bytes);
             var msg = reader.ReadFusionSerializable<CanShareMessageData>();
             if (msg == null)
                 return;
 
+            FusionModule.logger.Log("Msg not null");
+
             if (!msg.Sender.IsValid || msg.Sender.IsMe)
                 return;
+
+            FusionModule.logger.Log("Sender is not me");
 
             if (string.IsNullOrWhiteSpace(ShareManager.AwaitingID) || msg.ID != ShareManager.AwaitingID)
                 return;
 
+            FusionModule.logger.Log("Awaiting ID is not empty");
+
             if (ShareManager.PlayerResponses.Contains(msg.Sender.SmallId))
                 return;
 
+            FusionModule.logger.Log("Player Responses does not contain sender");
+
             if (!ShareManager.IsPlayerAllowed(msg.Sender))
                 return;
+
+            FusionModule.logger.Log("Player is allowed");
 
             LastMessage = DateTime.Now;
 

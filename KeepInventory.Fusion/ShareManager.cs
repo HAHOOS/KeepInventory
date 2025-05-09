@@ -133,7 +133,7 @@ namespace KeepInventory.Fusion
                 OnShared?.Invoke(save, sender);
         }
 
-        private const int Timeout = 200;
+        private const int Timeout = 700;
 
         /// <summary>
         /// Get all players that you can share a save with
@@ -144,10 +144,14 @@ namespace KeepInventory.Fusion
             if (!IsSetup)
                 return [];
 
+            FusionModule.logger.Log("Is set up");
+
             if (Entry_SharingEnabled?.Value == false)
                 return [];
 
-            if (Entry_SharingBlacklist.Value.TrueForAll(x =>
+            FusionModule.logger.Log("Sharing enabled");
+
+            if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(x =>
             {
                 var id = PlayerIdManager.GetPlayerId(x);
                 if (id != null)
@@ -161,6 +165,8 @@ namespace KeepInventory.Fusion
                 return [];
             }
 
+            FusionModule.logger.Log("There are people not on the blacklist");
+
             PlayerResponses.Clear();
 
             var data = CanShareMessageData.Create();
@@ -170,7 +176,8 @@ namespace KeepInventory.Fusion
             writer.Write(data);
             using var message = FusionMessage.ModuleCreate<CanShareRequestMessage>(writer);
             MessageSender.BroadcastMessage(NetworkChannel.Reliable, message);
-
+            var last = DateTime.Now;
+            CanShareResponseMessage.LastMessage = DateTime.Now;
             while ((DateTime.Now - CanShareResponseMessage.LastMessage).TotalMilliseconds < Timeout) await Task.Delay(50);
             var resp = new List<byte>(PlayerResponses);
             PlayerResponses.Clear();

@@ -14,6 +14,7 @@ using Il2CppSLZ.Marrow.Data;
 using Il2CppSLZ.Marrow.Utilities;
 using MelonLoader.Pastel;
 using Il2CppSLZ.Marrow.Pool;
+using System.Threading.Tasks;
 
 namespace KeepInventory.Utilities
 {
@@ -104,25 +105,33 @@ namespace KeepInventory.Utilities
             if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) Internal_ShareSave(smallId, save);
         }
 
-        internal static IEnumerable<FusionPlayer> Internal_GetShareablePlayers()
+        internal async static Task<List<FusionPlayer>> Internal_GetShareablePlayers()
         {
-            var task = KeepInventory.Fusion.ShareManager.GetAllShareablePlayers();
-            task.Wait();
+            var task = await KeepInventory.Fusion.ShareManager.GetAllShareablePlayers();
+            List<FusionPlayer> players = [];
             foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
             {
-                if (player != null && task.Result.Contains(player.PlayerId.SmallId))
-                    yield return new FusionPlayer(player.PlayerId.SmallId, player.PlayerId.LongId, player.Username);
+                if (player != null && task.Contains(player.PlayerId.SmallId))
+                    players.Add(new FusionPlayer(player.PlayerId.SmallId, player.PlayerId.LongId, player.Username));
             }
+            return players;
         }
 
         /// <summary>
         /// Gets all players that you can share a save with, if not connected to any or doesn't have Fusion, returns an empty list
         /// </summary>
         /// <returns></returns>
-        public static List<FusionPlayer> GetShareablePlayers()
+        public static async Task<List<FusionPlayer>> GetShareablePlayers()
         {
-            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) return [.. Internal_GetShareablePlayers()];
-            else return [];
+            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected)
+            {
+                var players = await Internal_GetShareablePlayers();
+                return players;
+            }
+            else
+            {
+                return [];
+            }
         }
 
         internal static IEnumerable<FusionPlayer> Internal_GetPlayers()

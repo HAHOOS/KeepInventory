@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using BoneLib.BoneMenu;
 
@@ -9,6 +11,8 @@ using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
+
+using MelonLoader;
 
 using UnityEngine;
 
@@ -385,9 +389,9 @@ namespace KeepInventory.Menu
                 SelectedPlayers?.Clear();
                 SetupShare();
             };
-            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetupShare;
-            LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetupShare;
-            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoin += (_) => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += () => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnStartServer += () => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoin += (__) => SetupShare();
             LabFusion.Utilities.MultiplayerHooking.OnPlayerLeave += (player) =>
             {
                 SelectedPlayers?.Remove(player.SmallId);
@@ -395,45 +399,75 @@ namespace KeepInventory.Menu
             };
         }
 
+        private bool isSettingUpShare = false;
+
         internal void SetupShare()
         {
-            if (SharePage == null)
-                return;
-
-            SharePage?.RemoveAll();
-            SharePage.CreateFunction("Refresh", Color.yellow, SetupShare);
-            SharePage.CreateFunction("Share", Color.cyan, () =>
+            if (SharePage != null && !isSettingUpShare)
             {
-                if (SelectedPlayers == null || SelectedPlayers.Count == 0)
-                    return;
-
                 try
                 {
-                    SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));
+                    isSettingUpShare = true;
+                    SharePage?.RemoveAll();
+                    SharePage.CreateFunction("Refresh", Color.yellow, () => SetupShare());
+                    SharePage.CreateFunction("Share", Color.cyan, () =>
+                    {
+                        if (SelectedPlayers == null || SelectedPlayers.Count == 0)
+                            return;
+
+                        try
+                        {
+                            SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));
+                        }
+                        catch (Exception ex)
+                        {
+                            BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
+                            Core.Logger.Error($"An unexpected error has occurred while trying to share save, exception:\n{ex}");
+                        }
+                    });
+                    SharePage.CreateBlank();
+                    var waitElement = SharePage.CreateLabel("Checking for players...", Color.white);
+                    MelonCoroutines.Start(PlayerList_SetupShare(waitElement, () => isSettingUpShare = false));
                 }
                 catch (Exception ex)
                 {
-                    BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
-                    Core.Logger.Error($"An unexpected error has occurred while trying to share save, exception:\n{ex}");
+                    {
+                        Core.Logger.Error($"An unexpected error occurred while setting up share page:\n{ex}");
+                        isSettingUpShare = false;
+                    }
                 }
-            });
-            SharePage.CreateBlank();
-            var players = Utilities.Fusion.GetShareablePlayers();
-            players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
-            if (players.Count == 0)
-            {
-                SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
             }
-            else
+        }
+
+        internal System.Collections.IEnumerator PlayerList_SetupShare(FunctionElement waitElement, Action callback = null)
+        {
+            try
             {
-                foreach (var player in players)
+                var task = Utilities.Fusion.GetShareablePlayers().ConfigureAwait(false);
+                while (!task.GetAwaiter().IsCompleted) yield return null;
+
+                SharePage.Remove(waitElement);
+                var players = task.GetAwaiter().GetResult();
+                players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
+                if (players.Count == 0)
                 {
-                    var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null);
-                    element.Started += () => SelectedPlayers.Add(player.SmallId);
-                    element.Cancelled += () => SelectedPlayers.Remove(player.SmallId);
-                    if (SelectedPlayers.Contains(player.SmallId))
-                        element.Start();
+                    SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
                 }
+                else
+                {
+                    foreach (var player in players)
+                    {
+                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null);
+                        element.Started += () => SelectedPlayers.Add(player.SmallId);
+                        element.Cancelled += () => SelectedPlayers.Remove(player.SmallId);
+                        if (SelectedPlayers.Contains(player.SmallId))
+                            element.Start();
+                    }
+                }
+            }
+            finally
+            {
+                callback?.Invoke();
             }
         }
     }

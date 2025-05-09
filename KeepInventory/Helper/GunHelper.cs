@@ -1,9 +1,6 @@
 ﻿using System;
 
-using BoneLib;
-
 using Il2CppSLZ.Marrow;
-using Il2CppSLZ.Marrow.Data;
 
 using KeepInventory.Saves.V2;
 using KeepInventory.Utilities;
