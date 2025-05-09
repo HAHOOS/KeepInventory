@@ -10,7 +10,8 @@
 ## What is this?
 
 A BONELAB code mod that lets you keep your inventory when switching between levels that do not save your inventory or when rejoining the game. It features:
-- **Full [Fusion](https://thunderstore.io/c/bonelab/p/Lakatrazz/Fusion/) Support!**
+- **Full [Fusion](https://thunderstore.io/c/bonelab/p/Lakatrazz/Fusion/) Support, including sharing saves with others!**
+- Multiple save slots
 - Saving data about **guns** and loading them!
 - Customizability, such as disabling inventory loading on level load, or saving/loading ammo
 - And much more!
