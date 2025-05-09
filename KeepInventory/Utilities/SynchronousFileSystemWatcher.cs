@@ -64,12 +64,12 @@ namespace KeepInventory.Utilities
         /// <inheritdoc cref="FileSystemWatcher.Error"/>
         public event EventHandler<ErrorEventArgs> Error;
 
-        private readonly List<WatcherEvent> _Queue = [];
+        private readonly List<EventArgs> _Queue = [];
 
         /// <summary>
         /// Event queue
         /// </summary>
-        public IReadOnlyList<WatcherEvent> Queue => _Queue.AsReadOnly();
+        public IReadOnlyList<EventArgs> Queue => _Queue.AsReadOnly();
 
         /// <summary>
         /// Initialize a new instance of <see cref="SynchronousFileSystemWatcher"/>
@@ -101,12 +101,13 @@ namespace KeepInventory.Utilities
 
         private void Init()
         {
-            _watcher.Renamed += (sender, e) => _Queue.Add(new(e));
-            _watcher.Created += (sender, e) => _Queue.Add(new(e));
-            _watcher.Deleted += (sender, e) => _Queue.Add(new(e));
-            _watcher.Changed += (sender, e) => _Queue.Add(new(e));
-            _watcher.Disposed += (sender, e) => _Queue.Add(new());
-            _watcher.Error += (sender, e) => _Queue.Add(new(e));
+            _watcher.Renamed += (sender, e) => _Queue.Add(e);
+            _watcher.Created += (sender, e) => _Queue.Add(e);
+            _watcher.Deleted += (sender, e) => _Queue.Add(e);
+            _watcher.Changed += (sender, e) => _Queue.Add(e);
+            _watcher.Disposed += (sender, e) => _Queue.Add(e);
+
+            _watcher.Error += (sender, e) => _Queue.Add(e);
             Core.Update += Update;
         }
 
@@ -119,18 +120,38 @@ namespace KeepInventory.Utilities
                     var @event = _Queue[i];
                     try
                     {
-                        if (@event.ChangeType == WatcherChangeTypes.Created)
-                            Created?.Invoke(this, @event.ToFileSystemEventArgs());
-                        else if (@event.ChangeType == WatcherChangeTypes.Deleted)
-                            Deleted?.Invoke(this, @event.ToFileSystemEventArgs());
-                        else if (@event.ChangeType == WatcherChangeTypes.Renamed)
-                            Renamed?.Invoke(this, @event.ToRenamedEventArgs());
-                        else if (@event.ChangeType == WatcherChangeTypes.Changed)
-                            Changed?.Invoke(this, @event.ToFileSystemEventArgs());
-                        else if (@event.ChangeType == null && @event.Exception != null)
-                            Error?.Invoke(this, @event.ToErrorEventArgs());
-                        else if (@event.ChangeType == null)
-                            Disposed?.Invoke(this, new());
+                        if (@event is RenamedEventArgs renamed)
+                        {
+                            Renamed?.Invoke(this, renamed);
+                        }
+                        else if (@event is FileSystemEventArgs fse_args)
+                        {
+                            if (fse_args.ChangeType == WatcherChangeTypes.Created)
+                                Created?.Invoke(this, fse_args);
+                            else if (fse_args.ChangeType == WatcherChangeTypes.Deleted)
+                                Deleted?.Invoke(this, fse_args);
+                            else if (fse_args.ChangeType == WatcherChangeTypes.Changed)
+                                Changed?.Invoke(this, fse_args);
+                        }
+                        else if (@event is ErrorEventArgs error)
+                        {
+                            Error?.Invoke(this, error);
+                        }
+                        else if (@event is EventArgs args)
+                        {
+                            try
+                            {
+                                Disposed?.Invoke(this, args);
+                            }
+                            catch (Exception ex)
+                            {
+                                Core.Logger.Error($"An unexpected error has occurred while running Disposed event, exception:\n{ex}");
+                            }
+                            finally
+                            {
+                                this.Dispose();
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -147,93 +168,16 @@ namespace KeepInventory.Utilities
         /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose()
         {
-            _watcher.Dispose();
+            try
+            {
+                _watcher.Dispose();
+            }
+            catch (Exception)
+            {
+                // Ignore
+            }
             Core.Update -= Update;
             GC.SuppressFinalize(this);
         }
-    }
-
-    /// <summary>
-    /// A class holding parameters to be then converted into the requested <see cref="EventArgs"/>
-    /// </summary>
-    public class WatcherEvent
-    {
-        /// <inheritdoc cref="FileSystemEventArgs.ChangeType"/>
-        public WatcherChangeTypes? ChangeType { get; private set; }
-
-        /// <inheritdoc cref="FileSystemEventArgs.Name"/>
-        public string Name { get; }
-
-        /// <inheritdoc cref="FileSystemEventArgs.FullPath"/>
-        public string FullPath { get; }
-
-        /// <inheritdoc cref="RenamedEventArgs.OldName"/>
-        public string OldName { get; }
-
-        /// <inheritdoc cref="RenamedEventArgs.OldFullPath"/>
-        public string OldFullPath { get; }
-
-        /// <inheritdoc cref="ErrorEventArgs.GetException"/>
-        public Exception Exception { get; }
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WatcherEvent"/>
-        /// </summary>
-        /// <param name="args">The <see cref="FileSystemEventArgs"/> to hold parameters of</param>
-        public WatcherEvent(FileSystemEventArgs args)
-        {
-            this.ChangeType = args.ChangeType;
-            this.Name = args.Name;
-            this.FullPath = args.FullPath;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WatcherEvent"/>
-        /// </summary>
-        /// <param name="args">The <see cref="RenamedEventArgs"/> to hold parameters of</param>
-        public WatcherEvent(RenamedEventArgs args)
-        {
-            this.ChangeType = args.ChangeType;
-            this.Name = args.Name;
-            this.FullPath = args.FullPath;
-
-            this.OldFullPath = args.OldFullPath;
-            this.OldName = args.OldName;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WatcherEvent"/>
-        /// </summary>
-        /// <param name="args">The <see cref="ErrorEventArgs"/> to hold parameters of</param>
-        public WatcherEvent(ErrorEventArgs args)
-            => this.Exception = args.GetException();
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WatcherEvent"/>
-        /// </summary>
-        public WatcherEvent()
-        {
-        }
-
-        private static bool IsFile(string path)
-            => Path.HasExtension(path);
-
-        /// <summary>
-        /// Converts to <see cref="FileSystemEventArgs"/>
-        /// </summary>
-        public FileSystemEventArgs ToFileSystemEventArgs()
-            => new(ChangeType ?? WatcherChangeTypes.All, IsFile(FullPath) ? Path.GetDirectoryName(FullPath) : FullPath, IsFile(FullPath) ? Name : null);
-
-        /// <summary>
-        /// Converts to <see cref="RenamedEventArgs"/>
-        /// </summary>
-        public RenamedEventArgs ToRenamedEventArgs()
-            => new(ChangeType ?? WatcherChangeTypes.All, IsFile(FullPath) ? Path.GetDirectoryName(FullPath) : FullPath, IsFile(FullPath) ? Name : null, IsFile(FullPath) ? OldName : null);
-
-        /// <summary>
-        /// Converts to <see cref="ErrorEventArgs"/>
-        /// </summary>
-        public ErrorEventArgs ToErrorEventArgs()
-            => new(Exception);
     }
 }

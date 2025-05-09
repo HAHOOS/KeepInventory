@@ -316,7 +316,7 @@ namespace KeepInventory.Menu
                     (int)Math.Round(unity.r * 255, 0),
                     (int)Math.Round(unity.g * 255, 0),
                     (int)Math.Round(unity.b * 255, 0));
-                CurrentSave.DrawingColor = color;
+                CurrentSave.Color = $"{color.R:X2}{color.G:X2}{color.B:X2}";
                 CurrentSave.TrySaveToFile(false);
                 BoneMenu.UpdatePresetsPage();
                 preview.ElementName = $"Preview: <color=#{CurrentSave.Color ?? "FFFFFF"}>{CurrentSave.Name}</color>";
@@ -404,7 +404,9 @@ namespace KeepInventory.Menu
             SharePage.CreateFunction("Refresh", Color.yellow, SetupShare);
             SharePage.CreateFunction("Share", Color.cyan, () =>
             {
-                if (SelectedPlayers == null || SelectedPlayers.Count == 0) return;
+                if (SelectedPlayers == null || SelectedPlayers.Count == 0)
+                    return;
+
                 try
                 {
                     SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));

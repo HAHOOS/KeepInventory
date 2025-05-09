@@ -279,26 +279,34 @@ namespace KeepInventory
             }
             else
             {
-                var save = JsonSerializer.Deserialize<Save>(text, SerializeOptions);
-                if (save != null)
+                try
                 {
-                    if (!string.IsNullOrWhiteSpace(save.ID))
+                    var save = JsonSerializer.Deserialize<Save>(text, SerializeOptions);
+                    if (save != null)
                     {
-                        if (SaveManager.Saves.Any(x => x.ID == save.ID && x.FilePath != path))
+                        if (!string.IsNullOrWhiteSpace(save.ID))
                         {
-                            Core.Logger.Error("The ID is already used in another save, will not overwrite");
+                            if (SaveManager.Saves.Any(x => x.ID == save.ID && x.FilePath != path))
+                            {
+                                Core.Logger.Error("The ID is already used in another save");
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            Core.Logger.Error($"The ID '{save.ID}' is null or empty");
                             return false;
                         }
                     }
                     else
                     {
-                        Core.Logger.Error($"The ID '{save.ID}' is null or empty, will not overwrite");
+                        Core.Logger.Error("Deserialized save is null");
                         return false;
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Core.Logger.Error("Deserialized save is null");
+                    Core.Logger.Error($"An unexpected error has occurred while deserializing save, exception:\n{ex}");
                     return false;
                 }
             }

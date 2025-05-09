@@ -317,7 +317,7 @@ namespace KeepInventory
 
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        _ = Utilities.Fusion.NetworkSpawnInSlotAsync(receiver, crate.Crate.Barcode, SlotColor, item.SlotName, action);
+                                        receiver.SpawnInSlot(crate.Crate.Barcode, item.SlotName, action);
                                     }
                                     else
                                     {
@@ -332,7 +332,7 @@ namespace KeepInventory
                                     //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        _ = Utilities.Fusion.NetworkSpawnInSlotAsync(receiver, crate.Crate.Barcode, SlotColor, item.SlotName);
+                                        receiver.SpawnInSlot(crate.Crate.Barcode, item.SlotName);
                                         //Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     }
                                     else

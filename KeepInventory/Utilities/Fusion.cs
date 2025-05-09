@@ -12,11 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Il2CppSLZ.Marrow.Data;
 using Il2CppSLZ.Marrow.Utilities;
-using LabFusion.Data;
-using LabFusion.Network;
-using LabFusion.RPC;
 using MelonLoader.Pastel;
-using System.Threading.Tasks;
+using Il2CppSLZ.Marrow.Pool;
 
 namespace KeepInventory.Utilities
 {
@@ -310,13 +307,11 @@ namespace KeepInventory.Utilities
         /// </summary>
         /// <param name="receiver">The <see cref="InventorySlotReceiver"/> to spawn the <see cref="Spawnable"/> in</param>
         /// <param name="barcode">The <see cref="Barcode"/> to be used to spawn the <see cref="Spawnable"/></param>
-        /// <param name="slotColor">Color that will be used in the slot prefix</param>
         /// <param name="slotName">Name of the slot (debugging reasons)</param>
-        /// <param name="inBetween">An action that will run between the Spawn Request and Spawn In Slot events</param>
-        /// <returns>Entity ID of the <see cref="Spawnable"/></returns>
-        public static async Task NetworkSpawnInSlotAsync(InventorySlotReceiver receiver, Barcode barcode, System.Drawing.Color slotColor, string slotName = "N/A", Action<GameObject> inBetween = null)
+        /// <param name="callback">An action that will run after the <see cref="Spawnable"/> gets spawned and put into the holster</param>
+        internal static void Fusion_SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, string slotName = "N/A", Action<GameObject> callback = null)
         {
-            if (!NetworkInfo.HasServer)
+            if (!LabFusion.Network.NetworkInfo.HasServer)
             {
                 Warn($"[{slotName}] The player is not connected to a server!");
                 return;
@@ -333,117 +328,174 @@ namespace KeepInventory.Utilities
                 Error($"[{slotName}] Barcode is either null or empty, or the InventorySlotReceiver was null");
                 return;
             }
-            MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to spawn {barcode.ID}");
 
-            bool returned = false;
-            NetworkAssetSpawner.SpawnCallbackInfo? result = null;
+            var head = LabFusion.Data.RigData.Refs.RigManager.physicsRig.m_head;
 
-            Exception exception = null;
-
-            var head = RigData.Refs.RigManager.physicsRig.m_head;
-
-            var info = new NetworkAssetSpawner.SpawnRequestInfo
+            var info = new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
             {
                 rotation = head.rotation,
                 position = (head.position + (head.forward * 1.5f)),
                 spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
                 spawnEffect = false,
-                spawnCallback = async (callbackInfo) =>
+                spawnCallback = (callbackInfo) =>
                 {
-                    MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Spawned item (Coordinates: {callbackInfo.spawned.transform.position.ToString() ?? "N/A"})");
                     try
                     {
-                        int attempts = 0;
-                        const int maxAttempts = 5;
-                        const float interval = 0.35f * 1000;
-
                         LabFusion.Entities.NetworkEntity slotEntity = null;
 
-                        while (attempts < maxAttempts)
+                        if (!LabFusion.Entities.InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
                         {
-                            attempts++;
-                            if (!LabFusion.Entities.InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
-                            {
-                                Warn($"Could not find the provided receiver in InventorySlotReceiverExtender Cache (Attempt {attempts}/{maxAttempts})");
-                                returned = true;
-                                await Task.Delay((int)MathF.Round(interval));
-                            }
-                            else
-                            {
-                                slotEntity = _slotEntity;
-                                break;
-                            }
-                        }
-
-                        if (slotEntity == null)
-                        {
-                            Warn("Network Entity for InventorySlotReceiver was not found, aborting");
-                            returned = true;
+                            Error($"[{slotName}] Network Entity for InventorySlotReceiver was not found, aborting");
                             return;
+                        }
+                        else
+                        {
+                            slotEntity = _slotEntity;
                         }
 
                         var weaponExtender = callbackInfo.entity.GetExtender<LabFusion.Entities.WeaponSlotExtender>();
 
                         if (weaponExtender == null)
                         {
-                            Warn("Weapon Slot Extender was not found, aborting");
-                            returned = true;
+                            Warn($"[{slotName}] Weapon Slot Extender was not found, aborting");
                             return;
                         }
 
                         var slotExtender = slotEntity.GetExtender<LabFusion.Entities.InventorySlotReceiverExtender>();
+                        if (slotExtender == null)
+                        {
+                            Error($"[{slotName}] Could not find the provided receiver in InventorySlotReceiverExtender Cache");
+                            return;
+                        }
 
                         byte? index = (byte?)slotExtender.GetIndex(receiver);
 
                         if (!index.HasValue)
                         {
                             Warn($"[{slotName}] Could not find the extender for the provided receiver, aborting");
-                            returned = true;
                             return;
                         }
 
-                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Running in between function");
-                        inBetween?.Invoke(callbackInfo.spawned);
+                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(weaponExtender.Component.interactableHost);
 
-                        MsgFusionPrefix($"[{slotName.Pastel(slotColor)}] Attempting to equip");
+                        var component = slotExtender.GetComponent(index.Value);
 
-                        using var writer = FusionWriter.Create(InventorySlotInsertData.Size);
-                        var insertData = InventorySlotInsertData.Create(slotEntity.Id, LabFusion.Player.PlayerIdManager.LocalSmallId, callbackInfo.entity.Id, index.Value);
+                        component.InsertInSlot(weaponExtender.Component.interactableHost);
 
-                        writer.Write(insertData);
-
-                        var message = FusionMessage.Create(NativeMessageTag.InventorySlotInsert, writer);
-
-                        try
-                        {
-                            LabFusion.Extensions.InteractableHostExtensions.TryDetach(weaponExtender.Component.interactableHost);
-
-                            var component = slotExtender.GetComponent(index.Value);
-
-                            component.InsertInSlot(weaponExtender.Component.interactableHost);
-                        }
-                        finally
-                        {
-                            message?.Dispose();
-                        }
-
-                        result = callbackInfo;
+                        callback?.InvokeActionSafe(callbackInfo.spawned);
                     }
                     catch (Exception ex)
                     {
-                        exception = ex;
-                        returned = true;
+                        Error($"An unexpected error has occurred while trying to spawn & holster a spawnable, exception:\n{ex}");
                     }
                 }
             };
 
-            NetworkAssetSpawner.Spawn(info);
+            LabFusion.RPC.NetworkAssetSpawner.Spawn(info);
+        }
 
-            // For fuck's sake just now found out it will download by itself if you do a spawn request
-            // There used to be code here that I wasted hours on, because it wouldn't work
+        /// <summary>
+        /// Spawns a <see cref="Spawnable"/> from provided <see cref="Barcode"/> to an <see cref="InventorySlot"/>
+        /// </summary>
+        /// <param name="receiver">The <see cref="InventorySlotReceiver"/> to spawn the <see cref="Spawnable"/> in</param>
+        /// <param name="barcode">The <see cref="Barcode"/> to be used to spawn the <see cref="Spawnable"/></param>
+        /// <param name="slotName">Name of the slot (debugging reasons)</param>
+        /// <param name="callback">An action that will run after the <see cref="Spawnable"/> gets spawned and put into the holster</param>
+        public static void SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, string slotName = "N/A", Action<GameObject> callback = null)
+        {
+            if (IsConnected)
+            {
+                Fusion_SpawnInSlot(receiver, barcode, slotName, callback);
+            }
+            else
+            {
+                if (receiver._slottedWeapon?.interactableHost != null)
+                {
+                    receiver._weaponHost?.ForceDetach();
+                    receiver.DropWeapon();
+                }
+                var task = receiver.SpawnInSlotAsync(barcode);
+                var awaiter = task.GetAwaiter();
+                awaiter.OnCompleted((Action)(() =>
+                {
+                    if (awaiter.GetResult())
+                        callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
+                }));
+            }
+        }
 
-            while (result == null && !returned && exception == null) await Task.Delay(50);
-            if (exception != null) throw exception;
+        internal static void Fusion_LoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
+        {
+            LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
+            {
+                position = Player.Head.position,
+                rotation = Player.Head.rotation,
+                spawnable = gun.defaultMagazine.spawnable,
+                spawnEffect = false,
+                spawnCallback = (spawn) =>
+                {
+                    var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
+                    if (gunExt == null)
+                        return;
+
+                    var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
+                    var mag = spawn.spawned.GetComponent<Magazine>();
+
+                    if (socketExtender == null || mag == null)
+                        return;
+
+                    if (socketExtender.Component._magazinePlug)
+                    {
+                        var otherPlug = socketExtender.Component._magazinePlug;
+
+                        if (otherPlug != mag.magazinePlug)
+                        {
+                            if (otherPlug)
+                                LabFusion.Extensions.AlignPlugExtensions.ForceEject(otherPlug);
+                        }
+                    }
+                    LabFusion.Extensions.InteractableHostExtensions.TryDetach(mag.magazinePlug.host);
+
+                    mag.magazinePlug.InsertPlug(socketExtender.Component);
+
+                    gun.MagazineState.SetCartridge(rounds);
+                    callback?.Invoke();
+                }
+            });
+        }
+
+        /// <summary>
+        /// Loads a magazine into provided <see cref="Gun"/> with Fusion
+        /// </summary>
+        /// <param name="gun">The <see cref="Gun"/> to load the magazine into</param>
+        /// <param name="rounds">The amount of rounds to have in the magazine, -1 will have the default amount for the magazine</param>
+        /// <param name="callback">An action that gets called after the magazine gets loaded</param>
+        public static void LoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
+        {
+            if (rounds == -1)
+                rounds = gun.defaultMagazine.rounds;
+            if (IsConnected)
+            {
+                Fusion_LoadMagazine(gun, rounds, callback);
+            }
+            else
+            {
+                var task = gun.ammoSocket.ForceLoadAsync(new MagazineData
+                {
+                    spawnable = gun.defaultMagazine.spawnable,
+                    rounds = rounds,
+                    platform = gun.defaultMagazine.platform,
+                });
+                var awaiter = task.GetAwaiter();
+
+                void something()
+                {
+                    gun.MagazineState.SetCartridge(rounds);
+                    callback?.Invoke();
+                }
+
+                awaiter.OnCompleted((Action)something);
+            }
         }
 
         internal static void MsgFusionPrefix(string message)

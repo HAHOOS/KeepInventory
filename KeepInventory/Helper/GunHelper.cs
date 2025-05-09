@@ -6,6 +6,7 @@ using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Data;
 
 using KeepInventory.Saves.V2;
+using KeepInventory.Utilities;
 
 namespace KeepInventory.Helper
 {
@@ -14,100 +15,6 @@ namespace KeepInventory.Helper
     /// </summary>
     public static class GunHelper
     {
-        internal static void FusionLoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
-        {
-            LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
-            {
-                position = Player.Head.position,
-                rotation = Player.Head.rotation,
-                spawnable = gun.defaultMagazine.spawnable,
-                spawnEffect = false,
-                spawnCallback = (spawn) =>
-                {
-                    var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
-                    if (gunExt == null)
-                        return;
-
-                    var data = new LabFusion.Network.MagazineInsertData
-                    {
-                        smallId = LabFusion.Player.PlayerIdManager.LocalSmallId,
-                        gunId = gunExt.Id,
-                        magazineId = spawn.entity.Id
-                    };
-                    using var writer = LabFusion.Network.FusionWriter.Create();
-                    writer.Write(data);
-                    using var msg = LabFusion.Network.FusionMessage.Create(LabFusion.Network.NativeMessageTag.MagazineInsert, writer);
-                    LabFusion.Network.MessageSender.SendToServer(LabFusion.Network.NetworkChannel.Reliable, msg);
-
-                    var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
-                    var mag = spawn.spawned.GetComponent<Magazine>();
-
-                    if (socketExtender == null || mag == null)
-                        return;
-
-                    // Insert mag into gun
-                    if (socketExtender.Component._magazinePlug)
-                    {
-                        var otherPlug = socketExtender.Component._magazinePlug;
-
-                        if (otherPlug != mag.magazinePlug)
-                        {
-                            LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
-
-                            if (otherPlug)
-                            {
-                                LabFusion.Extensions.AlignPlugExtensions.ForceEject(otherPlug);
-                            }
-
-                            LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
-                        }
-                    }
-                    LabFusion.Extensions.InteractableHostExtensions.TryDetach(mag.magazinePlug.host);
-
-                    LabFusion.Patching.AmmoSocketPatches.IgnorePatch = true;
-                    mag.magazinePlug.InsertPlug(socketExtender.Component);
-                    LabFusion.Patching.AmmoSocketPatches.IgnorePatch = false;
-
-                    gun.MagazineState.SetCartridge(rounds);
-                    callback?.Invoke();
-                }
-            });
-        }
-
-        /// <summary>
-        /// Loads a magazine into a gun while having full Fusion support
-        /// </summary>
-        /// <param name="gun">The gun to load the magazine to</param>
-        /// <param name="rounds">The amount of rounds in the magazine, -1 will be the default max</param>
-        /// <param name="callback">Callback to be called when completed</param>
-        public static void LoadMagazine(this Gun gun, int rounds = -1, Action callback = null)
-        {
-            ArgumentNullException.ThrowIfNull(gun, nameof(gun));
-            if (rounds == -1) rounds = gun.defaultMagazine.rounds;
-            if (!Utilities.Fusion.IsConnected)
-            {
-                var task = gun.ammoSocket.ForceLoadAsync(new MagazineData
-                {
-                    spawnable = gun.defaultMagazine.spawnable,
-                    rounds = rounds,
-                    platform = gun.defaultMagazine.platform,
-                });
-                var awaiter = task.GetAwaiter();
-
-                void something()
-                {
-                    gun.MagazineState.SetCartridge(rounds);
-                    callback?.Invoke();
-                }
-
-                awaiter.OnCompleted((System.Action)something);
-            }
-            else
-            {
-                FusionLoadMagazine(gun, rounds, callback);
-            }
-        }
-
         /// <summary>
         /// Updates the gun with provided <see cref="GunInfo"/>
         /// </summary>
@@ -173,7 +80,7 @@ namespace KeepInventory.Helper
                         var mag = info.GetMagazineData(gun);
                         if (mag?.spawnable?.crateRef != null && !string.IsNullOrWhiteSpace(mag.platform))
                         {
-                            LoadMagazine(gun, info.RoundsLeft, other);
+                            gun.LoadMagazine(info.RoundsLeft, other);
                         }
                         else
                         {
