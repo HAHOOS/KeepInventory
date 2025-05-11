@@ -84,7 +84,7 @@ namespace KeepInventory.Fusion.Messages
                 return;
             }
 
-            if (ShareManager.Entry_SharingBlacklist?.Value.Contains(message.Target.LongId) == true)
+            if (!ShareManager.IsPlayerAllowed(message.Sender))
             {
                 FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] A blacklisted player tried to share a save with you");
                 return;

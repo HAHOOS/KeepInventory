@@ -122,24 +122,24 @@ namespace KeepInventory.Fusion.Messages
             if (isServerHandled)
                 throw new Exception("This message is supposed to be broadcasted, not sent to server");
 
-            FusionModule.logger.Log("Request received");
+            FusionModule.logger.Log("[REQUEST] Request received");
 
             using var reader = FusionReader.Create(bytes);
             var msg = reader.ReadFusionSerializable<CanShareMessageData>();
             if (msg == null)
                 return;
 
-            FusionModule.logger.Log("Msg is not null");
+            FusionModule.logger.Log("[REQUEST] Msg is not null");
 
             if (!msg.Sender.IsValid || msg.Sender.IsMe)
                 return;
 
-            FusionModule.logger.Log("Sender is not me");
+            FusionModule.logger.Log("[REQUEST] Sender is not me");
 
             if (!ShareManager.IsPlayerAllowed(msg.Sender))
                 return;
 
-            FusionModule.logger.Log("Sender is allowed");
+            FusionModule.logger.Log("[REQUEST] Sender is allowed");
 
             var responseData = CanShareMessageData.Create(msg.Sender.SmallId, msg.ID);
 
@@ -166,34 +166,34 @@ namespace KeepInventory.Fusion.Messages
             if (isServerHandled)
                 throw new Exception("This message is supposed to be broadcasted, not sent to server");
 
-            FusionModule.logger.Log("Response received");
+            FusionModule.logger.Log("[RESPONSE] Response received");
 
             using var reader = FusionReader.Create(bytes);
             var msg = reader.ReadFusionSerializable<CanShareMessageData>();
             if (msg == null)
                 return;
 
-            FusionModule.logger.Log("Msg not null");
+            FusionModule.logger.Log("[RESPONSE] Msg not null");
 
             if (!msg.Sender.IsValid || msg.Sender.IsMe)
                 return;
 
-            FusionModule.logger.Log("Sender is not me");
+            FusionModule.logger.Log("[RESPONSE] Sender is not me");
 
             if (string.IsNullOrWhiteSpace(ShareManager.AwaitingID) || msg.ID != ShareManager.AwaitingID)
                 return;
 
-            FusionModule.logger.Log("Awaiting ID is not empty");
+            FusionModule.logger.Log("[RESPONSE] Awaiting ID is not empty");
 
             if (ShareManager.PlayerResponses.Contains(msg.Sender.SmallId))
                 return;
 
-            FusionModule.logger.Log("Player Responses does not contain sender");
+            FusionModule.logger.Log("[RESPONSE] Player Responses does not contain sender");
 
             if (!ShareManager.IsPlayerAllowed(msg.Sender))
                 return;
 
-            FusionModule.logger.Log("Player is allowed");
+            FusionModule.logger.Log("[RESPONSE] Player is allowed");
 
             LastMessage = DateTime.Now;
 

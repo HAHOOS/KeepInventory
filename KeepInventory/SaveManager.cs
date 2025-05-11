@@ -436,7 +436,6 @@ namespace KeepInventory
             if (save != null)
             {
                 _Saves.Remove(save);
-                Core.Logger.Msg($"File Path: {save.FilePath}");
                 if (removeFile && !string.IsNullOrWhiteSpace(save.FilePath))
                 {
                     Core.Logger.Msg($"Removing file at '{save.FilePath}'");

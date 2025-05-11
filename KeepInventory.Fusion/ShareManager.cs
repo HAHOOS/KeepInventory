@@ -133,7 +133,7 @@ namespace KeepInventory.Fusion
                 OnShared?.Invoke(save, sender);
         }
 
-        private const int Timeout = 700;
+        private const int Timeout = 500;
 
         /// <summary>
         /// Get all players that you can share a save with
