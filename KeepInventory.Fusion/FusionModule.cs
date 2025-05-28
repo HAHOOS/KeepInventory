@@ -1,46 +1,25 @@
-﻿using Il2CppSLZ.Marrow;
+﻿using System;
+
+using Il2CppSLZ.Marrow;
+
 using KeepInventory.Fusion.Messages;
 
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
 using LabFusion.Utilities;
 
-using MelonLoader.Pastel;
-
 using MelonLoader;
-
-using System;
+using MelonLoader.Pastel;
 
 namespace KeepInventory.Fusion
 {
-    /// <summary>
-    /// Module for Fusion
-    /// </summary>
     public class FusionModule : Module
     {
-        /// <summary>
-        /// Name of the module
-        /// </summary>
         public override string Name => "KeepInventory";
-
-        /// <summary>
-        /// Author of the module
-        /// </summary>
         public override string Author => "HAHOOS";
-
-        /// <summary>
-        /// Version of the module
-        /// </summary>
         public override Version Version => System.Version.Parse(_Version);
-
-        /// <summary>
-        /// Color in the console of the module
-        /// </summary>
         public override ConsoleColor Color => ConsoleColor.Yellow;
 
-        /// <summary>
-        /// Runs when module gets registered
-        /// </summary>
         protected override void OnModuleRegistered()
         {
             logger = LoggerInstance;
@@ -52,14 +31,8 @@ namespace KeepInventory.Fusion
             ModuleMessageHandler.RegisterHandler<CanShareResponseMessage>();
         }
 
-        /// <summary>
-        /// Version of the library, used mainly for AssemblyInfo
-        /// </summary>
         public const string _Version = KeepInventory.Core.Version;
 
-        /// <summary>
-        /// Event that triggers when RigManager is created
-        /// </summary>
         public static event Action OnRigCreated;
 
         internal static MelonLogger.Instance backupLogger;
@@ -71,9 +44,6 @@ namespace KeepInventory.Fusion
             OnRigCreated?.Invoke();
         }
 
-        /// <summary>
-        /// Sets up the <see cref="MultiplayerHooking"/> and <see cref="MelonLoader.MelonLogger.Instance"/>
-        /// </summary>
         public static void Setup(MelonLogger.Instance _logger)
         {
             backupLogger = _logger;
@@ -83,9 +53,6 @@ namespace KeepInventory.Fusion
             LocalPlayer.OnLocalRigCreated += RigCreated;
         }
 
-        /// <summary>
-        /// Loads the messages
-        /// </summary>
         public static void LoadModule()
         {
             MsgFusionPrefix("Loading module");

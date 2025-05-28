@@ -18,23 +18,13 @@ using Tomlet.Models;
 
 namespace KeepInventory.Managers
 {
-    /// <summary>
-    /// Class that manages the saves
-    /// </summary>
     public static class SaveManager
     {
-        /// <summary>
-        /// Path to the directory that contains all the saves
-        /// </summary>
         public static string SavesDirectory { get; private set; } = string.Empty;
 
         private static readonly List<Save> _Saves = [];
 
         internal static List<string> IgnoredFilePaths = [];
-
-        /// <summary>
-        /// <see cref="JsonSerializerOptions"/> for all operations relate to saves
-        /// </summary>
         public static readonly JsonSerializerOptions SerializeOptions = new()
         {
             WriteIndented = true,
@@ -42,10 +32,6 @@ namespace KeepInventory.Managers
             IgnoreReadOnlyFields = false,
             IgnoreReadOnlyProperties = false
         };
-
-        /// <summary>
-        /// List of all saves
-        /// </summary>
         public static ReadOnlyCollection<Save> Saves => _Saves.AsReadOnly();
 
         internal static SynchronousFileSystemWatcher FileSystemWatcher { get; private set; }
@@ -82,8 +68,6 @@ namespace KeepInventory.Managers
                     {
                         var path1 = Path.Combine(Core.KI_PreferencesDirectory, "Save.cfg");
                         var path2 = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg");
-
-                        // 0 - path1, 1 - path2
                         int correct = -1;
 
                         if (File.Exists(path1))
@@ -153,25 +137,12 @@ namespace KeepInventory.Managers
                 }
             }
         }
-
-        /// <summary>
-        /// Generates a string with random characters
-        /// </summary>
-        /// <param name="length">Length of string</param>
-        /// <returns>A random string with specified length</returns>
         public static string GenerateRandomID(int length)
         {
             Random random = new();
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
         }
-
-        /// <summary>
-        /// Registers a new <see cref="Save"/>
-        /// </summary>
-        /// <param name="save"><see cref="Save"/> that should be registered</param>
-        /// <param name="createFile">Should a file be created with the save if not found</param>
-        /// <exception cref="ArgumentException">A save with provided ID already exists</exception>
         public static void RegisterSave(Save save, bool createFile = true)
         {
             ArgumentNullException.ThrowIfNull(save, nameof(save));
@@ -210,12 +181,6 @@ namespace KeepInventory.Managers
             }
             Core.Logger.Msg($"Registered save with ID '{save.ID}'");
         }
-
-        /// <summary>
-        /// Registers a new <see cref="Save"/>
-        /// </summary>
-        /// <param name="filePath">Path to the file that contains the <see cref="Save"/></param>
-        /// <exception cref="ArgumentException">A save with provided ID already exists</exception>
         public static void RegisterSave(string filePath)
         {
             Core.Logger.Msg($"Attempting to load a save file at '{filePath}'");
@@ -314,12 +279,6 @@ namespace KeepInventory.Managers
         }
 
         private static readonly Dictionary<string, DateTime> LastWrite = [];
-
-        /// <summary>
-        /// Checks last write time to prevent the <see cref="FileSystemWatcher.Changed"/> from triggering twice
-        /// </summary>
-        /// <param name="file">The path to check</param>
-        /// <returns>Was it a double trigger</returns>
         internal static bool PreventDoubleTrigger(string file)
         {
             if (!File.Exists(file))
@@ -422,13 +381,6 @@ namespace KeepInventory.Managers
                 return false;
             }
         }
-
-        /// <summary>
-        /// Unregisters a <see cref="Save"/> with provided ID
-        /// </summary>
-        /// <param name="ID">ID of the <see cref="Save"/> to unregister</param>
-        /// <param name="removeFile">Should the file be deleted as well to prevent loading again</param>
-        /// <exception cref="KeyNotFoundException">A save with provided ID does not exist</exception>
         public static void UnregisterSave(string ID, bool removeFile = true)
         {
             Core.Logger.Msg($"Unregistering save with ID '{ID}'");

@@ -7,93 +7,49 @@ using MelonLoader;
 
 namespace KeepInventory.Utilities
 {
-    /// <summary>
-    /// Class that makes the <see cref="FileSystemWatcher"/> run events on the main thread
-    /// </summary>
     public class SynchronousFileSystemWatcher : IDisposable
     {
         private readonly FileSystemWatcher _watcher = new();
-
-        /// <inheritdoc cref="FileSystemWatcher.EnableRaisingEvents"/>
         public bool EnableRaisingEvents
         {
             get => _watcher.EnableRaisingEvents;
             set => _watcher.EnableRaisingEvents = value;
         }
-
-        /// <inheritdoc cref="FileSystemWatcher.NotifyFilter"/>
         public NotifyFilters NotifyFilter
         {
             get => _watcher.NotifyFilter;
             set => _watcher.NotifyFilter = value;
         }
-
-        /// <inheritdoc cref="FileSystemWatcher.Filter"/>
         public string Filter
         {
             get => _watcher.Filter;
             set => _watcher.Filter = value;
         }
-
-        /// <inheritdoc cref="FileSystemWatcher.Filters"/>
         public Collection<string> Filters
         {
             get => _watcher.Filters;
         }
-
-        /// <inheritdoc cref="FileSystemWatcher.Path"/>
         public string Path
         {
             get => _watcher.Path;
             set => _watcher.Path = value;
         }
-
-        /// <inheritdoc cref="FileSystemWatcher.Renamed"/>
         public event EventHandler<RenamedEventArgs> Renamed;
-
-        /// <inheritdoc cref="FileSystemWatcher.Created"/>
         public event EventHandler<FileSystemEventArgs> Created;
-
-        /// <inheritdoc cref="FileSystemWatcher.Deleted"/>
         public event EventHandler<FileSystemEventArgs> Deleted;
-
-        /// <inheritdoc cref="FileSystemWatcher.Changed"/>
         public event EventHandler<FileSystemEventArgs> Changed;
-
-        /// <inheritdoc cref="System.ComponentModel.Component.Disposed"/>
         public event EventHandler Disposed;
-
-        /// <inheritdoc cref="FileSystemWatcher.Error"/>
         public event EventHandler<ErrorEventArgs> Error;
 
         private readonly List<EventArgs> _Queue = [];
-
-        /// <summary>
-        /// Event queue
-        /// </summary>
         public IReadOnlyList<EventArgs> Queue => _Queue.AsReadOnly();
-
-        /// <summary>
-        /// Initialize a new instance of <see cref="SynchronousFileSystemWatcher"/>
-        /// </summary>
         public SynchronousFileSystemWatcher()
             => Init();
-
-        /// <summary>
-        /// Initialize a new instance of <see cref="SynchronousFileSystemWatcher"/>
-        /// </summary>
-        /// <param name="path"><inheritdoc cref="FileSystemWatcher.Path"/></param>
         public SynchronousFileSystemWatcher(string path)
         {
             _watcher.Path = path;
             Init();
         }
-
-        /// <summary>
-        /// Initialize a new instance of <see cref="SynchronousFileSystemWatcher"/>
-        /// </summary>
-        /// <param name="path"><inheritdoc cref="FileSystemWatcher.Path"/></param>
-        /// <param name="filter"><inheritdoc cref="FileSystemWatcher.Filter"/></param>
         public SynchronousFileSystemWatcher(string path, string filter)
         {
             _watcher.Path = path;
@@ -166,8 +122,6 @@ namespace KeepInventory.Utilities
                 }
             }
         }
-
-        /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose()
         {
             try
@@ -176,7 +130,6 @@ namespace KeepInventory.Utilities
             }
             catch (Exception)
             {
-                // Ignore
             }
             MelonEvents.OnUpdate.Unsubscribe(Update);
             GC.SuppressFinalize(this);

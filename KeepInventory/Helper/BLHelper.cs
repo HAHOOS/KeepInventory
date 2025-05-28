@@ -16,10 +16,6 @@ namespace KeepInventory.Helper
     {
         #region BoneMenu (Code shared by @camobiwon on Discord)
 
-        //You will need a PrefsCategory someone in your main class to reference here
-        //Replace instances of "Main" with your desired class
-        //Additionally you would need some method to save your preferences (Main.SavePreferences here)
-
         private readonly static MelonPreferences_Category prefs = Core.PrefsCategory;
 
         public static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, MelonPreferences_Category category = null, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
@@ -119,60 +115,27 @@ namespace KeepInventory.Helper
                 category.SaveToFile(false);
                 callback?.InvokeActionSafe(x);
             });
-            element.Value = value.Value; //BoneMenu temp hack fix
+            element.Value = value.Value;
             return element;
         }
-
-        /// <summary>
-        /// Creates the toggle function.
-        /// </summary>
-        /// <param name="page">The page.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="offColor">The color used when function is off.</param>
-        /// <param name="onColor">The color used when function is on.</param>
-        /// <param name="callback">The callback.</param>
-        /// <returns>The element that was added to the page</returns>
         public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback)
         {
             var element = new ToggleFunctionElement(name, offColor, onColor, callback);
             page.Add(element.Element);
             return element;
         }
-
-        /// <summary>
-        /// Creates the toggle function.
-        /// </summary>
-        /// <param name="page">The page.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="offColor">The color used when function is off.</param>
-        /// <param name="callback">The callback.</param>
-        /// <returns>The element that was added to the page</returns>
         public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Action<ToggleFunctionElement> callback)
         {
             var element = new ToggleFunctionElement(name, offColor, callback);
             page.Add(element.Element);
             return element;
         }
-
-        /// <summary>
-        /// Creates a blank space
-        /// </summary>
-        /// <param name="page">The page.</param>
-        /// <returns><see cref="BlankElement"/> that creates the blank space</returns>
         public static BlankElement CreateBlank(this Page page)
         {
             var element = new BlankElement();
             page.Add(element.Element);
             return element;
         }
-
-        /// <summary>
-        /// Creates a label, which is just a function element set without borders
-        /// </summary>
-        /// <param name="page">Page to add the label to</param>
-        /// <param name="text">Text for the label</param>
-        /// <param name="color">Color of the text</param>
-        /// <returns>A <see cref="FunctionElement"/> without borders</returns>
         public static FunctionElement CreateLabel(this Page page, string text, Color color)
         {
             var element = new FunctionElement(text, color, null);

@@ -13,74 +13,20 @@ using UnityEngine;
 
 namespace KeepInventory.Menu
 {
-    /// <summary>
-    /// Class that holds most of the functionality with <see cref="BoneLib.BoneMenu"/>
-    /// </summary>
     public static class BoneMenu
     {
-        /// <summary>
-        /// Page appearing first, which is the author: "HAHOOS"
-        /// </summary>
         public static Page AuthorPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="AuthorPage"/>, which contains all of the settings for this mod
-        /// </summary>
         public static Page ModPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which enables the user to manage everything related to saves
-        /// </summary>
         public static Page SavesPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="SavesPage"/>, which enables the user to manage saves
-        /// </summary>
         public static Page PresetsPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="SavesPage"/>, which enables the player to change how saving and loading works
-        /// </summary>
         public static Page SavingConfigPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which enables the player to disable certain events such as load inventory on level load
-        /// </summary>
         public static Page EventsPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which enables you to manage the "Sharing" feature for saves
-        /// </summary>
         public static Page SharingPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="SharingPage"/>, which enables you to blacklist players in the lobby you are currently in from sharing saves with you
-        /// </summary>
         public static Page SharingBlacklistPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which enables the player to disable certain events such as load inventory on level load
-        /// </summary>
         public static Page BlacklistPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="BlacklistPage"/>, which is just a list of all blacklisted levels
-        /// </summary>
         public static Page BlacklistViewPage { get; private set; }
-
-        /// <summary>
-        /// SubPage of <see cref="ModPage"/>, which has more general settings
-        /// </summary>
         public static Page OtherPage { get; private set; }
-
-        /// <summary>
-        /// Is the BoneMenu setup
-        /// </summary>
         public static bool IsSetup { get; private set; }
-
-        /// <summary>
-        /// Should the saves be removed on pressed
-        /// </summary>
         public static bool RemoveSavesOnPress { get; private set; }
 
         internal static void Setup()
@@ -164,20 +110,6 @@ namespace KeepInventory.Menu
                     BLHelper.SendNotification("Failure", "There is no default save!", true, 2, BoneLib.Notifications.NotificationType.Error);
                 }
             });
-            /*
-            ModPage.CreateBlank();
-            ModPage.CreateFunction("Save inventory to default save", Color.cyan, () =>
-            {
-                if (Core.CurrentSave != null)
-                {
-                    InventoryManager.SaveInventory(Core.CurrentSave);
-                }
-                else
-                {
-                    BLHelper.SendNotification("Failure", "There is no default save!", true, 2, BoneLib.Notifications.NotificationType.Error);
-                }
-            });
-            */
 
             var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
             modVersion.SetProperty(ElementProperties.NoBorder);

@@ -8,22 +8,9 @@ using KeepInventory.Utilities;
 
 namespace KeepInventory.Helper
 {
-    /// <summary>
-    /// Provides helper methods for <see cref="Gun"/>
-    /// </summary>
     public static class GunHelper
     {
         private readonly static Color SlotColor = Color.Cyan;
-
-        /// <summary>
-        /// Updates the gun with provided <see cref="GunInfo"/>
-        /// </summary>
-        /// <param name="gun">The gun to update</param>
-        /// <param name="info">The data to update with</param>
-        /// <param name="slot">The save slot (debugging purposes)</param>
-        /// <param name="name">Name of the crate (debugging purposes)</param>
-        /// <param name="barcode">Barcode of the spawnable (debugging purposes)</param>
-        /// <param name="printMessages">If <see langword="true"/>, the method will print debug messages using <see cref="MelonLoader.MelonLogger.Instance"/></param>
         public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
         {
             if (string.IsNullOrWhiteSpace(name)) name = "N/A";

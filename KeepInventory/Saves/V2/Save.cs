@@ -13,23 +13,13 @@ using Color = System.Drawing.Color;
 
 namespace KeepInventory.Saves.V2
 {
-    /// <summary>
-    /// Class that gets serialized or deserialized, holds all saved info about inventory, ammo etc.
-    /// </summary>
     public class Save
     {
-        /// <summary>
-        /// The version of the save
-        /// </summary>
         [JsonPropertyName("Version")]
         public readonly int Version = 2;
 
         [JsonIgnore]
         private string _name;
-
-        /// <summary>
-        /// Name identifying the save
-        /// </summary>
         [JsonPropertyName("Name")]
         public string Name
         {
@@ -44,10 +34,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private string _id;
-
-        /// <summary>
-        /// Identifier of the save
-        /// </summary>
         [JsonPropertyName("ID")]
         public string ID
         {
@@ -59,16 +45,8 @@ namespace KeepInventory.Saves.V2
                 OnPropertyChanged?.Invoke(nameof(ID), old, value);
             }
         }
-
-        /// <summary>
-        /// Color of the text in the menu
-        /// </summary>
         [JsonIgnore]
         public Color DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
-
-        /// <summary>
-        /// HEX Color of the text in the menu
-        /// </summary>
         [JsonPropertyName("Color")]
         public string Color
         {
@@ -97,19 +75,11 @@ namespace KeepInventory.Saves.V2
                 }
             }
         }
-
-        /// <summary>
-        /// Will the saves properties be automatically updated when changes to the file in <see cref="FilePath"/> are done
-        /// </summary>
         [JsonIgnore]
         public bool IsFileWatcherEnabled { get; set; } = true;
 
         [JsonIgnore]
         private string _filePath;
-
-        /// <summary>
-        /// Path to the save file
-        /// </summary>
         [JsonIgnore]
         public string FilePath
         {
@@ -124,10 +94,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private bool _isHidden;
-
-        /// <summary>
-        /// Should the save be hidden from BoneMenu
-        /// </summary>
         [JsonPropertyName("IsHidden")]
         public bool IsHidden
         {
@@ -142,10 +108,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private bool _canBeOverwrittenByPlayer;
-
-        /// <summary>
-        /// Can the save be overwritten by player using the BoneMenu
-        /// </summary>
         [JsonPropertyName("CanBeOverwrittenByPlayer")]
         public bool CanBeOverwrittenByPlayer
         {
@@ -160,10 +122,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _lightAmmo = -1;
-
-        /// <summary>
-        /// The amount of light ammo left
-        /// </summary>
         [JsonPropertyName("LightAmmo")]
         public int LightAmmo
         {
@@ -178,10 +136,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _mediumAmmo = -1;
-
-        /// <summary>
-        /// The amount of medium ammo left
-        /// </summary>
         [JsonPropertyName("MediumAmmo")]
         public int MediumAmmo
         {
@@ -196,10 +150,6 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _heavyAmmo = -1;
-
-        /// <summary>
-        /// The amount of heavy ammo left
-        /// </summary>
         [JsonPropertyName("HeavyAmmo")]
         public int HeavyAmmo
         {
@@ -213,10 +163,6 @@ namespace KeepInventory.Saves.V2
         }
 
         private List<SaveSlot> _inventorySlots;
-
-        /// <summary>
-        /// List of all slots and the spawnables stored in them
-        /// </summary>
         [JsonPropertyName("InventorySlots")]
         public List<SaveSlot> InventorySlots
         {
@@ -228,17 +174,9 @@ namespace KeepInventory.Saves.V2
                 OnPropertyChanged?.Invoke(nameof(InventorySlots), old, value);
             }
         }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/>
-        /// </summary>
         public Save()
         {
         }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/> from an old one
-        /// </summary>
         public Save(Save old)
         {
             _name = old.Name;
@@ -251,10 +189,6 @@ namespace KeepInventory.Saves.V2
             _heavyAmmo = old.HeavyAmmo;
             _inventorySlots = [.. old.InventorySlots];
         }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/> from an old one
-        /// </summary>
         [JsonConstructor]
         public Save(int Version, string Name, string ID, string Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
@@ -276,10 +210,6 @@ namespace KeepInventory.Saves.V2
             if (string.IsNullOrWhiteSpace(_id))
                 throw new Exception("ID cannot be null or empty");
         }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/> from a V1
-        /// </summary>
         public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V1.Save v1save)
         {
             _id = id;
@@ -294,10 +224,6 @@ namespace KeepInventory.Saves.V2
             v1save.InventorySlots?.ForEach(x => _new.Add(new SaveSlot(x)));
             _inventorySlots = _new;
         }
-
-        /// <summary>
-        /// Create new instance of <see cref="Save"/> from a V0
-        /// </summary>
         public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V0.Save v0save)
         {
             _id = id;
@@ -318,10 +244,6 @@ namespace KeepInventory.Saves.V2
             }));
             _inventorySlots = _new;
         }
-
-        /// <summary>
-        /// Triggered when a property changes
-        /// </summary>
         public event Action<string, object, object> OnPropertyChanged;
 
         internal void Update(Save save)
@@ -355,12 +277,6 @@ namespace KeepInventory.Saves.V2
         }
 
         internal bool Saving = false;
-
-        /// <summary>
-        /// Saves the save to its file
-        /// </summary>
-        /// <param name="printMessage">Should there be logs in the console for saving</param>
-        /// <exception cref="FileNotFoundException">The file was not found or the path was empty</exception>
         public void SaveToFile(bool printMessage = true)
         {
             if (!string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath))
@@ -390,12 +306,6 @@ namespace KeepInventory.Saves.V2
                 throw new FileNotFoundException("Save does not have a file!");
             }
         }
-
-        /// <summary>
-        /// Saves the save to its file without throwing exceptions
-        /// </summary>
-        /// <param name="printMessage">Should there be logs in the console for saving</param>
-        /// <returns><see langword="true"/> if saved successfully, otherwise <see langword="false"/></returns>
         public bool TrySaveToFile(bool printMessage = true)
         {
             try
@@ -435,8 +345,6 @@ namespace KeepInventory.Saves.V2
             }
             if (!Saving) SaveManager.IgnoredFilePaths.Remove(FilePath);
         }
-
-        /// <inheritdoc cref="object.ToString"/>
         public override string ToString()
            => this.Name;
     }

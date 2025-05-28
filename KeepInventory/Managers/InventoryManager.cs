@@ -17,19 +17,9 @@ using KeepInventory.Patches;
 
 namespace KeepInventory.Managers
 {
-    /// <summary>
-    /// Class that handles most of work with the inventory
-    /// </summary>
     public static class InventoryManager
     {
-        /// <summary>
-        /// A boolean value indicating if the next <see cref="AmmoInventoryPatches.Awake"/> should run
-        /// </summary>
         internal static bool LoadAmmoOnAwake = false;
-
-        /// <summary>
-        /// Saves the current inventory, overriding provided <see cref="Save"/>
-        /// </summary>
         public static void SaveInventory(Save save, bool notifications = false)
         {
             if (save == null)
@@ -71,7 +61,6 @@ namespace KeepInventory.Managers
                                 {
                                     string name = item.GetSlotName();
                                     var barcode = poolee.SpawnableCrate.Barcode;
-                                    //Core.Logger.Msg($"Slot: {name} / Barcode: {poolee.SpawnableCrate.name} ({poolee.SpawnableCrate.Barcode.ID})");
                                     if (gunInfo != null && Core.mp_saveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
                                     {
                                         save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
@@ -118,11 +107,6 @@ namespace KeepInventory.Managers
                 if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }
-
-        /// <summary>
-        /// Spawn the saved items in provided save to the inventory
-        /// </summary>
-        /// <param name="save"><see cref="Save"/> to spawn the items from</param>
         internal static void SpawnSavedItems(Save save)
         {
             if (save == null)
@@ -148,13 +132,10 @@ namespace KeepInventory.Managers
                         Core.Logger.Error("Inventory does not exist, cannot load saved items!");
                         return;
                     }
-
-                    // Adds saved items to inventory slots
                     var list = rigManager.GetComponentsInChildren<InventorySlotReceiver>().ToList();
 
                     foreach (var item in save.InventorySlots)
                     {
-                        //Core.MsgPrefix("Looking for slot", item.SlotName, SlotColor);
 
                         void spawn(InventorySlotReceiver receiver)
                         {
@@ -164,19 +145,15 @@ namespace KeepInventory.Managers
 
                                 if (item.Type == SaveSlot.SpawnableType.Gun && Core.mp_saveGunData.Value && item.Barcode != CommonBarcodes.Misc.SpawnGun)
                                 {
-                                    // Settings properties for the gun, this is horrible
                                     void action(GameObject obj)
                                     {
                                         if (item.GunInfo != null && obj != null)
                                         {
                                             var guns = obj.GetComponents<Gun>();
-                                            //Core.MsgPrefix("Attempting to write GunInfo", item.SlotName, SlotColor);
                                             foreach (var gun in guns)
                                                 gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode, false);
                                         }
                                     }
-
-                                    //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
 
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
@@ -192,17 +169,13 @@ namespace KeepInventory.Managers
                                 }
                                 else
                                 {
-                                    //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
                                         receiver.SpawnInSlot(crate.Crate.Barcode);
-                                        //Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     }
                                     else
                                     {
                                         var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
-                                        //Action complete = () => Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
-                                        //task.GetAwaiter().OnCompleted(complete);
                                     }
                                 }
                             }
@@ -211,13 +184,10 @@ namespace KeepInventory.Managers
                                 Core.Logger.Warning($"[{item.SlotName}] Could not find crate with the following barcode: {item.Barcode}");
                             }
                         }
-
-                        // Check for a slot with the same name and one that is for spawnables, not ammo
                         InventorySlotReceiver slot = rigManager.FindSlot(item.SlotName);
                         if (slot != null)
                         {
                             var receiver = slot;
-                            //if (receiver._weaponHost?.GetHostGameObject() != null) MonoBehaviour.Destroy(receiver._weaponHost.GetHostGameObject());
                             spawn(receiver);
                         }
                         else
@@ -249,8 +219,6 @@ namespace KeepInventory.Managers
                 return;
             }
             var ammoInventory = AmmoInventory.Instance ?? throw new Exception("Ammo inventory is null");
-            //AmmoGroup ammoGroup = type == AmmoType.Light ? ammoInventory.lightAmmoGroup : type == AmmoType.Medium ? ammoInventory.mediumAmmoGroup : ammoInventory.heavyAmmoGroup;
-            //ammoInventory.AddCartridge(ammoGroup, count);
             ammoInventory._groupCounts[type.ToString().ToLower()] = count;
             ammoInventory.onAmmoUpdateCount?.Invoke(type.ToString().ToLower(), count);
             ammoInventory.onAmmoUpdate?.Invoke();
@@ -262,12 +230,6 @@ namespace KeepInventory.Managers
             Medium,
             Heavy
         }
-
-        /// <summary>
-        /// Sets ammo from provided <see cref="Save"/>
-        /// </summary>
-        /// <param name="save"><see cref="Save"/> to add the ammo from</param>
-        /// <param name="showNotifications">If notifications should be shown</param>
         public static void AddSavedAmmo(Save save, bool showNotifications = true)
         {
             if (save == null)
@@ -306,11 +268,6 @@ namespace KeepInventory.Managers
                 if (showNotifications) BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
             }
         }
-
-        /// <summary>
-        /// Loads the saved inventory from provided <see cref="Save"/>
-        /// </summary>
-        /// <param name="save"><see cref="Save"/> to load the inventory from</param>
         public static void LoadSavedInventory(Save save)
         {
             if (save == null)
@@ -329,7 +286,6 @@ namespace KeepInventory.Managers
                 Core.Logger.Msg("Loading inventory...");
                 if (Core.mp_ammosaving.Value)
                 {
-                    // Adds saved ammo
                     Core.Logger.Msg("Waiting for Ammo Inventory to be initialized");
                     var ammoInventory = AmmoInventory.Instance;
                     if (ammoInventory != null)
@@ -345,7 +301,6 @@ namespace KeepInventory.Managers
 
                 if (Core.HasFusion)
                 {
-                    // Spawns the saved items by sending messages to the Fusion server
                     Core.Logger.Msg("Checking if client is connected to a Fusion server");
                     Utilities.Fusion.SpawnSavedItems(save);
                 }
@@ -364,10 +319,6 @@ namespace KeepInventory.Managers
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }
-
-        /// <summary>
-        /// Clear the current player's inventory
-        /// </summary>
         public static void ClearInventory()
         {
             var slots = Player.RigManager.GetAllSlots();

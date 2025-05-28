@@ -5,34 +5,15 @@ using Il2CppSLZ.Marrow;
 
 namespace KeepInventory.Helper
 {
-    /// <summary>
-    /// Helper for <see cref="Inventory"/>
-    /// </summary>
     public static class InventoryHelper
     {
-        /// <summary>
-        /// Aliases of slots, key is original name, value is the alias
-        /// </summary>
         public static readonly Dictionary<string, string> Aliases = new() {
             {"HeadSlotContainer", "Head" }
         };
-
-        /// <summary>
-        /// Get all of the slots of the <see cref="RigManager"/>
-        /// </summary>
-        /// <param name="rigManager">The <see cref="RigManager"/> to check</param>
-        /// <returns>All found slots in the <see cref="RigManager"/></returns>
         public static List<InventorySlotReceiver> GetAllSlots(this RigManager rigManager)
         {
             return rigManager?.GetComponentsInChildren<InventorySlotReceiver>().ToList();
         }
-
-        /// <summary>
-        /// Find a slot with provided name
-        /// </summary>
-        /// <param name="rigManager"><see cref="RigManager"/> to get the slots from</param>
-        /// <param name="name">Name of the <see cref="InventorySlotReceiver"/></param>
-        /// <returns>If found, returns the <see cref="InventorySlotReceiver"/>, otherwise <see langword="null"/></returns>
         public static InventorySlotReceiver FindSlot(this RigManager rigManager, string name)
         {
             var slots = rigManager.GetAllSlots();
@@ -45,13 +26,6 @@ namespace KeepInventory.Helper
             }
             return null;
         }
-
-        /// <summary>
-        /// Get name of a slot
-        /// </summary>
-        /// <param name="slotReceiver">The <see cref="InventorySlotReceiver"/> to get name of</param>
-        /// <param name="useAliases">Should it check also for aliases, and if found, it will return the alias</param>
-        /// <returns>Slot name of the provided <see cref="InventorySlotReceiver"/></returns>
         public static string GetSlotName(this InventorySlotReceiver slotReceiver, bool useAliases = true)
         {
             var name = slotReceiver.transform.parent.name;

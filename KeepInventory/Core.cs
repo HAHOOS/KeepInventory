@@ -1,45 +1,33 @@
-﻿using MelonLoader;
-using MelonLoader.Utils;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
 
 using BoneLib;
 using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
-using UnityEngine;
+using KeepInventory.Helper;
+using KeepInventory.Managers;
+using KeepInventory.Menu;
+using KeepInventory.Utilities;
 
-using Il2CppSLZ.Marrow;
-
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using System;
-using System.Reflection;
+using MelonLoader;
+using MelonLoader.Pastel;
+using MelonLoader.Utils;
 
 using Semver;
 
-using MelonLoader.Pastel;
-
-using KeepInventory.Helper;
-using KeepInventory.Utilities;
-using KeepInventory.Menu;
-using System.Threading;
-using KeepInventory.Managers;
+using UnityEngine;
 
 namespace KeepInventory
 {
-    /// <summary>
-    /// Main class containing most of the functionality of KeepInventory
-    /// </summary>
     public class Core : MelonMod
     {
-        /// <summary>
-        /// Current version of KeepInventory, used mostly for AssemblyInfo
-        /// </summary>
         public const string Version = "1.3.0";
 
-        /// <summary>
-        /// The current save for the inventory
-        /// </summary>
         public static Saves.V2.Save CurrentSave
         {
             get
@@ -57,24 +45,11 @@ namespace KeepInventory
             }
         }
 
-        /// <summary>
-        /// Run when <see cref="CurrentSave"/> gets changed
-        /// </summary>
         public static event Action DefaultSaveChanged;
 
-        /// <summary>
-        /// Instance of the <see cref="Core"/> class
-        /// </summary>
         public static Core Instance { get; internal set; }
-
-        /// <summary>
-        /// Assembly of MelonLoader
-        /// </summary>
         internal static Assembly MLAssembly;
 
-        /// <summary>
-        /// List of all blacklisted BONELAB levels
-        /// </summary>
         public readonly static List<string> bonelabBlacklist = [
                 CommonBarcodes.Maps.Home,
                 CommonBarcodes.Maps.Ascent,
@@ -97,9 +72,6 @@ namespace KeepInventory
                 CommonBarcodes.Maps.MainMenu,
         ];
 
-        /// <summary>
-        /// List of all blacklisted LABWORKS levels
-        /// </summary>
         public readonly static List<string> labworksBlacklist = [
            "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
            "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
@@ -124,136 +96,34 @@ namespace KeepInventory
         internal static int _lastAmmoCount_light = 0;
         internal static int _lastAmmoCount_medium = 0;
         internal static int _lastAmmoCount_heavy = 0;
-
-        /// <summary>
-        /// Path to the preferences directory of KeepInventory
-        /// </summary>
         public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");
-
-        /// <summary>
-        /// Category containing all of the config
-        /// </summary>
         internal static MelonPreferences_Category PrefsCategory;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should items be saved and/or loaded
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_itemsaving;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should ammo be saved and/or loaded
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_ammosaving;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should gun data be saved and/or loaded
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_saveGunData;
-
-        /// <summary>
-        /// An entry with a string value indicating what save is default, which is which should be used when automatically loading and saving inventory. The string value should be the ID
-        /// </summary>
         internal static MelonPreferences_Entry<string> mp_defaultSave;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should the inventory be saved on level unload
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_saveOnLevelUnload;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should the inventory be loaded on level load
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_loadOnLevelLoad;
-
-        /// <summary>
-        /// An entry with a list of all blacklisted levels from loading/saving inventory
-        /// </summary>
         internal static MelonPreferences_Entry<List<string>> mp_blacklistedLevels;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should BONELAB levels (except VoidG114 and BL Hub) be blacklisted
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should LABWORKS levels (except Sandbox levels, only campaign) be blacklisted
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_blacklistLABWORKSlevels;
-
-        /// <summary>
-        /// An entry with a boolean value indicating whether or not should the mod show notifications
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_showNotifications;
-
-        /// <summary>
-        /// An entry with an int value that indicates what version of config is it using (will be used for migrating configs in the future updates, if there will be any)
-        /// </summary>
         internal static MelonPreferences_Entry<int> mp_configVersion;
-
-        /// <summary>
-        /// If true, when you die all of the weapons you were holding get holstered if possible
-        /// </summary>
         internal static MelonPreferences_Entry<bool> mp_holsterHeldWeaponsOnDeath;
-
-        /// <summary>
-        /// Variable of element in BoneMenu responsible for showing if level is blacklisted or not, and changing it
-        /// </summary>
         internal static FunctionElement statusElement;
-
-        /// <summary>
-        /// <see cref="LevelInfo"/> of the current level
-        /// </summary>
         internal static LevelInfo levelInfo;
-
-        /// <summary>
-        /// Boolean value indicating if user has Fusion
-        /// </summary>
         public static bool HasFusion => FindMelon("LabFusion", "Lakatrazz") != null;
-
-        /// <summary>
-        /// Boolean value indicating whether or not was the Fusion Library for KeepInventory loaded/initialized
-        /// </summary>
         public static bool IsFusionLibraryInitialized { get; internal set; } = false;
-
-        /// <summary>
-        /// Boolean value indicating whether or not Fusion Support Library failed to load
-        /// </summary>
         public static bool FailedFLLoad { get; internal set; } = false;
-
-        /// <summary>
-        /// A boolean value indicating whether or not will this be the first time <see cref="LevelLoadedEvent(LevelInfo)"/> will be run
-        /// </summary>
         private bool InitialLoad = true;
-
-        /// <summary>
-        /// Instance of <see cref="KeepInventory.Utilities.Thunderstore"/>
-        /// </summary>
         internal static Thunderstore ThunderstoreInstance { get; private set; }
-
-        /// <summary>
-        /// Is the mod the latest version
-        /// </summary>
         internal static bool IsLatestVersion { get; private set; } = true;
-
-        /// <summary>
-        /// <see cref="Package"/> of KeepInventory
-        /// </summary>
         internal static Package ThunderstorePackage { get; private set; }
-
-        /// <summary>
-        /// The thread that Unity runs on
-        /// </summary>
         public Thread UnityThread { get; private set; }
 
-        /// <summary>
-        /// Is the current thread the unity thread
-        /// </summary>
         public bool IsCurrentThreadMainThread
             => Thread.CurrentThread == UnityThread;
 
-        /// <summary>
-        /// Calls when MelonLoader loads all Mods/Plugins
-        /// </summary>
         public override void OnInitializeMelon()
         {
             UnityThread = Thread.CurrentThread;
@@ -338,9 +208,6 @@ namespace KeepInventory
             }
         }
 
-        /// <summary>
-        /// Runs when the application is about to quit
-        /// </summary>
         public override void OnApplicationQuit()
         {
             SavePreferences();
@@ -351,22 +218,11 @@ namespace KeepInventory
             });
         }
 
-        /// <summary>
-        /// Send a message to the console with a prefix
-        /// </summary>
-        /// <param name="message">The message to send</param>
-        /// <param name="prefix">The prefix of the message</param>
-        /// <param name="color">The color of the prefix</param>
         internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
         {
             Logger.Msg($"[{prefix.Pastel(color)}] {message}");
         }
 
-        /// <summary>
-        /// Triggers when application is being quit <br/>
-        /// Used to save inventory if PersistentSave is turned on<br/>
-        /// <b>Will not trigger when trying to close MelonLoader, rather than the game</b>
-        /// </summary>
         public void SavePreferences()
         {
             LoggerInstance.Msg("Saving Preferences");
@@ -381,10 +237,6 @@ namespace KeepInventory
             }
         }
 
-        /// <summary>
-        /// Called when a BONELAB Level is unloaded<br/>
-        /// Used now for saving inventory
-        /// </summary>
         private void LevelUnloadedEvent()
         {
             if (!mp_saveOnLevelUnload.Value) return;
@@ -404,11 +256,6 @@ namespace KeepInventory
             }
         }
 
-        /// <summary>
-        /// Called when a BONELAB Level is loaded<br/>
-        /// Mostly used to load the inventory as of now
-        /// </summary>
-        /// <param name="obj">Contains Level Information</param>
         private void LevelLoadedEvent(LevelInfo obj)
         {
             levelInfo = obj;
@@ -467,9 +314,6 @@ namespace KeepInventory
             }
         }
 
-        /// <summary>
-        /// Set up Preferences
-        /// </summary>
         private void SetupPreferences()
         {
             if (!Directory.Exists(KI_PreferencesDirectory))
@@ -480,8 +324,6 @@ namespace KeepInventory
             PrefsCategory = MelonPreferences.CreateCategory("KeepInventory_Settings");
             PrefsCategory.SetFilePath(Path.Combine(KI_PreferencesDirectory, "Config.cfg"));
 
-            // Saving
-
             mp_itemsaving = PrefsCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
                 description: "If true, will save and load items in inventory");
             mp_ammosaving = PrefsCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
@@ -491,14 +333,10 @@ namespace KeepInventory
             mp_defaultSave = PrefsCategory.CreateEntry<string>("DefaultSave", string.Empty, "Default Save",
                 description: "ID of the save that will be used for things such as loading inventory on load or saving the inventory on level unload");
 
-            // Events
-
             mp_saveOnLevelUnload = PrefsCategory.CreateEntry<bool>("SaveOnLevelUnload", true, "Save On Level Unload",
                 description: "If true, during level unload, the inventory will be automatically saved");
             mp_loadOnLevelLoad = PrefsCategory.CreateEntry<bool>("LoadOnLevelLoad", true, "Load On Level Load",
                 description: "If true, the saved inventory will be automatically loaded when you get loaded into a level thats not blacklisted");
-
-            // Blacklist
 
             mp_blacklistBONELABlevels = PrefsCategory.CreateEntry<bool>("BlacklistBONELABLevels", true, "Blacklist BONELAB Levels",
                 description: "If true, most of the BONELAB levels (except VoidG114 and BONELAB Hub) will be blacklisted from saving/loading inventory");
@@ -506,8 +344,6 @@ namespace KeepInventory
                 description: "If true, LABWORKS levels from the campaign (not sandbox levels) will be blacklisted from saving/loading inventory");
             mp_blacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
                 description: "List of levels that will not save/load inventory");
-
-            // Other
 
             mp_showNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
                 description: "If true, notifications will be shown in-game regarding errors or other things");

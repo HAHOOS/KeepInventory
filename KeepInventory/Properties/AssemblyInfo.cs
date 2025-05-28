@@ -9,7 +9,6 @@ using System.Runtime.InteropServices;
 [assembly: MelonGame("Stress Level Zero", "BONELAB")]
 [assembly: MelonAuthorColor(0, 255, 165, 0)]
 [assembly: MelonColor(0, 255, 255, 0)]
-// Make ML shut up about KeepInventory.Fusion not loaded (it gets loaded on initialization which is after the message is thrown)
 [assembly: MelonOptionalDependencies("LabFusion", "KeepInventory.Fusion")]
 
 #endregion MelonLoader

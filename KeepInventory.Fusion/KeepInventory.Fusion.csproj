@@ -11,10 +11,6 @@
 	  <SignAssembly>True</SignAssembly>
 
 	  <AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
-
-	  <GenerateDocumentationFile>True</GenerateDocumentationFile>
-
-	  <Configurations>Debug;Release;MelonLoader;SDK</Configurations>
   </PropertyGroup>
 
 	<ItemGroup>

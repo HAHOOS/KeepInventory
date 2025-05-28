@@ -58,12 +58,6 @@ namespace KeepInventory.Managers
             }
             return true;
         }
-
-        /// <summary>
-        /// Converts a <see cref="Stream"/> to a byte array
-        /// </summary>
-        /// <param name="stream">The <see cref="Stream"/> to convert</param>
-        /// <returns>A<see cref="byte"/> array of the provided <see cref="Stream"/></returns>
         public static byte[] StreamToByteArray(Stream stream)
         {
             byte[] buffer = new byte[16 * 1024];

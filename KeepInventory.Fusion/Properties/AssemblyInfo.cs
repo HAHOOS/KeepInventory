@@ -1,6 +1,6 @@
-﻿using KeepInventory.Fusion;
+﻿using System.Reflection;
 
-using System.Reflection;
+using KeepInventory.Fusion;
 
 [assembly: AssemblyTitle("Library containing most of the functionality with LabFusion for KeepInventory")]
 [assembly: AssemblyDescription("Library containing most of the functionality with LabFusion for KeepInventory")]

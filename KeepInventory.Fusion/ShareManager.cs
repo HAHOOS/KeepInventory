@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 using KeepInventory.Fusion.Messages;
+using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
 using LabFusion.Network;
@@ -15,29 +16,12 @@ using MelonLoader;
 
 namespace KeepInventory.Fusion
 {
-    /// <summary>
-    /// Class that lets you easily share and manage the sharing of <see cref="Save"/>s
-    /// </summary>
     public static class ShareManager
     {
-        /// <summary>
-        /// Event that gets called when a save is shared
-        /// </summary>
         public static event Action<Save, byte> OnShared;
 
-        /// <summary>
-        /// Category for <see cref="MelonPreferences_Category"/>
-        /// </summary>
         public static MelonPreferences_Category Category { get; private set; }
-
-        /// <summary>
-        /// An entry that decides if you can share with others or others can share with you saves
-        /// </summary>
         public static MelonPreferences_Entry<bool> Entry_SharingEnabled { get; private set; }
-
-        /// <summary>
-        /// List of long IDs of players that you do not wish for them to share saves with you
-        /// </summary>
         public static MelonPreferences_Entry<List<ulong>> Entry_SharingBlacklist { get; private set; }
 
         private static bool IsSetup;
@@ -46,9 +30,6 @@ namespace KeepInventory.Fusion
 
         internal static string AwaitingID = string.Empty;
 
-        /// <summary>
-        /// Setup the preferences for sharing
-        /// </summary>
         public static void Setup()
         {
             Category = MelonPreferences.CreateCategory("KeepInventory_Sharing");
@@ -64,11 +45,6 @@ namespace KeepInventory.Fusion
                 => LocalPlayer.Metadata.TrySetMetadata("HasKeepInventory", bool.TrueString);
         }
 
-        /// <summary>
-        /// Share a <see cref="Save"/> with a specified player
-        /// </summary>
-        /// <param name="save"><see cref="Save"/> to share</param>
-        /// <param name="target">The player to share the save with</param>
         public static void Share(Save save, PlayerId target)
         {
             if (!IsSetup)
@@ -102,21 +78,11 @@ namespace KeepInventory.Fusion
             }
         }
 
-        /// <summary>
-        /// Verify that the data received from <see cref="ShareSaveMessage"/> is valid
-        /// </summary>
-        /// <param name="data">Data to check</param>
-        /// <returns><see langword="true"/> if valid, otherwise <see langword="false"/></returns>
         public static bool VerifyData(string data)
         {
             return !string.IsNullOrWhiteSpace(data) && IsJson(data);
         }
 
-        /// <summary>
-        /// Checks if a player is allowed to share a save with you
-        /// </summary>
-        /// <param name="playerId">The player to check</param>
-        /// <returns><see langword="true"/> if allowed, otherwise <see langword="false"/></returns>
         public static bool IsPlayerAllowed(PlayerId playerId)
         {
             if (!IsSetup)
@@ -139,10 +105,6 @@ namespace KeepInventory.Fusion
 
         private const int Timeout = 500;
 
-        /// <summary>
-        /// Get all players that you can share a save with
-        /// </summary>
-        /// <returns>A list of Small IDs of players</returns>
         public async static Task<List<byte>> GetAllShareablePlayers()
         {
             if (!IsSetup)
