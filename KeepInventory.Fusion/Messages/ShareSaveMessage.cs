@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 
+using KeepInventory.Fusion.Managers;
 using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 

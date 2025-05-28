@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 
+using KeepInventory.Fusion.Managers;
+
 using LabFusion.Data;
 using LabFusion.Network;
 using LabFusion.Player;

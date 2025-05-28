@@ -14,7 +14,7 @@ using LabFusion.Utilities;
 
 using MelonLoader;
 
-namespace KeepInventory.Fusion
+namespace KeepInventory.Fusion.Managers
 {
     public static class ShareManager
     {
@@ -33,7 +33,7 @@ namespace KeepInventory.Fusion
         public static void Setup()
         {
             Category = MelonPreferences.CreateCategory("KeepInventory_Sharing");
-            Entry_SharingEnabled = Category.CreateEntry<bool>("Enabled", true, "Enabled",
+            Entry_SharingEnabled = Category.CreateEntry("Enabled", true, "Enabled",
                 description: "Can people share saves to you and can you share.");
             Entry_SharingBlacklist = Category.CreateEntry<List<ulong>>("Blacklist", [], "Blacklist",
                 description: "List of long IDs of players that you do not want to allow sharing saves from");

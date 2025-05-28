@@ -36,7 +36,7 @@ namespace KeepInventory.Utilities
             {
                 KeepInventory.Fusion.FusionModule.Setup(Core.Logger);
                 KeepInventory.Fusion.FusionModule.LoadModule();
-                KeepInventory.Fusion.ShareManager.Setup();
+                KeepInventory.Fusion.Managers.ShareManager.Setup();
             }
             catch (Exception ex)
             {
@@ -47,7 +47,7 @@ namespace KeepInventory.Utilities
 
         internal static void Setup()
         {
-            KeepInventory.Fusion.ShareManager.OnShared += (save, sender) =>
+            KeepInventory.Fusion.Managers.ShareManager.OnShared += (save, sender) =>
             {
                 if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(sender, out LabFusion.Entities.NetworkPlayer player))
                 {
@@ -76,7 +76,7 @@ namespace KeepInventory.Utilities
         internal static void Internal_ShareSave(byte smallId, Save save)
         {
             if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(smallId, out LabFusion.Entities.NetworkPlayer plr))
-                KeepInventory.Fusion.ShareManager.Share(save, plr.PlayerId);
+                KeepInventory.Fusion.Managers.ShareManager.Share(save, plr.PlayerId);
             else
                 throw new Exception($"Player with small ID {smallId} could not be found");
         }
@@ -87,7 +87,7 @@ namespace KeepInventory.Utilities
 
         internal async static Task<List<FusionPlayer>> Internal_GetShareablePlayers()
         {
-            var task = await KeepInventory.Fusion.ShareManager.GetAllShareablePlayers();
+            var task = await KeepInventory.Fusion.Managers.ShareManager.GetAllShareablePlayers();
             List<FusionPlayer> players = [];
             foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
             {
