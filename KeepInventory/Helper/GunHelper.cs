@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 
 using Il2CppSLZ.Marrow;
 
@@ -12,17 +13,18 @@ namespace KeepInventory.Helper
     /// </summary>
     public static class GunHelper
     {
+        private readonly static Color SlotColor = Color.Cyan;
+
         /// <summary>
         /// Updates the gun with provided <see cref="GunInfo"/>
         /// </summary>
         /// <param name="gun">The gun to update</param>
         /// <param name="info">The data to update with</param>
-        /// <param name="slotColor">Color that will be used in the slot prefix</param>
         /// <param name="slot">The save slot (debugging purposes)</param>
         /// <param name="name">Name of the crate (debugging purposes)</param>
         /// <param name="barcode">Barcode of the spawnable (debugging purposes)</param>
         /// <param name="printMessages">If <see langword="true"/>, the method will print debug messages using <see cref="MelonLoader.MelonLogger.Instance"/></param>
-        public static void UpdateProperties(this Gun gun, GunInfo info, System.Drawing.Color slotColor, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
+        public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
         {
             if (string.IsNullOrWhiteSpace(name)) name = "N/A";
             if (string.IsNullOrWhiteSpace(barcode)) barcode = "N/A";
@@ -34,21 +36,21 @@ namespace KeepInventory.Helper
                 {
                     void other()
                     {
-                        if (printMessages) Core.MsgPrefix($"Setting fire mode value to {info.FireMode}", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix($"Setting fire mode value to {info.FireMode}", slotName, SlotColor);
                         gun.fireMode = info.FireMode;
-                        if (printMessages) Core.MsgPrefix($"Setting 'HasFiredOnce' value to {info.HasFiredOnce}", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix($"Setting 'HasFiredOnce' value to {info.HasFiredOnce}", slotName, SlotColor);
                         gun.hasFiredOnce = info.HasFiredOnce;
-                        if (printMessages) Core.MsgPrefix($"Setting hammer state to {info.HammerState}", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix($"Setting hammer state to {info.HammerState}", slotName, SlotColor);
                         gun.hammerState = info.HammerState;
-                        if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, SlotColor);
                         gun.slideState = info.SlideState;
 
                         if (!gun.isCharged && info.IsBulletInChamber)
                         {
-                            if (printMessages) Core.MsgPrefix("Charging gun", slotName, slotColor);
+                            if (printMessages) Core.MsgPrefix("Charging gun", slotName, SlotColor);
                             gun.Charge();
                             if (gun._hasMagState) gun.MagazineState.AddCartridge(1, gun.defaultCartridge);
-                            if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, slotColor);
+                            if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, SlotColor);
                             gun.cartridgeState = info.CartridgeState;
                         }
 
@@ -67,13 +69,13 @@ namespace KeepInventory.Helper
                                 break;
                         }
 
-                        if (printMessages) Core.MsgPrefix($"Spawned to slot: {name} ({barcode})", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix($"Spawned to slot: {name} ({barcode})", slotName, SlotColor);
                     }
 
-                    if (printMessages) Core.MsgPrefix($"Writing gun info for: {name} ({barcode})", slotName, slotColor);
+                    if (printMessages) Core.MsgPrefix($"Writing gun info for: {name} ({barcode})", slotName, SlotColor);
                     if (info.IsMag && gun.defaultMagazine != null && gun.defaultCartridge != null)
                     {
-                        if (printMessages) Core.MsgPrefix("Loading magazine", slotName, slotColor);
+                        if (printMessages) Core.MsgPrefix("Loading magazine", slotName, SlotColor);
                         var mag = info.GetMagazineData(gun);
                         if (mag?.spawnable?.crateRef != null && !string.IsNullOrWhiteSpace(mag.platform))
                         {

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 
+using MelonLoader;
+
 namespace KeepInventory.Utilities
 {
     /// <summary>
@@ -108,7 +110,7 @@ namespace KeepInventory.Utilities
             _watcher.Disposed += (sender, e) => _Queue.Add(e);
 
             _watcher.Error += (sender, e) => _Queue.Add(e);
-            Core.Update += Update;
+            MelonEvents.OnUpdate.Subscribe(Update);
         }
 
         private void Update()
@@ -145,17 +147,17 @@ namespace KeepInventory.Utilities
                             }
                             catch (Exception ex)
                             {
-                                Core.Logger.Error($"An unexpected error has occurred while running Disposed event, exception:\n{ex}");
+                                MelonLogger.Error($"SynchronousFileSystemWatcher | An unexpected error has occurred while running Disposed event, exception:\n{ex}");
                             }
                             finally
                             {
-                                this.Dispose();
+                                Dispose();
                             }
                         }
                     }
                     catch (Exception ex)
                     {
-                        Core.Logger.Error($"An unexpected error has occurred while triggering file system watcher events, exception:\n{ex}");
+                        MelonLogger.Error($"SynchronousFileSystemWatcher | An unexpected error has occurred while triggering file system watcher events, exception:\n{ex}");
                     }
                     finally
                     {
@@ -176,7 +178,7 @@ namespace KeepInventory.Utilities
             {
                 // Ignore
             }
-            Core.Update -= Update;
+            MelonEvents.OnUpdate.Unsubscribe(Update);
             GC.SuppressFinalize(this);
         }
     }

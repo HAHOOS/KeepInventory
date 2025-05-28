@@ -40,8 +40,6 @@ namespace KeepInventory.Managers
             try
             {
                 Core.Logger.Msg("Saving inventory...");
-                bool isItemSaved = false;
-                bool isAmmoSaved = false;
                 if (Core.mp_itemsaving.Value)
                 {
                     Core.Logger.Msg("Saving items in inventory slots");
@@ -93,7 +91,6 @@ namespace KeepInventory.Managers
                         {
                             Core.Logger.Msg("No spawnables were found in slots");
                         }
-                        isItemSaved = true;
                     }
                     else
                     {
@@ -103,35 +100,17 @@ namespace KeepInventory.Managers
                 }
                 if (Core.mp_ammosaving.Value)
                 {
-                    save.LightAmmo = Core._lastAmmoCount_light;
+                    save.LightAmmo = AmmoManager.GetValue("light");
                     Core.Logger.Msg("Saved Light Ammo: " + save.LightAmmo);
-                    save.MediumAmmo = Core._lastAmmoCount_medium;
+                    save.MediumAmmo = AmmoManager.GetValue("medium");
                     Core.Logger.Msg("Saved Medium Ammo: " + save.MediumAmmo);
-                    save.HeavyAmmo = Core._lastAmmoCount_heavy;
+                    save.HeavyAmmo = AmmoManager.GetValue("heavy");
                     Core.Logger.Msg("Saved Heavy Ammo: " + save.HeavyAmmo);
-                    isAmmoSaved = true;
                 }
                 save.SaveToFile(true);
                 Core.Logger.Msg("Successfully saved inventory");
 
-                string formatString()
-                {
-                    string list = "";
-                    if (isItemSaved)
-                    {
-                        if (!string.IsNullOrWhiteSpace(list)) list = $"{list}, Items";
-                        else list = "Items";
-                    }
-                    if (isAmmoSaved)
-                    {
-                        if (!string.IsNullOrWhiteSpace(list)) list = $"{list}, Ammo";
-                        else list = "Ammo";
-                    }
-                    if (string.IsNullOrWhiteSpace(list)) list = "N/A";
-                    return list;
-                }
-
-                if (notifications) BLHelper.SendNotification("Success", $"Successfully saved the inventory, the following was saved: {formatString()}", true, 5f, BoneLib.Notifications.NotificationType.Success);
+                if (notifications) BLHelper.SendNotification("Success", "Successfully saved the inventory!", true, 5f, BoneLib.Notifications.NotificationType.Success);
             }
             catch (Exception ex)
             {
@@ -175,7 +154,6 @@ namespace KeepInventory.Managers
 
                     foreach (var item in save.InventorySlots)
                     {
-                        var SlotColor = Colors.GetRandomSlotColor();
                         //Core.MsgPrefix("Looking for slot", item.SlotName, SlotColor);
 
                         void spawn(InventorySlotReceiver receiver)
@@ -194,7 +172,7 @@ namespace KeepInventory.Managers
                                             var guns = obj.GetComponents<Gun>();
                                             //Core.MsgPrefix("Attempting to write GunInfo", item.SlotName, SlotColor);
                                             foreach (var gun in guns)
-                                                gun.UpdateProperties(item.GunInfo, SlotColor, item, crate.Crate.name, item.Barcode, false);
+                                                gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode, false);
                                         }
                                     }
 

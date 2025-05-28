@@ -263,6 +263,39 @@ namespace KeepInventory
 
             LoggerInstance.Msg("Setting up KeepInventory");
 
+            CheckVersion();
+
+            if (!HasFusion)
+            {
+                LoggerInstance.Warning("Could not find LabFusion, the mod will not use any of Fusion's functionality");
+            }
+
+            if (HasFusion)
+            {
+                LoggerInstance.Msg("Attempting to load the Fusion Support Library");
+                if (DependencyManager.TryLoadDependency("KeepInventory.Fusion"))
+                    IsFusionLibraryInitialized = true;
+                else
+                    FailedFLLoad = true;
+            }
+
+            Hooking.OnLevelLoaded += LevelLoadedEvent;
+            Hooking.OnLevelUnloaded += LevelUnloadedEvent;
+
+            if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
+            if (HasFusion) Utilities.Fusion.Setup();
+
+            SetupPreferences();
+            SaveManager.Setup();
+            BoneMenu.Setup();
+            AmmoManager.Track("light");
+            AmmoManager.Track("medium");
+            AmmoManager.Track("heavy");
+            AmmoManager.Init();
+        }
+
+        private void CheckVersion()
+        {
             ThunderstoreInstance = new Thunderstore($"KeepInventory / {Version} A BONELAB MelonLoader Mod");
 
             try
@@ -303,114 +336,6 @@ namespace KeepInventory
             {
                 LoggerInstance.Error($"An unexpected error has occurred while trying to check if KeepInventory is the latest version, exception:\n{e}");
             }
-
-            if (!HasFusion)
-            {
-                LoggerInstance.Warning("Could not find LabFusion, the mod will not use any of Fusion's functionality");
-            }
-            else
-            {
-                LoggerInstance.Msg("Found LabFusion");
-            }
-
-            if (HasFusion)
-            {
-                LoggerInstance.Msg("Attempting to load the Fusion Support Library");
-                try
-                {
-                    var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                    if (assembly != null)
-                    {
-                        var assemblyInfo = assembly.GetName();
-                        if (assemblyInfo != null)
-                        {
-                            var _path = $"{assemblyInfo.Name}.Embedded.Dependencies.KeepInventory.Fusion.dll";
-                            var names = assembly.GetManifestResourceNames();
-                            if (names == null || names.Length == 0 || !names.Contains(_path))
-                            {
-                                FailedFLLoad = true;
-                                LoggerInstance.Error("There were no embedded resources or dependency was not found in the list of embedded resources, cannot not load Fusion Support Library");
-                            }
-                            else
-                            {
-                                var stream = assembly.GetManifestResourceStream(_path);
-                                if (stream?.Length > 0)
-                                {
-                                    var bytes = StreamToByteArray(stream);
-                                    System.Reflection.Assembly.Load(bytes);
-                                    LoggerInstance.Msg("Loaded Fusion Support Library");
-                                    IsFusionLibraryInitialized = true;
-                                }
-                                else
-                                {
-                                    FailedFLLoad = true;
-                                    LoggerInstance.Error("Could not get stream of Fusion Support Library, cannot not load Fusion Support Library");
-                                }
-                            }
-                        }
-                        else
-                        {
-                            FailedFLLoad = true;
-                            LoggerInstance.Error("Assembly Info was not found, cannot not load Fusion Support Library");
-                        }
-                    }
-                    else
-                    {
-                        FailedFLLoad = true;
-                        LoggerInstance.Error("Executing assembly was somehow not found, cannot not load Fusion Support Library");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    FailedFLLoad = true;
-                    LoggerInstance.Error($"An unexpected error occurred while loading the library:\n{ex}");
-                }
-            }
-
-            Hooking.OnLevelLoaded += LevelLoadedEvent;
-            Hooking.OnLevelUnloaded += LevelUnloadedEvent;
-
-            if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
-            if (HasFusion) KeepInventory.Utilities.Fusion.Setup();
-
-            SetupPreferences();
-            SaveManager.Setup();
-            BoneMenu.Setup();
-        }
-
-        internal static event Action Update;
-
-        /// <summary>
-        /// Runs every frame
-        /// </summary>
-        public override void OnUpdate()
-        {
-            var inv = AmmoInventory.Instance;
-            if (inv != null)
-            {
-                // HACK: For whatever reason when the level is unloading it sets the ammo to 10000000
-                if (inv._groupCounts.ContainsKey("light") && inv._groupCounts["light"] != 10000000) _lastAmmoCount_light = inv._groupCounts["light"];
-                if (inv._groupCounts.ContainsKey("medium") && inv._groupCounts["medium"] != 10000000) _lastAmmoCount_medium = inv._groupCounts["medium"];
-                if (inv._groupCounts.ContainsKey("heavy") && inv._groupCounts["heavy"] != 10000000) _lastAmmoCount_heavy = inv._groupCounts["heavy"];
-            }
-            Update?.Invoke();
-        }
-
-        /// <summary>
-        /// Converts a <see cref="Stream"/> to a byte array
-        /// </summary>
-        /// <param name="stream">The <see cref="Stream"/> to convert</param>
-        /// <returns>A<see cref="byte"/> array of the provided <see cref="Stream"/></returns>
-        public static byte[] StreamToByteArray(Stream stream)
-        {
-            byte[] buffer = new byte[16 * 1024];
-            using MemoryStream ms = new();
-            int read;
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                ms.Write(buffer, 0, read);
-            }
-            return ms.ToArray();
         }
 
         /// <summary>
@@ -471,7 +396,7 @@ namespace KeepInventory
                 if (CurrentSave != null)
                     InventoryManager.SaveInventory(CurrentSave);
                 else
-                    Core.Logger.Warning("No default save is set, cannot save");
+                    LoggerInstance.Warning("No default save is set, cannot save");
             }
             else
             {
@@ -514,7 +439,7 @@ namespace KeepInventory
                 {
                     if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
                     {
-                        LoggerInstance.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
+                        LoggerInstance.Warning("The Fusion Library is not loaded. Try restarting the game.");
                     }
                     else
                     {

@@ -4,7 +4,6 @@
 		<LangVersion>latest</LangVersion>
 
 		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
-		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
