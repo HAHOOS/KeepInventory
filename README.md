@@ -16,9 +16,6 @@ A BONELAB code mod that lets you keep your inventory when switching between leve
 - Customizability, such as disabling inventory loading on level load, or saving/loading ammo
 - And much more!
 
-**WARNING!**
-This mod might remove campaign data regarding the inventory while playing through campaign levels. You can change this behaviour at any time by going to the BoneMenu > HAHOOS > KeepInventory > Other and disabling `Remove Initial Inventory From Save`.
-
 If you find any bugs, I recommend creating an [issue](https://github.com/HAHOOS/KeepInventory/issues). This will really help the development of the mod
 
 The "Box" asset used in the logo is under the [MIT License](https://github.com/twbs/icons/blob/main/LICENSE)
