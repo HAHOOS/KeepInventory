@@ -10,6 +10,10 @@ using Il2CppSLZ.Marrow.Warehouse;
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
 
+using LabFusion.Entities;
+using LabFusion.Network;
+using LabFusion.Player;
+
 using MelonLoader;
 
 using UnityEngine;
@@ -67,6 +71,8 @@ namespace KeepInventory.Menu
 
         public Page SharePage { get; set; }
 
+        public PageLinkElement ShareLink { get; set; }
+
         public FunctionElement LightAmmo { get; private set; }
         public FunctionElement MediumAmmo { get; private set; }
         public FunctionElement HeavyAmmo { get; private set; }
@@ -100,6 +106,23 @@ namespace KeepInventory.Menu
 
             Core.DefaultSaveChanged -= Setup;
             CurrentSave.OnPropertyChanged -= PropertyChanged;
+        }
+
+        private static bool SharingEnabled()
+        {
+            if (!NetworkInfo.HasServer)
+                return false;
+
+            if (NetworkInfo.IsServer)
+                return true;
+
+            if (!NetworkPlayerManager.TryGetPlayer(PlayerIdManager.HostSmallId, out NetworkPlayer host))
+                return false;
+
+            if (host.PlayerId?.Metadata?.TryGetMetadata("HasKeepInventory", out string val) != true)
+                return false;
+
+            return bool.Parse(val);
         }
 
         private void PropertyChanged(string name, object oldVal, object newVal)
@@ -147,10 +170,13 @@ namespace KeepInventory.Menu
 
             if (Core.HasFusion && Core.IsFusionLibraryInitialized)
             {
-                SharePage ??= Page.CreatePage("Share", Color.cyan, 0, false);
-                Page.CreatePageLink(SharePage);
+                if (SharingEnabled())
+                {
+                    SharePage ??= Page.CreatePage("Share", Color.cyan, 0, false);
+                    ShareLink ??= Page.CreatePageLink(SharePage);
+                    SetupShare();
+                }
                 SetupFusion();
-                SetupShare();
             }
 
             SetDefaultFunction = Core.CurrentSave != CurrentSave ? Page.CreateFunction("Set as default", Color.green, () =>
@@ -401,6 +427,12 @@ namespace KeepInventory.Menu
 
         internal void SetupShare()
         {
+            if (!SharingEnabled())
+            {
+                Page.Remove(ShareLink);
+                if (BoneLib.BoneMenu.Menu.CurrentPage == SharePage)
+                    BoneLib.BoneMenu.Menu.OpenPage(Page);
+            }
             if (SharePage != null && !isSettingUpShare)
             {
                 try

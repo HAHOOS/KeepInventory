@@ -9,6 +9,7 @@ using KeepInventory.Saves.V2;
 
 using LabFusion.Network;
 using LabFusion.Player;
+using LabFusion.Utilities;
 
 using MelonLoader;
 
@@ -58,6 +59,9 @@ namespace KeepInventory.Fusion
             Category.SetFilePath(Path.Combine(Core.KI_PreferencesDirectory, "Sharing.cfg"));
             Category.SaveToFile(false);
             IsSetup = true;
+
+            MultiplayerHooking.OnStartServer += ()
+                => LocalPlayer.Metadata.TrySetMetadata("HasKeepInventory", bool.TrueString);
         }
 
         /// <summary>
@@ -175,7 +179,7 @@ namespace KeepInventory.Fusion
             using var writer = FusionWriter.Create();
             writer.Write(data);
             using var message = FusionMessage.ModuleCreate<CanShareRequestMessage>(writer);
-            MessageSender.BroadcastMessage(NetworkChannel.Reliable, message);
+            MessageSender.SendToServer(NetworkChannel.Reliable, message);
             var last = DateTime.Now;
             CanShareResponseMessage.LastMessage = DateTime.Now;
             while ((DateTime.Now - CanShareResponseMessage.LastMessage).TotalMilliseconds < Timeout) await Task.Delay(50);

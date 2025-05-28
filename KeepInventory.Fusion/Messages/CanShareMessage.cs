@@ -120,7 +120,10 @@ namespace KeepInventory.Fusion.Messages
         public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
         {
             if (isServerHandled)
-                throw new Exception("This message is supposed to be broadcasted, not sent to server");
+            {
+                using var _msg = FusionMessage.ModuleCreate<CanShareRequestMessage>(bytes);
+                MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, _msg);
+            }
 
             FusionModule.logger.Log("[REQUEST] Request received");
 
@@ -145,8 +148,8 @@ namespace KeepInventory.Fusion.Messages
 
             using var writer = FusionWriter.Create();
             writer.Write(responseData);
-            using var message = FusionMessage.ModuleCreate<CanShareResponseMessage>(bytes);
-            MessageSender.BroadcastMessage(NetworkChannel.Reliable, message);
+            using var message = FusionMessage.ModuleCreate<CanShareResponseMessage>(writer);
+            MessageSender.SendToServer(NetworkChannel.Reliable, message);
         }
     }
 
@@ -164,7 +167,10 @@ namespace KeepInventory.Fusion.Messages
         public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
         {
             if (isServerHandled)
-                throw new Exception("This message is supposed to be broadcasted, not sent to server");
+            {
+                using var _msg = FusionMessage.ModuleCreate<CanShareResponseMessage>(bytes);
+                MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, _msg);
+            }
 
             FusionModule.logger.Log("[RESPONSE] Response received");
 
