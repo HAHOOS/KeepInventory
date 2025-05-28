@@ -15,6 +15,7 @@ using Il2CppSLZ.Marrow.Utilities;
 using MelonLoader.Pastel;
 using Il2CppSLZ.Marrow.Pool;
 using System.Threading.Tasks;
+using KeepInventory.Managers;
 
 namespace KeepInventory.Utilities
 {
@@ -181,22 +182,6 @@ namespace KeepInventory.Utilities
             return LabFusion.Utilities.FusionPlayer.IsLocalPlayer(rigManager);
         }
 
-        /// <summary>
-        /// Find the <see cref="RigManager"/> for the local player that is connected to a server
-        /// </summary>
-        /// <returns>The <see cref="RigManager"/> of the local player</returns>
-        internal static RigManager FindRigManager()
-        {
-            if (!IsConnected)
-            {
-                return Player.RigManager;
-            }
-            else
-            {
-                return LabFusion.Data.RigData.Refs.RigManager ?? Player.RigManager;
-            }
-        }
-
         private static Action RigCreatedEvent;
 
         /// <summary>
@@ -225,7 +210,7 @@ namespace KeepInventory.Utilities
         /// </summary>
         internal static void SpawnSavedItems_FSL(Save save)
         {
-            if (Core.FindRigManager() == null)
+            if (Player.RigManager == null)
             {
                 Core.Logger.Msg("Rig not found, awaiting");
 
@@ -316,121 +301,21 @@ namespace KeepInventory.Utilities
         /// </summary>
         /// <param name="receiver">The <see cref="InventorySlotReceiver"/> to spawn the <see cref="Spawnable"/> in</param>
         /// <param name="barcode">The <see cref="Barcode"/> to be used to spawn the <see cref="Spawnable"/></param>
-        /// <param name="slotName">Name of the slot (debugging reasons)</param>
         /// <param name="callback">An action that will run after the <see cref="Spawnable"/> gets spawned and put into the holster</param>
-        internal static void Fusion_SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, string slotName = "N/A", Action<GameObject> callback = null)
+        public static void SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, Action<GameObject> callback = null)
         {
-            if (!LabFusion.Network.NetworkInfo.HasServer)
+            if (receiver._slottedWeapon?.interactableHost != null)
             {
-                Warn($"[{slotName}] The player is not connected to a server!");
-                return;
+                receiver._weaponHost?.ForceDetach();
+                receiver.DropWeapon();
             }
-
-            if (!MarrowGame.assetWarehouse.HasCrate(barcode))
+            var task = receiver.SpawnInSlotAsync(barcode);
+            var awaiter = task.GetAwaiter();
+            awaiter.OnCompleted((Action)(() =>
             {
-                Warn($"[{slotName}] You do not have the mod installed!");
-                return;
-            }
-
-            if (barcode == null || string.IsNullOrWhiteSpace(barcode.ID) || receiver == null)
-            {
-                Error($"[{slotName}] Barcode is either null or empty, or the InventorySlotReceiver was null");
-                return;
-            }
-
-            var head = LabFusion.Data.RigData.Refs.RigManager.physicsRig.m_head;
-
-            var info = new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
-            {
-                rotation = head.rotation,
-                position = (head.position + (head.forward * 1.5f)),
-                spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
-                spawnEffect = false,
-                spawnCallback = (callbackInfo) =>
-                {
-                    try
-                    {
-                        LabFusion.Entities.NetworkEntity slotEntity = null;
-
-                        if (!LabFusion.Entities.InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
-                        {
-                            Error($"[{slotName}] Network Entity for InventorySlotReceiver was not found, aborting");
-                            return;
-                        }
-                        else
-                        {
-                            slotEntity = _slotEntity;
-                        }
-
-                        var weaponExtender = callbackInfo.entity.GetExtender<LabFusion.Entities.WeaponSlotExtender>();
-
-                        if (weaponExtender == null)
-                        {
-                            Warn($"[{slotName}] Weapon Slot Extender was not found, aborting");
-                            return;
-                        }
-
-                        var slotExtender = slotEntity.GetExtender<LabFusion.Entities.InventorySlotReceiverExtender>();
-                        if (slotExtender == null)
-                        {
-                            Error($"[{slotName}] Could not find the provided receiver in InventorySlotReceiverExtender Cache");
-                            return;
-                        }
-
-                        byte? index = (byte?)slotExtender.GetIndex(receiver);
-
-                        if (!index.HasValue)
-                        {
-                            Warn($"[{slotName}] Could not find the extender for the provided receiver, aborting");
-                            return;
-                        }
-
-                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(weaponExtender.Component.interactableHost);
-
-                        var component = slotExtender.GetComponent(index.Value);
-
-                        component.InsertInSlot(weaponExtender.Component.interactableHost);
-
-                        callback?.InvokeActionSafe(callbackInfo.spawned);
-                    }
-                    catch (Exception ex)
-                    {
-                        Error($"An unexpected error has occurred while trying to spawn & holster a spawnable, exception:\n{ex}");
-                    }
-                }
-            };
-
-            LabFusion.RPC.NetworkAssetSpawner.Spawn(info);
-        }
-
-        /// <summary>
-        /// Spawns a <see cref="Spawnable"/> from provided <see cref="Barcode"/> to an <see cref="InventorySlot"/>
-        /// </summary>
-        /// <param name="receiver">The <see cref="InventorySlotReceiver"/> to spawn the <see cref="Spawnable"/> in</param>
-        /// <param name="barcode">The <see cref="Barcode"/> to be used to spawn the <see cref="Spawnable"/></param>
-        /// <param name="slotName">Name of the slot (debugging reasons)</param>
-        /// <param name="callback">An action that will run after the <see cref="Spawnable"/> gets spawned and put into the holster</param>
-        public static void SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, string slotName = "N/A", Action<GameObject> callback = null)
-        {
-            if (IsConnected)
-            {
-                Fusion_SpawnInSlot(receiver, barcode, slotName, callback);
-            }
-            else
-            {
-                if (receiver._slottedWeapon?.interactableHost != null)
-                {
-                    receiver._weaponHost?.ForceDetach();
-                    receiver.DropWeapon();
-                }
-                var task = receiver.SpawnInSlotAsync(barcode);
-                var awaiter = task.GetAwaiter();
-                awaiter.OnCompleted((Action)(() =>
-                {
-                    if (awaiter.GetResult())
-                        callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
-                }));
-            }
+                if (awaiter.GetResult())
+                    callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
+            }));
         }
 
         internal static void Fusion_LoadMagazine(this Gun gun, int rounds = -1, Action callback = null)

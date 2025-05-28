@@ -8,6 +8,7 @@ using BoneLib.BoneMenu;
 using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
+using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
 using LabFusion.Entities;

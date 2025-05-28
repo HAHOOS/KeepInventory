@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using KeepInventory.Helper;
+using KeepInventory.Managers;
 
 using Color = System.Drawing.Color;
 
@@ -228,17 +229,11 @@ namespace KeepInventory.Saves.V2
             }
         }
 
-        private void PostCreate()
-        {
-            // Currently empty
-        }
-
         /// <summary>
         /// Create new instance of <see cref="Save"/>
         /// </summary>
         public Save()
         {
-            PostCreate();
         }
 
         /// <summary>
@@ -255,7 +250,6 @@ namespace KeepInventory.Saves.V2
             _mediumAmmo = old.MediumAmmo;
             _heavyAmmo = old.HeavyAmmo;
             _inventorySlots = [.. old.InventorySlots];
-            PostCreate();
         }
 
         /// <summary>
@@ -281,8 +275,6 @@ namespace KeepInventory.Saves.V2
 
             if (string.IsNullOrWhiteSpace(_id))
                 throw new Exception("ID cannot be null or empty");
-
-            PostCreate();
         }
 
         /// <summary>
@@ -301,7 +293,6 @@ namespace KeepInventory.Saves.V2
             List<SaveSlot> _new = [];
             v1save.InventorySlots?.ForEach(x => _new.Add(new SaveSlot(x)));
             _inventorySlots = _new;
-            PostCreate();
         }
 
         /// <summary>
@@ -326,7 +317,6 @@ namespace KeepInventory.Saves.V2
                 GunInfo = null
             }));
             _inventorySlots = _new;
-            PostCreate();
         }
 
         /// <summary>

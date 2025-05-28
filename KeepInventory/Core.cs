@@ -23,6 +23,7 @@ using KeepInventory.Helper;
 using KeepInventory.Utilities;
 using KeepInventory.Menu;
 using System.Threading;
+using KeepInventory.Managers;
 
 namespace KeepInventory
 {
@@ -31,8 +32,6 @@ namespace KeepInventory
     /// </summary>
     public class Core : MelonMod
     {
-        #region Variables
-
         /// <summary>
         /// Current version of KeepInventory, used mostly for AssemblyInfo
         /// </summary>
@@ -126,25 +125,15 @@ namespace KeepInventory
         internal static int _lastAmmoCount_medium = 0;
         internal static int _lastAmmoCount_heavy = 0;
 
-        #region MelonPreferences
-
         /// <summary>
         /// Path to the preferences directory of KeepInventory
         /// </summary>
         public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");
 
-        #region Categories
-
         /// <summary>
         /// Category containing all of the config
         /// </summary>
         internal static MelonPreferences_Category PrefsCategory;
-
-        #endregion Categories
-
-        #region Entries
-
-        #region Saving
 
         /// <summary>
         /// An entry with a boolean value indicating whether or not should items be saved and/or loaded
@@ -166,10 +155,6 @@ namespace KeepInventory
         /// </summary>
         internal static MelonPreferences_Entry<string> mp_defaultSave;
 
-        #endregion Saving
-
-        #region Events
-
         /// <summary>
         /// An entry with a boolean value indicating whether or not should the inventory be saved on level unload
         /// </summary>
@@ -179,10 +164,6 @@ namespace KeepInventory
         /// An entry with a boolean value indicating whether or not should the inventory be loaded on level load
         /// </summary>
         internal static MelonPreferences_Entry<bool> mp_loadOnLevelLoad;
-
-        #endregion Events
-
-        #region Blacklist
 
         /// <summary>
         /// An entry with a list of all blacklisted levels from loading/saving inventory
@@ -199,10 +180,6 @@ namespace KeepInventory
         /// </summary>
         internal static MelonPreferences_Entry<bool> mp_blacklistLABWORKSlevels;
 
-        #endregion Blacklist
-
-        #region Other
-
         /// <summary>
         /// An entry with a boolean value indicating whether or not should the mod show notifications
         /// </summary>
@@ -214,20 +191,9 @@ namespace KeepInventory
         internal static MelonPreferences_Entry<int> mp_configVersion;
 
         /// <summary>
-        /// If true, the mod will remove initial inventory found in save data in a loaded inventory
-        /// </summary>
-        internal static MelonPreferences_Entry<bool> mp_initialInventoryRemove;
-
-        /// <summary>
         /// If true, when you die all of the weapons you were holding get holstered if possible
         /// </summary>
         internal static MelonPreferences_Entry<bool> mp_holsterHeldWeaponsOnDeath;
-
-        #endregion Other
-
-        #endregion Entries
-
-        #endregion MelonPreferences
 
         /// <summary>
         /// Variable of element in BoneMenu responsible for showing if level is blacklisted or not, and changing it
@@ -273,12 +239,6 @@ namespace KeepInventory
         /// <see cref="Package"/> of KeepInventory
         /// </summary>
         internal static Package ThunderstorePackage { get; private set; }
-
-        #endregion Variables
-
-        #region Methods
-
-        #region MelonLoader
 
         /// <summary>
         /// The thread that Unity runs on
@@ -436,10 +396,6 @@ namespace KeepInventory
             Update?.Invoke();
         }
 
-        #endregion MelonLoader
-
-        #region Other
-
         /// <summary>
         /// Converts a <see cref="Stream"/> to a byte array
         /// </summary>
@@ -501,20 +457,6 @@ namespace KeepInventory
         }
 
         /// <summary>
-        /// Find the <see cref="RigManager"/> of the player
-        /// </summary>
-        /// <returns>The <see cref="RigManager"/> of the player</returns>
-        public static RigManager FindRigManager()
-        {
-            if (HasFusion && Utilities.Fusion.IsConnected && IsFusionLibraryInitialized) return Utilities.Fusion.FindRigManager();
-            else return Player.RigManager;
-        }
-
-        #endregion Other
-
-        #region BoneLib Events
-
-        /// <summary>
         /// Called when a BONELAB Level is unloaded<br/>
         /// Used now for saving inventory
         /// </summary>
@@ -570,10 +512,6 @@ namespace KeepInventory
             {
                 if (mp_loadOnLevelLoad.Value)
                 {
-                    if (InventoryManager.DoesSaveForLevelExist(levelInfo.barcode))
-                    {
-                        if (mp_initialInventoryRemove.Value) InventoryManager.RemoveInitialInventoryFromSave(levelInfo.barcode);
-                    }
                     if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
                     {
                         LoggerInstance.Warning("The Fusion Library is not loaded or the setting 'Fusion Support' is set to Disabled. Try enabling 'Fusion Support' in settings or restarting the game if you have Fusion Support option enabled. The Fusion Support library might have not loaded properly");
@@ -603,10 +541,6 @@ namespace KeepInventory
                 statusElement.ElementColor = Color.red;
             }
         }
-
-        #endregion BoneLib Events
-
-        #region Setup
 
         /// <summary>
         /// Set up Preferences
@@ -654,16 +588,10 @@ namespace KeepInventory
                 description: "If true, notifications will be shown in-game regarding errors or other things");
             mp_configVersion = PrefsCategory.CreateEntry<int>("ConfigVersion", 1, "Config Version",
                 description: "DO NOT CHANGE THIS AT ALL, THIS WILL BE USED FOR MIGRATING CONFIGS AND SHOULD NOT BE CHANGED AT ALL");
-            mp_initialInventoryRemove = PrefsCategory.CreateEntry<bool>("RemoveInitialInventory", true, "Remove Initial Inventory",
-                description: "If true, the mod will remove initial inventory found in save data in a loaded inventory");
             mp_holsterHeldWeaponsOnDeath = PrefsCategory.CreateEntry<bool>("HolsterHeldWeaponsOnDeath", true, "Holster Held Weapons On Death",
                 description: "If true, when you die all of the weapons you were holding get holstered if possible");
 
             PrefsCategory.SaveToFile(false);
         }
-
-        #endregion Setup
-
-        #endregion Methods
     }
 }

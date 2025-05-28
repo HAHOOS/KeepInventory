@@ -16,7 +16,7 @@ using MelonLoader.Utils;
 using Tomlet;
 using Tomlet.Models;
 
-namespace KeepInventory
+namespace KeepInventory.Managers
 {
     /// <summary>
     /// Class that manages the saves
@@ -108,12 +108,12 @@ namespace KeepInventory
                                 }
                                 if (subTable != null)
                                 {
-                                    Type type = correct == 0 ? typeof(KeepInventory.Saves.V1.Save) : typeof(KeepInventory.Saves.V0.Save);
+                                    Type type = correct == 0 ? typeof(Saves.V1.Save) : typeof(Saves.V0.Save);
                                     var _value = TomletMain.To(type, subTable);
 
                                     if (correct == 1)
                                     {
-                                        if ((KeepInventory.Saves.V0.Save)_value == null)
+                                        if ((Saves.V0.Save)_value == null)
                                         {
                                             Core.Logger.Error("Could not retrieve the value from old save!");
                                             return;
@@ -121,15 +121,15 @@ namespace KeepInventory
                                     }
                                     else
                                     {
-                                        if ((KeepInventory.Saves.V1.Save)_value == null)
+                                        if ((Saves.V1.Save)_value == null)
                                         {
                                             Core.Logger.Error("Could not retrieve the value from old save!");
                                             return;
                                         }
                                     }
                                     Save save = null;
-                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (KeepInventory.Saves.V0.Save)_value);
-                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (KeepInventory.Saves.V1.Save)_value);
+                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (Saves.V0.Save)_value);
+                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", Color.Aqua, true, false, (Saves.V1.Save)_value);
                                     RegisterSave(save, true);
                                     if (File.Exists(path1) && correct == 0) File.Delete(path1);
                                     if (File.Exists(path2) && correct == 1) File.Delete(path2);
@@ -261,7 +261,7 @@ namespace KeepInventory
         private static bool Check(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(nameof(path));
-            if (!System.IO.File.Exists(path)) throw new FileNotFoundException($"Save file at '{path}' could be found");
+            if (!File.Exists(path)) throw new FileNotFoundException($"Save file at '{path}' could be found");
             string text;
             try
             {
@@ -272,7 +272,7 @@ namespace KeepInventory
                 Core.Logger.Error($"Unable to check the integrity of the file, because an unexpected error has occurred, exception:\n{ex}");
                 return false;
             }
-            if (string.IsNullOrWhiteSpace(text) || !SaveManager.IsJSON(text) || text == "{}")
+            if (string.IsNullOrWhiteSpace(text) || !IsJSON(text) || text == "{}")
             {
                 Core.Logger.Error("The content of the file is not correct");
                 return false;
@@ -286,7 +286,7 @@ namespace KeepInventory
                     {
                         if (!string.IsNullOrWhiteSpace(save.ID))
                         {
-                            if (SaveManager.Saves.Any(x => x.ID == save.ID && x.FilePath != path))
+                            if (Saves.Any(x => x.ID == save.ID && x.FilePath != path))
                             {
                                 Core.Logger.Error("The ID is already used in another save");
                                 return false;
@@ -316,7 +316,7 @@ namespace KeepInventory
         private static readonly Dictionary<string, DateTime> LastWrite = [];
 
         /// <summary>
-        /// Checks last write time to prevent the <see cref="System.IO.FileSystemWatcher.Changed"/> from triggering twice
+        /// Checks last write time to prevent the <see cref="FileSystemWatcher.Changed"/> from triggering twice
         /// </summary>
         /// <param name="file">The path to check</param>
         /// <returns>Was it a double trigger</returns>

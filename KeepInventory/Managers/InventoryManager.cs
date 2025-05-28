@@ -15,7 +15,7 @@ using UnityEngine;
 
 using KeepInventory.Patches;
 
-namespace KeepInventory
+namespace KeepInventory.Managers
 {
     /// <summary>
     /// Class that handles most of work with the inventory
@@ -23,37 +23,9 @@ namespace KeepInventory
     public static class InventoryManager
     {
         /// <summary>
-        /// A boolean value indicating if the next <see cref="KeepInventory.Patches.AmmoInventoryPatches.Awake"/> should run
+        /// A boolean value indicating if the next <see cref="AmmoInventoryPatches.Awake"/> should run
         /// </summary>
         internal static bool LoadAmmoOnAwake = false;
-
-        static readonly Dictionary<string, string> SaveNames = new()
-        {
-            { "Descent", CommonBarcodes.Maps.Descent },
-            { "Ascent", CommonBarcodes.Maps.Ascent },
-            { "LongRun", CommonBarcodes.Maps.LongRun },
-            { "Hub", CommonBarcodes.Maps.BLHub },
-            { "KartBowling", CommonBarcodes.Maps.BigBoneBowling },
-            { "Tuscany", CommonBarcodes.Maps.Tuscany },
-            { "HalfwayPark", CommonBarcodes.Maps.HalfwayPark },
-            { "MineDive", CommonBarcodes.Maps.MineDive },
-            { "BigAnomaly_A", CommonBarcodes.Maps.BigAnomaly },
-            { "StreetPuncher", CommonBarcodes.Maps.StreetPuncher },
-            { "SprintBridge", CommonBarcodes.Maps.SprintBridge },
-            { "MagmaGate", CommonBarcodes.Maps.MagmaGate },
-            { "MoonBase", CommonBarcodes.Maps.Moonbase },
-            { "MonogonMotorway", CommonBarcodes.Maps.MonogonMotorway },
-            { "Pillar", CommonBarcodes.Maps.PillarClimb },
-            { "BigAnomaly_B", CommonBarcodes.Maps.BigAnomaly2 },
-            { "DungeonWarrior", CommonBarcodes.Maps.DungeonWarrior },
-            { "DistrictParkour", CommonBarcodes.Maps.NeonParkour },
-            { "FantasyArena", CommonBarcodes.Maps.FantasyArena },
-            { "Baseline", CommonBarcodes.Maps.Baseline },
-            { "GunRangeSandbox", CommonBarcodes.Maps.GunRange },
-            { "MuseumSandbox", CommonBarcodes.Maps.MuseumBasement },
-            { "Mirror", CommonBarcodes.Maps.Mirror },
-            { "G114", CommonBarcodes.Maps.VoidG114 },
-        };
 
         /// <summary>
         /// Saves the current inventory, overriding provided <see cref="Save"/>
@@ -75,7 +47,7 @@ namespace KeepInventory
                     Core.Logger.Msg("Saving items in inventory slots");
 
                     bool notFound = false;
-                    var rigManager = Core.FindRigManager();
+                    var rigManager = Player.RigManager;
                     if (rigManager == null)
                     {
                         Core.Logger.Warning("RigManager does not exist, cannot save inventory slots");
@@ -169,93 +141,6 @@ namespace KeepInventory
         }
 
         /// <summary>
-        /// Removes the initial inventory from all BONELAB campaign saves.
-        /// </summary>
-        /// <returns>Did it save successfully</returns>
-        public static bool RemoveInitialInventoryFromAllSaves()
-        {
-            Action staged = null;
-            foreach (var item in Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState)
-            {
-                bool changed = false;
-                foreach (var y in item.Value)
-                {
-                    if (y.Key == "SLZ.Bonelab.initial_inventory" && y.Value != null)
-                    {
-                        Core.Logger.Warning($"Found initial inventory in save (Level: {item.Key}), removing");
-                        staged += () =>
-                        {
-                            changed = true;
-                            item.Value[y.Key] = null;
-                        };
-                    }
-                }
-                staged += () =>
-                {
-                    if (!changed) return;
-                    Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[item.key] = item.value;
-                };
-            }
-            staged?.Invoke();
-            return Il2CppSLZ.Bonelab.SaveData.DataManager.TrySaveActiveSave(Il2CppSLZ.Marrow.SaveData.SaveFlags.Progression);
-        }
-
-        /// <summary>
-        /// Removes the initial inventory from a BONELAB campaign save with provided barcode.
-        /// </summary>
-        /// <param name="barcode">The barcode of the level that has the save</param>
-        /// <returns>Did it save successfully and was the save found</returns>
-        public static bool RemoveInitialInventoryFromSave(string barcode)
-        {
-            Action staged = null;
-            var value = SaveNames.FirstOrDefault(x => x.Value == barcode);
-            if (!string.IsNullOrWhiteSpace(value.Key))
-            {
-                var item = Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[value.Key];
-                bool changed = false;
-                foreach (var y in item)
-                {
-                    if (y.Key == "SLZ.Bonelab.initial_inventory" && y.Value != null)
-                    {
-                        Core.Logger.Warning($"Found initial inventory in save (Level: {value.Key}), removing");
-                        staged += () =>
-                        {
-                            changed = true;
-                            item[y.Key] = null;
-                        };
-                    }
-                }
-                staged += () =>
-                {
-                    if (!changed) return;
-                    Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState[value.Key] = item;
-                };
-
-                staged?.Invoke();
-                return Il2CppSLZ.Bonelab.SaveData.DataManager.TrySaveActiveSave(Il2CppSLZ.Marrow.SaveData.SaveFlags.Progression);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if there is a save for the provided level
-        /// </summary>
-        /// <param name="barcode">The barcode of the level</param>
-        /// <returns><see langword="true"/> if found a save, otherwise <see langword="false"/></returns>
-        public static bool DoesSaveForLevelExist(string barcode)
-        {
-            foreach (var item in Il2CppSLZ.Bonelab.SaveData.DataManager.ActiveSave.Progression.LevelState)
-            {
-                var value = SaveNames.FirstOrDefault(x => x.Value == barcode);
-                if (!string.IsNullOrWhiteSpace(value.Key))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
         /// Spawn the saved items in provided save to the inventory
         /// </summary>
         /// <param name="save"><see cref="Save"/> to spawn the items from</param>
@@ -273,7 +158,7 @@ namespace KeepInventory
             {
                 if (save.InventorySlots?.Count > 0)
                 {
-                    var rigManager = Core.FindRigManager();
+                    var rigManager = Player.RigManager;
                     if (rigManager == null)
                     {
                         Core.Logger.Error("RigManager does not exist, cannot load saved items!");
@@ -317,7 +202,7 @@ namespace KeepInventory
 
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        receiver.SpawnInSlot(crate.Crate.Barcode, item.SlotName, action);
+                                        receiver.SpawnInSlot(crate.Crate.Barcode, action);
                                     }
                                     else
                                     {
@@ -332,7 +217,7 @@ namespace KeepInventory
                                     //Core.MsgPrefix($"Spawning to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     if (Core.HasFusion && Utilities.Fusion.IsConnected)
                                     {
-                                        receiver.SpawnInSlot(crate.Crate.Barcode, item.SlotName);
+                                        receiver.SpawnInSlot(crate.Crate.Barcode);
                                         //Core.MsgPrefix($"Spawned to slot: {crate.Crate.name} ({item.Barcode})", item.SlotName, SlotColor);
                                     }
                                     else
@@ -370,7 +255,7 @@ namespace KeepInventory
                 Core.Logger.Msg("Loaded inventory");
                 BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Core.Logger.Error("An error occurred while loading the inventory", ex);
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
@@ -412,7 +297,7 @@ namespace KeepInventory
                 Core.Logger.Error("Cannot load ammo from an empty save!");
                 return;
             }
-            if (!AmmoInventory.CurrentThreadIsMainThread())
+            if (!UnityEngine.Object.CurrentThreadIsMainThread())
             {
                 Core.Logger.Warning("Adding ammo not on the main thread, this may cause crashes due to protected memory");
             }
@@ -495,7 +380,7 @@ namespace KeepInventory
                     }
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Core.Logger.Error("An error occurred while loading the inventory", ex);
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);

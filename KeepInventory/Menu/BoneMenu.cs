@@ -7,6 +7,7 @@ using BoneLib.BoneMenu;
 using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
+using KeepInventory.Managers;
 
 using UnityEngine;
 
@@ -148,7 +149,6 @@ namespace KeepInventory.Menu
 
             OtherPage = ModPage.CreatePage("Other", Color.white);
             OtherPage.CreateBoolPref("Show Notifications", Color.green, ref Core.mp_showNotifications, prefDefaultValue: true);
-            OtherPage.CreateBoolPref("Remove Initial Inventory From Save", Color.red, ref Core.mp_initialInventoryRemove, prefDefaultValue: true);
             OtherPage.CreateBoolPref("Holster Held Weapons on Death", Color.magenta, ref Core.mp_holsterHeldWeaponsOnDeath);
             OtherPage.CreateFunction("Clear Inventory", Color.yellow, InventoryManager.ClearInventory);
 
