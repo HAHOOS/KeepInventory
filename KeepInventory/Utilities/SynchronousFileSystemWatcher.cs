@@ -10,46 +10,60 @@ namespace KeepInventory.Utilities
     public class SynchronousFileSystemWatcher : IDisposable
     {
         private readonly FileSystemWatcher _watcher = new();
+
         public bool EnableRaisingEvents
         {
             get => _watcher.EnableRaisingEvents;
             set => _watcher.EnableRaisingEvents = value;
         }
+
         public NotifyFilters NotifyFilter
         {
             get => _watcher.NotifyFilter;
             set => _watcher.NotifyFilter = value;
         }
+
         public string Filter
         {
             get => _watcher.Filter;
             set => _watcher.Filter = value;
         }
+
         public Collection<string> Filters
         {
             get => _watcher.Filters;
         }
+
         public string Path
         {
             get => _watcher.Path;
             set => _watcher.Path = value;
         }
+
         public event EventHandler<RenamedEventArgs> Renamed;
+
         public event EventHandler<FileSystemEventArgs> Created;
+
         public event EventHandler<FileSystemEventArgs> Deleted;
+
         public event EventHandler<FileSystemEventArgs> Changed;
+
         public event EventHandler Disposed;
+
         public event EventHandler<ErrorEventArgs> Error;
 
         private readonly List<EventArgs> _Queue = [];
         public IReadOnlyList<EventArgs> Queue => _Queue.AsReadOnly();
+
         public SynchronousFileSystemWatcher()
             => Init();
+
         public SynchronousFileSystemWatcher(string path)
         {
             _watcher.Path = path;
             Init();
         }
+
         public SynchronousFileSystemWatcher(string path, string filter)
         {
             _watcher.Path = path;
@@ -122,6 +136,7 @@ namespace KeepInventory.Utilities
                 }
             }
         }
+
         public void Dispose()
         {
             try

@@ -20,6 +20,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private string _name;
+
         [JsonPropertyName("Name")]
         public string Name
         {
@@ -34,6 +35,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private string _id;
+
         [JsonPropertyName("ID")]
         public string ID
         {
@@ -45,8 +47,10 @@ namespace KeepInventory.Saves.V2
                 OnPropertyChanged?.Invoke(nameof(ID), old, value);
             }
         }
+
         [JsonIgnore]
         public Color DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
+
         [JsonPropertyName("Color")]
         public string Color
         {
@@ -75,11 +79,13 @@ namespace KeepInventory.Saves.V2
                 }
             }
         }
+
         [JsonIgnore]
         public bool IsFileWatcherEnabled { get; set; } = true;
 
         [JsonIgnore]
         private string _filePath;
+
         [JsonIgnore]
         public string FilePath
         {
@@ -94,6 +100,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private bool _isHidden;
+
         [JsonPropertyName("IsHidden")]
         public bool IsHidden
         {
@@ -108,6 +115,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private bool _canBeOverwrittenByPlayer;
+
         [JsonPropertyName("CanBeOverwrittenByPlayer")]
         public bool CanBeOverwrittenByPlayer
         {
@@ -122,6 +130,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _lightAmmo = -1;
+
         [JsonPropertyName("LightAmmo")]
         public int LightAmmo
         {
@@ -136,6 +145,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _mediumAmmo = -1;
+
         [JsonPropertyName("MediumAmmo")]
         public int MediumAmmo
         {
@@ -150,6 +160,7 @@ namespace KeepInventory.Saves.V2
 
         [JsonIgnore]
         private int _heavyAmmo = -1;
+
         [JsonPropertyName("HeavyAmmo")]
         public int HeavyAmmo
         {
@@ -163,6 +174,7 @@ namespace KeepInventory.Saves.V2
         }
 
         private List<SaveSlot> _inventorySlots;
+
         [JsonPropertyName("InventorySlots")]
         public List<SaveSlot> InventorySlots
         {
@@ -174,9 +186,11 @@ namespace KeepInventory.Saves.V2
                 OnPropertyChanged?.Invoke(nameof(InventorySlots), old, value);
             }
         }
+
         public Save()
         {
         }
+
         public Save(Save old)
         {
             _name = old.Name;
@@ -189,6 +203,7 @@ namespace KeepInventory.Saves.V2
             _heavyAmmo = old.HeavyAmmo;
             _inventorySlots = [.. old.InventorySlots];
         }
+
         [JsonConstructor]
         public Save(int Version, string Name, string ID, string Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
@@ -210,6 +225,7 @@ namespace KeepInventory.Saves.V2
             if (string.IsNullOrWhiteSpace(_id))
                 throw new Exception("ID cannot be null or empty");
         }
+
         public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V1.Save v1save)
         {
             _id = id;
@@ -224,6 +240,7 @@ namespace KeepInventory.Saves.V2
             v1save.InventorySlots?.ForEach(x => _new.Add(new SaveSlot(x)));
             _inventorySlots = _new;
         }
+
         public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V0.Save v0save)
         {
             _id = id;
@@ -244,6 +261,7 @@ namespace KeepInventory.Saves.V2
             }));
             _inventorySlots = _new;
         }
+
         public event Action<string, object, object> OnPropertyChanged;
 
         internal void Update(Save save)
@@ -277,6 +295,7 @@ namespace KeepInventory.Saves.V2
         }
 
         internal bool Saving = false;
+
         public void SaveToFile(bool printMessage = true)
         {
             if (!string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath))
@@ -306,6 +325,7 @@ namespace KeepInventory.Saves.V2
                 throw new FileNotFoundException("Save does not have a file!");
             }
         }
+
         public bool TrySaveToFile(bool printMessage = true)
         {
             try
@@ -345,6 +365,7 @@ namespace KeepInventory.Saves.V2
             }
             if (!Saving) SaveManager.IgnoredFilePaths.Remove(FilePath);
         }
+
         public override string ToString()
            => this.Name;
     }

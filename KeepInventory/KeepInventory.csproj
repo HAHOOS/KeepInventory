@@ -6,13 +6,11 @@
 		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
 
 		<SignAssembly>True</SignAssembly>
-		<AssemblyOriginatorKeyFile>C:\Users\HAHOOS\source\repos\KeepInventory\key.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>$(SolutionDir)\key.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 	<ItemGroup>
-		<None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
-	</ItemGroup>
-	<ItemGroup>
 		<EmbeddedResource Include="Embedded\Dependencies\KeepInventory.Fusion.dll" />
+		<None Remove="Embedded\Dependencies\KeepInventory.Fusion.dll" />
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="Assembly-CSharp">

@@ -118,24 +118,28 @@ namespace KeepInventory.Helper
             element.Value = value.Value;
             return element;
         }
+
         public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback)
         {
             var element = new ToggleFunctionElement(name, offColor, onColor, callback);
             page.Add(element.Element);
             return element;
         }
+
         public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Action<ToggleFunctionElement> callback)
         {
             var element = new ToggleFunctionElement(name, offColor, callback);
             page.Add(element.Element);
             return element;
         }
+
         public static BlankElement CreateBlank(this Page page)
         {
             var element = new BlankElement();
             page.Add(element.Element);
             return element;
         }
+
         public static FunctionElement CreateLabel(this Page page, string text, Color color)
         {
             var element = new FunctionElement(text, color, null);

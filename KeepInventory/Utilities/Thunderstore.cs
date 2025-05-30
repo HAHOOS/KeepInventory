@@ -13,14 +13,17 @@ namespace KeepInventory.Utilities
     {
         public readonly string UserAgent;
         public bool IsV1Deprecated = false;
+
         public Thunderstore(string userAgent)
         {
             UserAgent = userAgent;
         }
+
         public Thunderstore(string userAgent, bool isV1Deprecated) : this(userAgent)
         {
             IsV1Deprecated = isV1Deprecated;
         }
+
         public Thunderstore()
         {
             var executing = System.Reflection.Assembly.GetExecutingAssembly();
@@ -33,6 +36,7 @@ namespace KeepInventory.Utilities
                 }
             }
         }
+
         public Thunderstore(bool isV1Deprecated)
         {
             this.IsV1Deprecated = isV1Deprecated;
@@ -46,6 +50,7 @@ namespace KeepInventory.Utilities
                 }
             }
         }
+
         public Package GetPackage(string @namespace, string name)
         {
             var client = new HttpClient();
@@ -70,7 +75,6 @@ namespace KeepInventory.Utilities
                             var metrics = GetPackageMetrics(@namespace, name);
                             if (metrics != null)
                             {
-
                                 json.TotalDownloads = metrics.Downloads;
                                 json.RatingScore = metrics.RatingScore;
                             }
@@ -99,6 +103,7 @@ namespace KeepInventory.Utilities
             }
             return null;
         }
+
         public V1PackageMetrics GetPackageMetrics(string @namespace, string name)
         {
             if (IsV1Deprecated) return null;
@@ -143,6 +148,7 @@ namespace KeepInventory.Utilities
             }
             return null;
         }
+
         public PackageVersion GetPackage(string @namespace, string name, string version)
         {
             var client = new HttpClient();
@@ -186,6 +192,7 @@ namespace KeepInventory.Utilities
             }
             return null;
         }
+
         public bool IsLatestVersion(string @namespace, string name, string currentVersion)
         {
             if (SemVersion.TryParse(currentVersion, out var version))
@@ -194,10 +201,12 @@ namespace KeepInventory.Utilities
             }
             return false;
         }
+
         public bool IsLatestVersion(string @namespace, string name, Version currentVersion)
         {
             return IsLatestVersion(@namespace, name, new SemVersion(currentVersion));
         }
+
         public bool IsLatestVersion(string @namespace, string name, SemVersion currentVersion)
         {
             if (!IsV1Deprecated)
@@ -285,47 +294,61 @@ namespace KeepInventory.Utilities
             return false;
         }
     }
+
     public class Package
     {
         [JsonPropertyName("namespace")]
         [JsonInclude]
         public string Namespace { get; internal set; }
+
         [JsonPropertyName("name")]
         [JsonInclude]
         public string Name { get; internal set; }
+
         [JsonPropertyName("full_name")]
         [JsonInclude]
         public string FullName { get; internal set; }
+
         [JsonPropertyName("owner")]
         [JsonInclude]
         public string Owner { get; internal set; }
+
         [JsonPropertyName("package_url")]
         [JsonInclude]
         public string PackageUrl { get; internal set; }
+
         [JsonPropertyName("date_created")]
         [JsonInclude]
         public DateTime CreatedAt { get; internal set; }
+
         [JsonPropertyName("date_updated")]
         [JsonInclude]
         public DateTime UpdatedAt { get; internal set; }
+
         [JsonPropertyName("rating_score")]
         [JsonInclude]
         public int RatingScore { get; internal set; }
+
         [JsonPropertyName("is_pinned")]
         [JsonInclude]
         public bool IsPinned { get; internal set; }
+
         [JsonPropertyName("is_deprecated")]
         [JsonInclude]
         public bool IsDeprecated { get; internal set; }
+
         [JsonPropertyName("total_downloads")]
         [JsonInclude]
         public int TotalDownloads { get; internal set; }
+
         [JsonPropertyName("latest")]
         [JsonInclude]
         public PackageVersion Latest { get; internal set; }
+
         [JsonPropertyName("community_listings")]
         [JsonInclude]
         public PackageListing[] CommunityListings { get; internal set; }
+
         public bool IsLatestVersion(string current)
         {
             if (string.IsNullOrWhiteSpace(current)) return false;
@@ -336,12 +359,14 @@ namespace KeepInventory.Utilities
             }
             return false;
         }
+
         public bool IsLatestVersion(SemVersion current)
         {
             if (current == null) return false;
             if (this.Latest == null || this.Latest.SemVersion == null) return false;
             return current >= this.Latest.SemVersion;
         }
+
         public bool IsLatestVersion(Version current)
         {
             if (current == null) return false;
@@ -349,59 +374,76 @@ namespace KeepInventory.Utilities
             return new SemVersion(current) >= this.Latest.SemVersion;
         }
     }
+
     public class PackageVersion
     {
         [JsonPropertyName("namespace")]
         [JsonInclude]
         public string Namespace { get; internal set; }
+
         [JsonPropertyName("name")]
         [JsonInclude]
         public string Name { get; internal set; }
+
         [JsonPropertyName("version_number")]
         [JsonInclude]
         public string Version
         { get { return SemVersion.ToString(); } internal set { SemVersion = Semver.SemVersion.Parse(value); } }
+
         [JsonIgnore]
         public SemVersion SemVersion { get; internal set; }
+
         [JsonPropertyName("full_name")]
         [JsonInclude]
         public string FullName { get; internal set; }
+
         [JsonPropertyName("description")]
         [JsonInclude]
         public string Description { get; internal set; }
+
         [JsonPropertyName("icon")]
         [JsonInclude]
         public string Icon { get; internal set; }
+
         [JsonPropertyName("dependencies")]
         [JsonInclude]
         public List<string> Dependencies { get; internal set; }
+
         [JsonPropertyName("download_url")]
         [JsonInclude]
         public string DownloadUrl { get; internal set; }
+
         [JsonPropertyName("date_created")]
         [JsonInclude]
         public DateTime CreatedAt { get; internal set; }
+
         [JsonPropertyName("downloads")]
         [JsonInclude]
         public int Downloads { get; internal set; }
+
         [JsonPropertyName("website_url")]
         [JsonInclude]
         public string WebsiteURL { get; internal set; }
+
         [JsonPropertyName("is_active")]
         [JsonInclude]
         public bool IsActive { get; internal set; }
     }
+
     public class PackageListing
     {
         [JsonPropertyName("has_nsfw_content")]
         [JsonInclude]
         public bool HasNSFWContent { get; internal set; }
+
         [JsonPropertyName("categories")]
         [JsonInclude]
         public List<string> Categories { get; internal set; }
+
         [JsonPropertyName("community")]
         [JsonInclude]
         public string Community { get; internal set; }
+
         [JsonPropertyName("review_status")]
         [JsonInclude]
         public string ReviewStatusString
@@ -418,8 +460,10 @@ namespace KeepInventory.Utilities
                 }
             }
         }
+
         [JsonIgnore]
         public ReviewStatusEnum ReviewStatus { get; internal set; }
+
         public enum ReviewStatusEnum
         {
             UNREVIEWED,
@@ -427,20 +471,25 @@ namespace KeepInventory.Utilities
             REJECTED
         }
     }
+
     public class V1PackageMetrics
     {
         [JsonPropertyName("downloads")]
         [JsonInclude]
         public int Downloads { get; internal set; }
+
         [JsonPropertyName("rating_score")]
         [JsonInclude]
         public int RatingScore { get; internal set; }
+
         [JsonPropertyName("latest_version")]
         [JsonInclude]
         public string LatestVersion
         { get { return LatestSemVersion.ToString(); } internal set { LatestSemVersion = Semver.SemVersion.Parse(value); } }
+
         [JsonIgnore]
         public SemVersion LatestSemVersion { get; internal set; }
+
         public bool IsLatestVersion(string current)
         {
             if (string.IsNullOrWhiteSpace(current)) return false;
@@ -451,12 +500,14 @@ namespace KeepInventory.Utilities
             }
             return false;
         }
+
         public bool IsLatestVersion(SemVersion current)
         {
             if (current == null) return false;
             if (this.LatestSemVersion == null) return false;
             return current >= this.LatestSemVersion;
         }
+
         public bool IsLatestVersion(Version current)
         {
             if (current == null) return false;
@@ -464,28 +515,34 @@ namespace KeepInventory.Utilities
             return new SemVersion(current) >= this.LatestSemVersion;
         }
     }
+
     public class ThunderstoreErrorResponse
     {
         [JsonPropertyName("detail")]
         [JsonInclude]
         public string Details { get; internal set; }
     }
+
     public class ThunderstoreErrorException : Exception
     {
         public ThunderstoreErrorException() : base()
         {
         }
+
         public ThunderstoreErrorException(string message) : base(message)
         {
         }
+
         public ThunderstoreErrorException(string message, Exception innerException) : base(message, innerException)
         {
         }
+
         public ThunderstoreErrorException(string message, string details, HttpStatusCode httpStatusCode, Exception innerException) : base(message, innerException)
         {
             Details = details;
             HttpStatusCode = httpStatusCode;
         }
+
         public ThunderstoreErrorException(string message, HttpResponseMessage response) : base(message)
         {
             if (!response.IsSuccessStatusCode)
@@ -517,48 +574,59 @@ namespace KeepInventory.Utilities
                 }
             }
         }
+
         public string Details { get; }
         public HttpStatusCode HttpStatusCode { get; }
     }
+
     public class ThunderstorePackageNotFoundException : ThunderstoreErrorException
     {
         public string Namespace { get; }
         public string Name { get; }
         public string Version { get; }
+
         public ThunderstorePackageNotFoundException(string message, string @namespace, string name, string details, HttpStatusCode httpStatusCode, Exception innerException) : base(message, details, httpStatusCode, innerException)
         {
             Namespace = @namespace;
             Name = name;
         }
+
         public ThunderstorePackageNotFoundException(string message, string @namespace, string name, string version, string details, HttpStatusCode httpStatusCode, Exception innerException) : base(message, details, httpStatusCode, innerException)
         {
             Namespace = @namespace;
             Name = name;
             Version = version;
         }
+
         public ThunderstorePackageNotFoundException(string message, string @namespace, string name, HttpResponseMessage response) : base(message, response)
         {
             Namespace = @namespace;
             Name = name;
         }
+
         public ThunderstorePackageNotFoundException(string message, string @namespace, string name, string version, HttpResponseMessage response) : base(message, response)
         {
             Namespace = @namespace;
             Name = name;
             Version = version;
         }
+
         public ThunderstorePackageNotFoundException() : base()
         {
         }
+
         public ThunderstorePackageNotFoundException(string message) : base(message)
         {
         }
+
         public ThunderstorePackageNotFoundException(string message, Exception innerException) : base(message, innerException)
         {
         }
+
         public ThunderstorePackageNotFoundException(string message, string details, HttpStatusCode httpStatusCode, Exception innerException) : base(message, details, httpStatusCode, innerException)
         {
         }
+
         public ThunderstorePackageNotFoundException(string message, HttpResponseMessage response) : base(message, response)
         {
         }

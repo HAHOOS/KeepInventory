@@ -11,6 +11,7 @@ namespace KeepInventory.Helper
     public static class GunHelper
     {
         private readonly static Color SlotColor = Color.Cyan;
+
         public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
         {
             if (string.IsNullOrWhiteSpace(name)) name = "N/A";

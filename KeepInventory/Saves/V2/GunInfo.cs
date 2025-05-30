@@ -13,20 +13,28 @@ namespace KeepInventory.Saves.V2
     {
         [JsonPropertyName("IsMag")]
         public bool IsMag { get; set; }
+
         [JsonPropertyName("IsBulletInChamber")]
         public bool IsBulletInChamber { get; set; }
+
         [JsonPropertyName("FireMode")]
         public FireMode FireMode { get; set; }
+
         [JsonPropertyName("RoundsLeft")]
         public int RoundsLeft { get; set; }
+
         [JsonPropertyName("HammerState")]
         public HammerStates HammerState { get; set; }
+
         [JsonPropertyName("SlideState")]
         public SlideStates SlideState { get; set; }
+
         [JsonPropertyName("CartridgeState")]
         public CartridgeStates CartridgeState { get; set; }
+
         [JsonPropertyName("HasFiredOnce")]
         public bool HasFiredOnce { get; set; }
+
         public static GunInfo Parse(Gun gun)
         {
             var _new = new GunInfo
@@ -47,6 +55,7 @@ namespace KeepInventory.Saves.V2
 
             return _new;
         }
+
         public static GunInfo Parse(V1.GunInfo gunInfoV1)
         {
             if (gunInfoV1 == null) return null;
@@ -62,6 +71,7 @@ namespace KeepInventory.Saves.V2
                 RoundsLeft = gunInfoV1.RoundsLeft,
             };
         }
+
         public MagazineData GetMagazineData(Gun gun)
         {
             return new MagazineData
@@ -71,14 +81,17 @@ namespace KeepInventory.Saves.V2
                 platform = gun.defaultMagazine.platform,
             };
         }
+
         public string Serialize()
         {
             return JsonSerializer.Serialize(this, new JsonSerializerOptions() { WriteIndented = false });
         }
+
         public static string Serialize(GunInfo gunInfo)
         {
             return JsonSerializer.Serialize(gunInfo, new JsonSerializerOptions() { WriteIndented = false });
         }
+
         public static GunInfo Deserialize(string json)
         {
             return JsonSerializer.Deserialize<GunInfo>(json);
