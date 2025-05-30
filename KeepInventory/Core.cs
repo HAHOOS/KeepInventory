@@ -95,11 +95,6 @@ namespace KeepInventory
 
             PreferencesManager.Setup();
             SaveManager.Setup();
-            BoneMenu.Setup();
-            AmmoManager.Track("light");
-            AmmoManager.Track("medium");
-            AmmoManager.Track("heavy");
-            AmmoManager.Init();
 
             BlacklistManager.Add(new("default_labworks", "LABWORKS", true, [
                 "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
@@ -140,10 +135,19 @@ namespace KeepInventory
                 CommonBarcodes.Maps.NeonTrial,
                 CommonBarcodes.Maps.MainMenu,
             ]));
+
+            BoneMenu.Setup();
+
+            AmmoManager.Track("light");
+            AmmoManager.Track("medium");
+            AmmoManager.Track("heavy");
+            AmmoManager.Init();
+            LoggerInstance.Msg("Initialized.");
         }
 
         public override void OnDeinitializeMelon()
         {
+            LoggerInstance.Msg("Deinitialize requested, cleaning up.");
             AmmoManager.Destroy();
             PreferencesManager.Save();
             SaveManager.Saves.ForEach(x =>
@@ -198,9 +202,7 @@ namespace KeepInventory
         }
 
         internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
-        {
-            Logger.Msg($"[{prefix.Pastel(color)}] {message}");
-        }
+            => Logger.Msg($"[{prefix.Pastel(color)}] {message}");
 
         private void LevelUnloadedEvent()
         {

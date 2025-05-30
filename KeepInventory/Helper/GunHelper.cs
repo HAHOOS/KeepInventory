@@ -12,7 +12,7 @@ namespace KeepInventory.Helper
     {
         private readonly static Color SlotColor = Color.Cyan;
 
-        public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A", bool printMessages = true)
+        public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A")
         {
             if (string.IsNullOrWhiteSpace(name)) name = "N/A";
             if (string.IsNullOrWhiteSpace(barcode)) barcode = "N/A";
@@ -22,23 +22,17 @@ namespace KeepInventory.Helper
             {
                 try
                 {
-                    void other()
+                    void setGunProperties()
                     {
-                        if (printMessages) Core.MsgPrefix($"Setting fire mode value to {info.FireMode}", slotName, SlotColor);
                         gun.fireMode = info.FireMode;
-                        if (printMessages) Core.MsgPrefix($"Setting 'HasFiredOnce' value to {info.HasFiredOnce}", slotName, SlotColor);
                         gun.hasFiredOnce = info.HasFiredOnce;
-                        if (printMessages) Core.MsgPrefix($"Setting hammer state to {info.HammerState}", slotName, SlotColor);
                         gun.hammerState = info.HammerState;
-                        if (printMessages) Core.MsgPrefix($"Setting slide state to {info.SlideState}", slotName, SlotColor);
                         gun.slideState = info.SlideState;
 
                         if (!gun.isCharged && info.IsBulletInChamber)
                         {
-                            if (printMessages) Core.MsgPrefix("Charging gun", slotName, SlotColor);
                             gun.Charge();
                             if (gun._hasMagState) gun.MagazineState.AddCartridge(1, gun.defaultCartridge);
-                            if (printMessages) Core.MsgPrefix($"Setting cartridge state to {info.CartridgeState}", slotName, SlotColor);
                             gun.cartridgeState = info.CartridgeState;
                         }
 
@@ -56,28 +50,19 @@ namespace KeepInventory.Helper
                                 gun.CompleteSlideReturn();
                                 break;
                         }
-
-                        if (printMessages) Core.MsgPrefix($"Spawned to slot: {name} ({barcode})", slotName, SlotColor);
                     }
 
-                    if (printMessages) Core.MsgPrefix($"Writing gun info for: {name} ({barcode})", slotName, SlotColor);
                     if (info.IsMag && gun.defaultMagazine != null && gun.defaultCartridge != null)
                     {
-                        if (printMessages) Core.MsgPrefix("Loading magazine", slotName, SlotColor);
                         var mag = info.GetMagazineData(gun);
                         if (mag?.spawnable?.crateRef != null && !string.IsNullOrWhiteSpace(mag.platform))
-                        {
-                            gun.LoadMagazine(info.RoundsLeft, other);
-                        }
+                            gun.LoadMagazine(info.RoundsLeft, setGunProperties);
                         else
-                        {
-                            if (printMessages) Core.Logger.Warning($"[{slotName}] Could not get sufficient information for MagazineData, not loading the magazine and rounds left");
-                            other();
-                        }
+                            setGunProperties();
                     }
                     else
                     {
-                        other();
+                        setGunProperties();
                     }
                 }
                 catch (Exception ex)

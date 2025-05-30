@@ -146,9 +146,8 @@ namespace KeepInventory.Managers
                                     {
                                         if (item.GunInfo != null && obj != null)
                                         {
-                                            var guns = obj.GetComponents<Gun>();
-                                            foreach (var gun in guns)
-                                                gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode, false);
+                                            foreach (var gun in obj.GetComponents<Gun>())
+                                                gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode);
                                         }
                                     }
 
@@ -183,14 +182,9 @@ namespace KeepInventory.Managers
                         }
                         InventorySlotReceiver slot = rigManager.FindSlot(item.SlotName);
                         if (slot != null)
-                        {
-                            var receiver = slot;
-                            spawn(receiver);
-                        }
+                            spawn(slot);
                         else
-                        {
                             Core.Logger.Warning($"[{item.SlotName}] No slot was found with the provided name. It is possible that an avatar that was used during the saving had more slots than the current one");
-                        }
                     }
                 }
                 else

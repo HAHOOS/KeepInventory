@@ -197,7 +197,7 @@ namespace KeepInventory.Menu
             {
                 SaveInventoryFunction = Page.CreateFunction("Save inventory to save", Color.cyan, () =>
             {
-                InventoryManager.SaveInventory(CurrentSave, true);
+                InventoryManager.SaveInventory(CurrentSave, PreferencesManager.ShowNotifications.Value);
                 Setup();
             });
             }
