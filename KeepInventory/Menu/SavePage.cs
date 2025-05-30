@@ -462,10 +462,8 @@ namespace KeepInventory.Menu
                 }
                 catch (Exception ex)
                 {
-                    {
-                        Core.Logger.Error($"An unexpected error occurred while setting up share page:\n{ex}");
-                        isSettingUpShare = false;
-                    }
+                    Core.Logger.Error($"An unexpected error occurred while setting up share page:\n{ex}");
+                    isSettingUpShare = false;
                 }
             }
         }
@@ -475,10 +473,11 @@ namespace KeepInventory.Menu
             try
             {
                 var task = Utilities.Fusion.GetShareablePlayers().ConfigureAwait(false);
-                while (!task.GetAwaiter().IsCompleted) yield return null;
+                var awaiter = task.GetAwaiter();
+                while (!awaiter.IsCompleted) yield return null;
 
                 SharePage.Remove(waitElement);
-                var players = task.GetAwaiter().GetResult();
+                var players = awaiter.GetResult();
                 players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
                 if (players.Count == 0)
                 {
@@ -488,11 +487,9 @@ namespace KeepInventory.Menu
                 {
                     foreach (var player in players)
                     {
-                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null);
+                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallId));
                         element.OnStart += () => SelectedPlayers.Add(player.SmallId);
                         element.OnCancel += () => SelectedPlayers.Remove(player.SmallId);
-                        if (SelectedPlayers.Contains(player.SmallId))
-                            element.Start();
                     }
                 }
             }

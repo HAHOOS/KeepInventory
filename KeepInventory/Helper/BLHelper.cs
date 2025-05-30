@@ -120,16 +120,16 @@ namespace KeepInventory.Helper
             return element;
         }
 
-        public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback)
+        public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback, bool on = false)
         {
-            var element = new ToggleFunctionElement(name, offColor, onColor, callback);
+            var element = new ToggleFunctionElement(name, offColor, onColor, callback, on);
             page.Add(element.Element);
             return element;
         }
 
-        public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Action<ToggleFunctionElement> callback)
+        public static ToggleFunctionElement CreateToggleFunction(this Page page, string name, Color offColor, Action<ToggleFunctionElement> callback, bool on = false)
         {
-            var element = new ToggleFunctionElement(name, offColor, callback);
+            var element = new ToggleFunctionElement(name, offColor, callback, on);
             page.Add(element.Element);
             return element;
         }
