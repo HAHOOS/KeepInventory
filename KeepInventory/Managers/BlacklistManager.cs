@@ -18,7 +18,7 @@ namespace KeepInventory.Managers
                 return;
 
             _blacklist.Add(blacklist);
-            PreferencesManager.SetupBlacklist();
+            PreferencesManager.LoadBlacklist();
         }
 
         public static void Remove(string id)
@@ -51,7 +51,10 @@ namespace KeepInventory.Managers
             => IsLevelBlacklisted(SceneStreamer.Session.Level.Barcode);
 
         private static void SetEnabled(string id, bool enabled)
-            => _blacklist.FirstOrDefault(x => x.ID == id)?.SetEnabled(enabled);
+        {
+            _blacklist.FirstOrDefault(x => x.ID == id)?.SetEnabled(enabled);
+            PreferencesManager.SaveBlacklist();
+        }
 
         public static void Enable(string id)
             => SetEnabled(id, true);

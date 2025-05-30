@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using KeepInventory.Helper;
+using KeepInventory.Menu;
 
 using MelonLoader;
 using MelonLoader.Utils;
@@ -52,9 +53,9 @@ namespace KeepInventory.Managers
 
             BlacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
                 description: "List of levels that will not save/load inventory");
-            EnabledBlacklist = PrefsCategory.CreateEntry<List<string>>("EnabledBlacklist", [], "Enabled Blacklist",
+            EnabledBlacklist = PrefsCategory.CreateEntry<List<string>>("EnabledBlacklist", ["default_labworks", "default_bonelab"], "Enabled Blacklist",
                 description: "List of blacklist IDs that should be used");
-            EnabledBlacklist.OnEntryValueChanged.Subscribe((_, _) => SetupBlacklist());
+            LoadBlacklist();
 
             ShowNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
                 description: "If true, notifications will be shown in-game regarding errors or other things");
@@ -80,8 +81,11 @@ namespace KeepInventory.Managers
             }
         }
 
-        internal static void SetupBlacklist()
+        internal static void LoadBlacklist()
         {
+            if (EnabledBlacklist == null)
+                return;
+
             List<string> ids = [];
             BlacklistManager.Blacklist.ForEach(x => ids.Add(x.ID));
             EnabledBlacklist.Value.ForEach(x =>
@@ -97,6 +101,18 @@ namespace KeepInventory.Managers
                 if (BlacklistManager.HasItem(x))
                     BlacklistManager.Disable(x);
             });
+            BoneMenu.SetupPredefinedBlacklist();
+        }
+
+        internal static void SaveBlacklist()
+        {
+            if (EnabledBlacklist == null)
+                return;
+
+            List<string> ids = [];
+            BlacklistManager.Blacklist.ForEach(x => { if (x.Enabled) ids.Add(x.ID); });
+            EnabledBlacklist.Value = ids;
+            PrefsCategory.SaveToFile(true);
         }
     }
 }

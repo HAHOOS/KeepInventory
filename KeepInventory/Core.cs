@@ -93,9 +93,6 @@ namespace KeepInventory
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
             if (HasFusion) Utilities.Fusion.Setup();
 
-            PreferencesManager.Setup();
-            SaveManager.Setup();
-
             BlacklistManager.Add(new("default_labworks", "LABWORKS", true, [
                 "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
                 "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
@@ -135,6 +132,9 @@ namespace KeepInventory
                 CommonBarcodes.Maps.NeonTrial,
                 CommonBarcodes.Maps.MainMenu,
             ]));
+
+            PreferencesManager.Setup();
+            SaveManager.Setup();
 
             BoneMenu.Setup();
 
