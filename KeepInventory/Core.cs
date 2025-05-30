@@ -9,6 +9,8 @@ using BoneLib;
 using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
+using Il2CppSLZ.Marrow.Warehouse;
+
 using KeepInventory.Helper;
 using KeepInventory.Managers;
 using KeepInventory.Menu;
@@ -16,7 +18,6 @@ using KeepInventory.Utilities;
 
 using MelonLoader;
 using MelonLoader.Pastel;
-using MelonLoader.Utils;
 
 using Semver;
 
@@ -32,15 +33,15 @@ namespace KeepInventory
         {
             get
             {
-                return SaveManager.Saves.FirstOrDefault(x => x.ID == mp_defaultSave.Value);
+                return SaveManager.Saves.FirstOrDefault(x => x.ID == PreferencesManager.DefaultSave.Value);
             }
             set
             {
                 if (value == null)
-                    mp_defaultSave.Value = string.Empty;
+                    PreferencesManager.DefaultSave.Value = string.Empty;
 
-                mp_defaultSave.Value = value.ID;
-                PrefsCategory.SaveToFile(false);
+                PreferencesManager.DefaultSave.Value = value.ID;
+                PreferencesManager.Save();
                 DefaultSaveChanged?.Invoke();
             }
         }
@@ -50,66 +51,8 @@ namespace KeepInventory
         public static Core Instance { get; internal set; }
         internal static Assembly MLAssembly;
 
-        public readonly static List<string> bonelabBlacklist = [
-                CommonBarcodes.Maps.Home,
-                CommonBarcodes.Maps.Ascent,
-                CommonBarcodes.Maps.Descent,
-                CommonBarcodes.Maps.MineDive,
-                CommonBarcodes.Maps.LongRun,
-                CommonBarcodes.Maps.BigAnomaly,
-                CommonBarcodes.Maps.BigAnomaly2,
-                CommonBarcodes.Maps.StreetPuncher,
-                CommonBarcodes.Maps.SprintBridge,
-                CommonBarcodes.Maps.MagmaGate,
-                CommonBarcodes.Maps.Moonbase,
-                CommonBarcodes.Maps.MonogonMotorway,
-                CommonBarcodes.Maps.PillarClimb,
-                CommonBarcodes.Maps.ContainerYard,
-                CommonBarcodes.Maps.FantasyArena,
-                CommonBarcodes.Maps.TunnelTipper,
-                CommonBarcodes.Maps.DropPit,
-                CommonBarcodes.Maps.NeonTrial,
-                CommonBarcodes.Maps.MainMenu,
-        ];
-
-        public readonly static List<string> labworksBlacklist = [
-           "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
-           "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks02Museum",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks03Streets",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks08Tower",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks11Arena",
-           "volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom",
-           "volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01",
-           "volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02"
-        ];
-
         internal static MelonLogger.Instance Logger { get; private set; }
 
-        internal static int _lastAmmoCount_light = 0;
-        internal static int _lastAmmoCount_medium = 0;
-        internal static int _lastAmmoCount_heavy = 0;
-        public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");
-        internal static MelonPreferences_Category PrefsCategory;
-        internal static MelonPreferences_Entry<bool> mp_itemsaving;
-        internal static MelonPreferences_Entry<bool> mp_ammosaving;
-        internal static MelonPreferences_Entry<bool> mp_saveGunData;
-        internal static MelonPreferences_Entry<string> mp_defaultSave;
-        internal static MelonPreferences_Entry<bool> mp_saveOnLevelUnload;
-        internal static MelonPreferences_Entry<bool> mp_loadOnLevelLoad;
-        internal static MelonPreferences_Entry<List<string>> mp_blacklistedLevels;
-        internal static MelonPreferences_Entry<bool> mp_blacklistBONELABlevels;
-        internal static MelonPreferences_Entry<bool> mp_blacklistLABWORKSlevels;
-        internal static MelonPreferences_Entry<bool> mp_showNotifications;
-        internal static MelonPreferences_Entry<int> mp_configVersion;
-        internal static MelonPreferences_Entry<bool> mp_holsterHeldWeaponsOnDeath;
         internal static FunctionElement statusElement;
         internal static LevelInfo levelInfo;
         public static bool HasFusion => FindMelon("LabFusion", "Lakatrazz") != null;
@@ -155,13 +98,64 @@ namespace KeepInventory
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
             if (HasFusion) Utilities.Fusion.Setup();
 
-            SetupPreferences();
+            PreferencesManager.Setup();
             SaveManager.Setup();
             BoneMenu.Setup();
             AmmoManager.Track("light");
             AmmoManager.Track("medium");
             AmmoManager.Track("heavy");
             AmmoManager.Init();
+
+            BlacklistManager.Add(new("default_labworks", "LABWORKS", true, [
+                "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
+                "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks02Museum",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks03Streets",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks08Tower",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks11Arena",
+                "volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom",
+                "volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01",
+                "volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02"
+            ]));
+            BlacklistManager.Add(new("default_bonelab", "BONELAB", true, [
+                CommonBarcodes.Maps.Home,
+                CommonBarcodes.Maps.Ascent,
+                CommonBarcodes.Maps.Descent,
+                CommonBarcodes.Maps.MineDive,
+                CommonBarcodes.Maps.LongRun,
+                CommonBarcodes.Maps.BigAnomaly,
+                CommonBarcodes.Maps.BigAnomaly2,
+                CommonBarcodes.Maps.StreetPuncher,
+                CommonBarcodes.Maps.SprintBridge,
+                CommonBarcodes.Maps.MagmaGate,
+                CommonBarcodes.Maps.Moonbase,
+                CommonBarcodes.Maps.MonogonMotorway,
+                CommonBarcodes.Maps.PillarClimb,
+                CommonBarcodes.Maps.ContainerYard,
+                CommonBarcodes.Maps.FantasyArena,
+                CommonBarcodes.Maps.TunnelTipper,
+                CommonBarcodes.Maps.DropPit,
+                CommonBarcodes.Maps.NeonTrial,
+                CommonBarcodes.Maps.MainMenu,
+            ]));
+        }
+
+        public override void OnDeinitializeMelon()
+        {
+            AmmoManager.Destroy();
+            PreferencesManager.Save();
+            SaveManager.Saves.ForEach(x =>
+            {
+                x.IsFileWatcherEnabled = false;
+                x.TrySaveToFile(true);
+            });
         }
 
         private void CheckVersion()
@@ -208,42 +202,16 @@ namespace KeepInventory
             }
         }
 
-        public override void OnApplicationQuit()
-        {
-            SavePreferences();
-            SaveManager.Saves.ForEach(x =>
-            {
-                x.IsFileWatcherEnabled = false;
-                x.TrySaveToFile(true);
-            });
-        }
-
         internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
         {
             Logger.Msg($"[{prefix.Pastel(color)}] {message}");
         }
 
-        public void SavePreferences()
-        {
-            LoggerInstance.Msg("Saving Preferences");
-            try
-            {
-                PrefsCategory?.SaveToFile(false);
-                LoggerInstance.Msg("Saved Preferences successfully");
-            }
-            catch (Exception e)
-            {
-                LoggerInstance.Error($"An unexpected error has occurred while saving preferences\n{e}");
-            }
-        }
-
         private void LevelUnloadedEvent()
         {
-            if (!mp_saveOnLevelUnload.Value) return;
-            var list = new List<string>(mp_blacklistedLevels.Value);
-            if (mp_blacklistBONELABlevels.Value) list.AddRange(bonelabBlacklist);
-            if (mp_blacklistLABWORKSlevels.Value) list.AddRange(labworksBlacklist);
-            if (!list.Contains(levelInfo.barcode))
+            if (!PreferencesManager.SaveOnLevelUnload.Value) return;
+
+            if (!IsBlacklisted(levelInfo.levelReference.Barcode))
             {
                 if (CurrentSave != null)
                     InventoryManager.SaveInventory(CurrentSave);
@@ -277,12 +245,10 @@ namespace KeepInventory
                 }
                 InitialLoad = false;
             }
-            var list = new List<string>(mp_blacklistedLevels.Value);
-            if (mp_blacklistBONELABlevels.Value) list.AddRange(bonelabBlacklist);
-            if (mp_blacklistLABWORKSlevels.Value) list.AddRange(labworksBlacklist);
-            if (!list.Contains(obj.barcode))
+
+            if (!IsBlacklisted(obj.levelReference.Barcode))
             {
-                if (mp_loadOnLevelLoad.Value)
+                if (PreferencesManager.LoadOnLevelLoad.Value)
                 {
                     if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
                     {
@@ -314,45 +280,7 @@ namespace KeepInventory
             }
         }
 
-        private void SetupPreferences()
-        {
-            if (!Directory.Exists(KI_PreferencesDirectory))
-            {
-                LoggerInstance.Msg("Creating preferences directory");
-                Directory.CreateDirectory(KI_PreferencesDirectory);
-            }
-            PrefsCategory = MelonPreferences.CreateCategory("KeepInventory_Settings");
-            PrefsCategory.SetFilePath(Path.Combine(KI_PreferencesDirectory, "Config.cfg"));
-
-            mp_itemsaving = PrefsCategory.CreateEntry<bool>("ItemSaving", true, "Item Saving",
-                description: "If true, will save and load items in inventory");
-            mp_ammosaving = PrefsCategory.CreateEntry<bool>("AmmoSaving", true, "Ammo Saving",
-                description: "If true, will save and load ammo in inventory");
-            mp_saveGunData = PrefsCategory.CreateEntry<bool>("SaveGunData", true, "Save Gun Data",
-                description: "If true, will save and load data about guns stored in slots, info such as rounds left etc.");
-            mp_defaultSave = PrefsCategory.CreateEntry<string>("DefaultSave", string.Empty, "Default Save",
-                description: "ID of the save that will be used for things such as loading inventory on load or saving the inventory on level unload");
-
-            mp_saveOnLevelUnload = PrefsCategory.CreateEntry<bool>("SaveOnLevelUnload", true, "Save On Level Unload",
-                description: "If true, during level unload, the inventory will be automatically saved");
-            mp_loadOnLevelLoad = PrefsCategory.CreateEntry<bool>("LoadOnLevelLoad", true, "Load On Level Load",
-                description: "If true, the saved inventory will be automatically loaded when you get loaded into a level thats not blacklisted");
-
-            mp_blacklistBONELABlevels = PrefsCategory.CreateEntry<bool>("BlacklistBONELABLevels", true, "Blacklist BONELAB Levels",
-                description: "If true, most of the BONELAB levels (except VoidG114 and BONELAB Hub) will be blacklisted from saving/loading inventory");
-            mp_blacklistLABWORKSlevels = PrefsCategory.CreateEntry<bool>("BlacklistLABWORKSLevels", true, "Blacklist LABWORKS Levels",
-                description: "If true, LABWORKS levels from the campaign (not sandbox levels) will be blacklisted from saving/loading inventory");
-            mp_blacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
-                description: "List of levels that will not save/load inventory");
-
-            mp_showNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
-                description: "If true, notifications will be shown in-game regarding errors or other things");
-            mp_configVersion = PrefsCategory.CreateEntry<int>("ConfigVersion", 1, "Config Version",
-                description: "DO NOT CHANGE THIS AT ALL, THIS WILL BE USED FOR MIGRATING CONFIGS AND SHOULD NOT BE CHANGED AT ALL");
-            mp_holsterHeldWeaponsOnDeath = PrefsCategory.CreateEntry<bool>("HolsterHeldWeaponsOnDeath", true, "Holster Held Weapons On Death",
-                description: "If true, when you die all of the weapons you were holding get holstered if possible");
-
-            PrefsCategory.SaveToFile(false);
-        }
+        private static bool IsBlacklisted(Barcode barcode)
+            => BlacklistManager.IsLevelBlacklisted(barcode) || PreferencesManager.BlacklistedLevels.Value.Contains(barcode.ID);
     }
 }

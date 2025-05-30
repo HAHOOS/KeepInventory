@@ -1,7 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Pool;
+using Il2CppSLZ.Marrow.Warehouse;
+
+using UnityEngine;
 
 namespace KeepInventory.Helper
 {
@@ -10,10 +15,12 @@ namespace KeepInventory.Helper
         public static readonly Dictionary<string, string> Aliases = new() {
             {"HeadSlotContainer", "Head" }
         };
+
         public static List<InventorySlotReceiver> GetAllSlots(this RigManager rigManager)
         {
             return rigManager?.GetComponentsInChildren<InventorySlotReceiver>().ToList();
         }
+
         public static InventorySlotReceiver FindSlot(this RigManager rigManager, string name)
         {
             var slots = rigManager.GetAllSlots();
@@ -26,12 +33,29 @@ namespace KeepInventory.Helper
             }
             return null;
         }
+
         public static string GetSlotName(this InventorySlotReceiver slotReceiver, bool useAliases = true)
         {
             var name = slotReceiver.transform.parent.name;
             if (name.StartsWith("prop")) name = slotReceiver.transform.parent.parent.name;
             if (Aliases.ContainsKey(name) && useAliases) name = Aliases[name];
             return name;
+        }
+
+        public static void SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, Action<GameObject> callback = null)
+        {
+            if (receiver._slottedWeapon?.interactableHost != null)
+            {
+                receiver._weaponHost?.ForceDetach();
+                receiver.DropWeapon();
+            }
+            var task = receiver.SpawnInSlotAsync(barcode);
+            var awaiter = task.GetAwaiter();
+            awaiter.OnCompleted((Action)(() =>
+            {
+                if (awaiter.GetResult())
+                    callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
+            }));
         }
     }
 }

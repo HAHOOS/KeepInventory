@@ -489,8 +489,8 @@ namespace KeepInventory.Menu
                     foreach (var player in players)
                     {
                         var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null);
-                        element.Started += () => SelectedPlayers.Add(player.SmallId);
-                        element.Cancelled += () => SelectedPlayers.Remove(player.SmallId);
+                        element.OnStart += () => SelectedPlayers.Add(player.SmallId);
+                        element.OnCancel += () => SelectedPlayers.Remove(player.SmallId);
                         if (SelectedPlayers.Contains(player.SmallId))
                             element.Start();
                     }

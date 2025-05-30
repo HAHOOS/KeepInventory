@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 
 using BoneLib.BoneMenu;
 
@@ -14,44 +13,61 @@ namespace KeepInventory.Menu
         public Color OffColor;
         public Color OnColor;
         public bool IsRunning { get; private set; }
-        public event Action Started;
-        public event Action Cancelled;
+
+        public event Action OnStart;
+
+        public event Action OnCancel;
+
         public void Start()
         {
-            Core.Logger.Msg("Start");
-            if (IsRunning) return;
-            Core.Logger.Msg("Start pass");
+            if (IsRunning)
+                return;
+
             IsRunning = true;
             Element.ElementColor = OnColor;
-            Started?.Invoke();
+            OnStart?.Invoke();
             Callback?.Invoke(this);
         }
+
         public void Cancel()
         {
-            Core.Logger.Msg("Cancel");
-            if (!IsRunning) return;
-            Core.Logger.Msg("Cancel pass");
+            if (!IsRunning)
+                return;
             IsRunning = false;
             Element.ElementColor = OffColor;
-            Cancelled?.Invoke();
+            OnCancel?.Invoke();
         }
-        public ToggleFunctionElement(string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback)
+
+        public ToggleFunctionElement(string name, Color offColor, Color onColor, Action<ToggleFunctionElement> callback, bool on = false)
         {
             Callback = callback;
             OffColor = offColor;
             OnColor = onColor;
-            Element = new FunctionElement(name, offColor, () =>
+            Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
             {
                 if (this.IsRunning) this.Cancel();
                 else this.Start();
             });
         }
-        public ToggleFunctionElement(string name, Color offColor, Action<ToggleFunctionElement> callback)
+
+        public ToggleFunctionElement(string name, Color offColor, Action<ToggleFunctionElement> callback, bool on = false)
         {
             Callback = callback;
             OffColor = offColor;
             OnColor = Color.red;
-            Element = new FunctionElement(name, offColor, () =>
+            Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
+            {
+                if (this.IsRunning) this.Cancel();
+                else this.Start();
+            });
+        }
+
+        public ToggleFunctionElement(string name, Action<ToggleFunctionElement> callback, bool on = false)
+        {
+            Callback = callback;
+            OffColor = Color.white;
+            OnColor = Color.red;
+            Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
             {
                 if (this.IsRunning) this.Cancel();
                 else this.Start();

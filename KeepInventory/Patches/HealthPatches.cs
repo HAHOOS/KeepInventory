@@ -6,10 +6,11 @@ using Il2CppSLZ.Marrow;
 
 using KeepInventory.Utilities;
 using KeepInventory.Helper;
+using KeepInventory.Managers;
 
 namespace KeepInventory.Patches
 {
-    [HarmonyPatch(typeof(Player_Health))]
+    [HarmonyPatch(typeof(Player_Health), nameof(Player_Health.Death))]
     public static class HealthPatches
     {
         private static void HolsterItem(Hand hand)
@@ -43,24 +44,22 @@ namespace KeepInventory.Patches
                 item.OnHandDrop(host);
             }
         }
-        [HarmonyPrefix]
-        [HarmonyPatch(nameof(Player_Health.Death))]
+
         public static void Prefix(Player_Health __instance)
         {
             var rigManager = __instance._rigManager;
-            if (!rigManager.IsLocalPlayer())
+
+            if (rigManager?.IsLocalPlayer() != true)
                 return;
 
-            if (!Core.mp_holsterHeldWeaponsOnDeath.Value)
+            if (!PreferencesManager.HolsterHeldWeaponsOnDeath.Value)
                 return;
 
             if (Utilities.Fusion.IsGamemodeStarted)
                 return;
 
-            var hand1 = Player.LeftHand;
-            var hand2 = Player.RightHand;
-            HolsterItem(hand1);
-            HolsterItem(hand2);
+            HolsterItem(Player.LeftHand);
+            HolsterItem(Player.RightHand);
         }
     }
 }

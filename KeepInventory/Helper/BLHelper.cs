@@ -2,6 +2,7 @@
 using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
+using KeepInventory.Managers;
 using KeepInventory.Menu;
 
 using MelonLoader;
@@ -16,7 +17,7 @@ namespace KeepInventory.Helper
     {
         #region BoneMenu (Code shared by @camobiwon on Discord)
 
-        private readonly static MelonPreferences_Category prefs = Core.PrefsCategory;
+        private readonly static MelonPreferences_Category prefs = PreferencesManager.PrefsCategory;
 
         public static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, MelonPreferences_Category category = null, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
         {
@@ -154,7 +155,7 @@ namespace KeepInventory.Helper
 
         internal static void SendNotification(string title, string message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
-            if (Core.mp_showNotifications?.Value != true) return;
+            if (PreferencesManager.ShowNotifications?.Value != true) return;
             Notifier.Send(new Notification()
             {
                 Title = new NotificationText($"KeepInventory | {title}", Color.white, true),
@@ -169,7 +170,7 @@ namespace KeepInventory.Helper
         internal static void SendNotification(NotificationText title, NotificationText message, bool showTitleOnPopup = false, float popupLength = 2f, NotificationType type = NotificationType.Information, Texture2D customIcon = null)
         {
             title.Text = $"KeepInventory | {title.Text}";
-            if (Core.mp_showNotifications?.Value != true) return;
+            if (PreferencesManager.ShowNotifications?.Value != true) return;
             Notifier.Send(new Notification()
             {
                 Title = title,
@@ -183,7 +184,7 @@ namespace KeepInventory.Helper
 
         internal static void SendNotification(Notification notification)
         {
-            if (Core.mp_showNotifications?.Value != true) return;
+            if (PreferencesManager.ShowNotifications?.Value != true) return;
             Notifier.Send(notification);
         }
 

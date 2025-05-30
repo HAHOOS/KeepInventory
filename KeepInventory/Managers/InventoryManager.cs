@@ -20,6 +20,7 @@ namespace KeepInventory.Managers
     public static class InventoryManager
     {
         internal static bool LoadAmmoOnAwake = false;
+
         public static void SaveInventory(Save save, bool notifications = false)
         {
             if (save == null)
@@ -30,7 +31,7 @@ namespace KeepInventory.Managers
             try
             {
                 Core.Logger.Msg("Saving inventory...");
-                if (Core.mp_itemsaving.Value)
+                if (PreferencesManager.ItemSaving.Value)
                 {
                     Core.Logger.Msg("Saving items in inventory slots");
 
@@ -61,14 +62,10 @@ namespace KeepInventory.Managers
                                 {
                                     string name = item.GetSlotName();
                                     var barcode = poolee.SpawnableCrate.Barcode;
-                                    if (gunInfo != null && Core.mp_saveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
-                                    {
+                                    if (gunInfo != null && PreferencesManager.SaveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
                                         save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
-                                    }
                                     else
-                                    {
                                         save.InventorySlots.Add(new SaveSlot(name, barcode));
-                                    }
                                 }
                                 else
                                 {
@@ -87,7 +84,7 @@ namespace KeepInventory.Managers
                         if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, because some required game objects were not found, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
                     }
                 }
-                if (Core.mp_ammosaving.Value)
+                if (PreferencesManager.AmmoSaving.Value)
                 {
                     save.LightAmmo = AmmoManager.GetValue("light");
                     Core.Logger.Msg("Saved Light Ammo: " + save.LightAmmo);
@@ -107,6 +104,7 @@ namespace KeepInventory.Managers
                 if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }
+
         internal static void SpawnSavedItems(Save save)
         {
             if (save == null)
@@ -136,14 +134,13 @@ namespace KeepInventory.Managers
 
                     foreach (var item in save.InventorySlots)
                     {
-
                         void spawn(InventorySlotReceiver receiver)
                         {
                             if (MarrowGame.assetWarehouse.HasCrate(new Barcode(item.Barcode)))
                             {
                                 var crate = new SpawnableCrateReference(item.Barcode);
 
-                                if (item.Type == SaveSlot.SpawnableType.Gun && Core.mp_saveGunData.Value && item.Barcode != CommonBarcodes.Misc.SpawnGun)
+                                if (item.Type == SaveSlot.SpawnableType.Gun && PreferencesManager.SaveGunData.Value && item.Barcode != CommonBarcodes.Misc.SpawnGun)
                                 {
                                     void action(GameObject obj)
                                     {
@@ -230,7 +227,8 @@ namespace KeepInventory.Managers
             Medium,
             Heavy
         }
-        public static void AddSavedAmmo(Save save, bool showNotifications = true)
+
+        public static void AddSavedAmmo(Save save)
         {
             if (save == null)
             {
@@ -262,12 +260,13 @@ namespace KeepInventory.Managers
                 Core.Logger.Warning("Game contains InfiniteAmmo mod, not adding ammo");
                 return;
             }
-            if (!Core.mp_itemsaving.Value)
+            if (!PreferencesManager.ItemSaving.Value)
             {
                 Core.Logger.Msg("Loaded inventory");
-                if (showNotifications) BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                if (PreferencesManager.ShowNotifications.Value) BLHelper.SendNotification("Success", "Successfully loaded the inventory", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
             }
         }
+
         public static void LoadSavedInventory(Save save)
         {
             if (save == null)
@@ -284,13 +283,13 @@ namespace KeepInventory.Managers
             try
             {
                 Core.Logger.Msg("Loading inventory...");
-                if (Core.mp_ammosaving.Value)
+                if (PreferencesManager.AmmoSaving.Value)
                 {
                     Core.Logger.Msg("Waiting for Ammo Inventory to be initialized");
                     var ammoInventory = AmmoInventory.Instance;
                     if (ammoInventory != null)
                     {
-                        AddSavedAmmo(save, Core.mp_showNotifications.Value);
+                        AddSavedAmmo(save);
                     }
                     else
                     {
@@ -306,7 +305,7 @@ namespace KeepInventory.Managers
                 }
                 else
                 {
-                    if (Core.mp_itemsaving.Value)
+                    if (PreferencesManager.ItemSaving.Value)
                     {
                         Core.Logger.Msg("Spawning in slots saved items");
                         SpawnSavedItems(save);
@@ -319,6 +318,7 @@ namespace KeepInventory.Managers
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }
+
         public static void ClearInventory()
         {
             var slots = Player.RigManager.GetAllSlots();

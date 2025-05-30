@@ -25,6 +25,7 @@ namespace KeepInventory.Managers
         private static readonly List<Save> _Saves = [];
 
         internal static List<string> IgnoredFilePaths = [];
+
         public static readonly JsonSerializerOptions SerializeOptions = new()
         {
             WriteIndented = true,
@@ -32,13 +33,14 @@ namespace KeepInventory.Managers
             IgnoreReadOnlyFields = false,
             IgnoreReadOnlyProperties = false
         };
+
         public static ReadOnlyCollection<Save> Saves => _Saves.AsReadOnly();
 
         internal static SynchronousFileSystemWatcher FileSystemWatcher { get; private set; }
 
         internal static void Setup()
         {
-            var directory = Directory.CreateDirectory(Path.Combine(Core.KI_PreferencesDirectory, "Saves"));
+            var directory = Directory.CreateDirectory(Path.Combine(PreferencesManager.KI_PreferencesDirectory, "Saves"));
             if (directory != null)
             {
                 Core.Logger.Msg("Created save directory");
@@ -66,7 +68,7 @@ namespace KeepInventory.Managers
                     TomlDocument oldSave = null;
                     try
                     {
-                        var path1 = Path.Combine(Core.KI_PreferencesDirectory, "Save.cfg");
+                        var path1 = Path.Combine(PreferencesManager.KI_PreferencesDirectory, "Save.cfg");
                         var path2 = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg");
                         int correct = -1;
 
@@ -137,12 +139,14 @@ namespace KeepInventory.Managers
                 }
             }
         }
+
         public static string GenerateRandomID(int length)
         {
             Random random = new();
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
         }
+
         public static void RegisterSave(Save save, bool createFile = true)
         {
             ArgumentNullException.ThrowIfNull(save, nameof(save));
@@ -181,6 +185,7 @@ namespace KeepInventory.Managers
             }
             Core.Logger.Msg($"Registered save with ID '{save.ID}'");
         }
+
         public static void RegisterSave(string filePath)
         {
             Core.Logger.Msg($"Attempting to load a save file at '{filePath}'");
@@ -279,6 +284,7 @@ namespace KeepInventory.Managers
         }
 
         private static readonly Dictionary<string, DateTime> LastWrite = [];
+
         internal static bool PreventDoubleTrigger(string file)
         {
             if (!File.Exists(file))
@@ -381,6 +387,7 @@ namespace KeepInventory.Managers
                 return false;
             }
         }
+
         public static void UnregisterSave(string ID, bool removeFile = true)
         {
             Core.Logger.Msg($"Unregistering save with ID '{ID}'");

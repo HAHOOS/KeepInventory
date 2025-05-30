@@ -40,6 +40,11 @@ namespace KeepInventory.Managers
             MelonEvents.OnUpdate.Subscribe(OnUpdate);
         }
 
+        public static void Destroy()
+        {
+            MelonEvents.OnUpdate.Unsubscribe(OnUpdate);
+        }
+
         private static void OnUpdate()
         {
             var inv = AmmoInventory.Instance;
