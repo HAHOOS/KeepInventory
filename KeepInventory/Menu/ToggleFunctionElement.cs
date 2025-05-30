@@ -43,6 +43,7 @@ namespace KeepInventory.Menu
             Callback = callback;
             OffColor = offColor;
             OnColor = onColor;
+            IsRunning = on;
             Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
             {
                 if (this.IsRunning) this.Cancel();
@@ -55,6 +56,7 @@ namespace KeepInventory.Menu
             Callback = callback;
             OffColor = offColor;
             OnColor = Color.red;
+            IsRunning = on;
             Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
             {
                 if (this.IsRunning) this.Cancel();
@@ -67,6 +69,7 @@ namespace KeepInventory.Menu
             Callback = callback;
             OffColor = Color.white;
             OnColor = Color.red;
+            IsRunning = on;
             Element = new FunctionElement(name, on ? OnColor : OffColor, () =>
             {
                 if (this.IsRunning) this.Cancel();

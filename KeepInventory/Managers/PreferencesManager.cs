@@ -112,7 +112,7 @@ namespace KeepInventory.Managers
             List<string> ids = [];
             BlacklistManager.Blacklist.ForEach(x => { if (x.Enabled) ids.Add(x.ID); });
             EnabledBlacklist.Value = ids;
-            PrefsCategory.SaveToFile(true);
+            PrefsCategory.SaveToFile(false);
         }
     }
 }
