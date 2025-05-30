@@ -128,7 +128,7 @@ namespace KeepInventory.Menu
             PredefinedBlacklistPage.RemoveAll();
             foreach (var blacklist in BlacklistManager.Blacklist)
             {
-                PredefinedBlacklistPage.CreateToggleFunction(blacklist.DisplayName, Color.red, new Color(0, 1, 0), (elem) =>
+                PredefinedBlacklistPage.CreateToggleFunction($"{blacklist.DisplayName} ({blacklist.Levels.Length})", Color.red, new Color(0, 1, 0), (elem) =>
                 {
                     if (elem.IsRunning) BlacklistManager.Enable(blacklist);
                     else BlacklistManager.Disable(blacklist);
