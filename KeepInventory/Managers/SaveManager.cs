@@ -340,11 +340,6 @@ namespace KeepInventory.Managers
                 if (PreventDoubleTrigger(y.FullPath)) return;
                 if (y.FullPath.EndsWith(".json"))
                 {
-                    if (!Core.Instance.IsCurrentThreadMainThread)
-                    {
-                        Core.Logger.Error("Changed event is not running on main thread");
-                        return;
-                    }
                     if (Check(y.FullPath))
                     {
                         Core.Logger.Msg($"{y.Name} has been modified, updating");

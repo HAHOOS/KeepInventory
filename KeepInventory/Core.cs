@@ -62,14 +62,9 @@ namespace KeepInventory
         internal static Thunderstore ThunderstoreInstance { get; private set; }
         internal static bool IsLatestVersion { get; private set; } = true;
         internal static Package ThunderstorePackage { get; private set; }
-        public Thread UnityThread { get; private set; }
-
-        public bool IsCurrentThreadMainThread
-            => Thread.CurrentThread == UnityThread;
 
         public override void OnInitializeMelon()
         {
-            UnityThread = Thread.CurrentThread;
             MLAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == "MelonLoader");
             Logger = LoggerInstance;
             Instance = this;
