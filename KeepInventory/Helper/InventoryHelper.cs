@@ -44,18 +44,37 @@ namespace KeepInventory.Helper
 
         public static void SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, Action<GameObject> callback = null)
         {
-            if (receiver._slottedWeapon?.interactableHost != null)
+            if (receiver == null)
+                return;
+
+            if (barcode == null)
+                return;
+
+            if (!AssetWarehouse.Instance.HasCrate(barcode))
             {
-                receiver._weaponHost?.ForceDetach();
-                receiver.DropWeapon();
+                Core.Logger.Warning($"Could not spawn item to slot '{receiver.GetSlotName()}', because the barcode does not exist: {barcode.ID}");
+                return;
             }
-            var task = receiver.SpawnInSlotAsync(barcode);
-            var awaiter = task.GetAwaiter();
-            awaiter.OnCompleted((Action)(() =>
+
+            if (Utilities.Fusion.IsConnected)
             {
-                if (awaiter.GetResult())
-                    callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
-            }));
+                Utilities.Fusion.Fusion_SpawnInSlot(receiver, barcode, callback);
+            }
+            else
+            {
+                if (receiver._slottedWeapon?.interactableHost != null)
+                {
+                    receiver._weaponHost?.ForceDetach();
+                    receiver.DropWeapon();
+                }
+                var task = receiver.SpawnInSlotAsync(barcode);
+                var awaiter = task.GetAwaiter();
+                awaiter.OnCompleted((Action)(() =>
+                {
+                    if (awaiter.GetResult())
+                        callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
+                }));
+            }
         }
     }
 }

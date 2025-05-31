@@ -197,6 +197,69 @@ namespace KeepInventory.Utilities
             }
         }
 
+        // This only exists until Fusion 1.10 releases
+        internal static void Fusion_SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, Action<GameObject> callback = null)
+        {
+            if (!LabFusion.Network.NetworkInfo.HasServer)
+                return;
+
+            if (!MarrowGame.assetWarehouse.HasCrate(barcode))
+                return;
+
+            if (barcode == null || string.IsNullOrWhiteSpace(barcode.ID) || receiver == null)
+                return;
+
+            var head = LabFusion.Data.RigData.Refs.RigManager.physicsRig.m_head;
+
+            var info = new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
+            {
+                rotation = head.rotation,
+                position = (head.position + (head.forward * 1.5f)),
+                spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
+                spawnEffect = false,
+                spawnCallback = (callbackInfo) =>
+                {
+                    try
+                    {
+                        LabFusion.Entities.NetworkEntity slotEntity = null;
+
+                        if (!LabFusion.Entities.InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
+                            return;
+                        else
+                            slotEntity = _slotEntity;
+
+                        var weaponExtender = callbackInfo.entity.GetExtender<LabFusion.Entities.WeaponSlotExtender>();
+
+                        if (weaponExtender == null)
+                            return;
+
+                        var slotExtender = slotEntity.GetExtender<LabFusion.Entities.InventorySlotReceiverExtender>();
+                        if (slotExtender == null)
+                            return;
+
+                        byte? index = (byte?)slotExtender.GetIndex(receiver);
+
+                        if (!index.HasValue)
+                            return;
+
+                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(weaponExtender.Component.interactableHost);
+
+                        var component = slotExtender.GetComponent(index.Value);
+
+                        component.InsertInSlot(weaponExtender.Component.interactableHost);
+
+                        callback?.InvokeActionSafe(callbackInfo.spawned);
+                    }
+                    catch (Exception ex)
+                    {
+                        Error($"An unexpected error has occurred while trying to spawn & holster a spawnable, exception:\n{ex}");
+                    }
+                }
+            };
+
+            LabFusion.RPC.NetworkAssetSpawner.Spawn(info);
+        }
+
         internal static bool GamemodeCheck()
         {
             if (!IsConnected) return false;
