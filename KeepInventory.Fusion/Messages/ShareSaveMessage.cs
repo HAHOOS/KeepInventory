@@ -4,8 +4,8 @@ using KeepInventory.Fusion.Managers;
 using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
-using LabFusion.Data;
 using LabFusion.Network;
+using LabFusion.Network.Serialization;
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
 
@@ -13,50 +13,34 @@ using MelonLoader.Pastel;
 
 namespace KeepInventory.Fusion.Messages
 {
-    public class ShareSaveMessageData : IFusionSerializable
+    public class ShareSaveMessageData : INetSerializable
     {
-        public PlayerId Sender;
-        public PlayerId Target;
+        public byte Sender;
         public string Data;
         public Save Save => JsonSerializer.Deserialize<Save>(Data, SaveManager.SerializeOptions);
 
-        public void Deserialize(FusionReader reader)
+        public void Serialize(INetSerializer writer)
         {
-            Sender = PlayerIdManager.GetPlayerId(reader.ReadByte());
-            Target = PlayerIdManager.GetPlayerId(reader.ReadByte());
-            Data = reader.ReadString();
-        }
-
-        public void Serialize(FusionWriter writer)
-        {
-            writer.Write(Sender.SmallId);
-            writer.Write(Target.SmallId);
-            writer.Write(Data);
+            writer.SerializeValue(ref Sender);
+            writer.SerializeValue(ref Data);
         }
     }
 
     public class ShareSaveMessage : ModuleMessageHandler
     {
-        public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
+        protected override void OnHandleMessage(ReceivedMessage received)
         {
-            if (isServerHandled)
-                return;
-
-            using var reader = FusionReader.Create(bytes);
-            var message = reader.ReadFusionSerializable<ShareSaveMessageData>();
+            var message = received.ReadData<ShareSaveMessageData>();
             if (message == null)
             {
                 FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] The received message could not be read or was null");
                 return;
             }
 
-            if (message.Target.SmallId != PlayerIdManager.LocalSmallId)
-            {
-                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] The target player is not the local player, ignoring");
+            if (!PlayerIDManager.SmallIDLookup.TryGetValue(message.Sender, out PlayerID id) || id == null)
                 return;
-            }
 
-            if (!ShareManager.IsPlayerAllowed(message.Sender))
+            if (!ShareManager.IsPlayerAllowed(id))
             {
                 FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] A blacklisted player tried to share a save with you");
                 return;
@@ -70,7 +54,7 @@ namespace KeepInventory.Fusion.Messages
 
             var save = JsonSerializer.Deserialize<Save>(message.Data);
 
-            ShareManager.TriggerEvent(save, message.Sender.SmallId);
+            ShareManager.TriggerEvent(save, message.Sender);
         }
     }
 }

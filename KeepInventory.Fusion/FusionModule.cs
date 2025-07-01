@@ -6,7 +6,6 @@ using KeepInventory.Fusion.Messages;
 
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
-using LabFusion.Utilities;
 
 using MelonLoader;
 using MelonLoader.Pastel;
@@ -24,11 +23,11 @@ namespace KeepInventory.Fusion
         {
             logger = LoggerInstance;
             MsgFusionPrefix("Registering ShareSaveMessage");
-            ModuleMessageHandler.RegisterHandler<ShareSaveMessage>();
+            ModuleMessageManager.RegisterHandler<ShareSaveMessage>();
             MsgFusionPrefix("Registering CanShareRequestMessage");
-            ModuleMessageHandler.RegisterHandler<CanShareRequestMessage>();
+            ModuleMessageManager.RegisterHandler<CanShareRequestMessage>();
             MsgFusionPrefix("Registering CanShareResponseMessage");
-            ModuleMessageHandler.RegisterHandler<CanShareResponseMessage>();
+            ModuleMessageManager.RegisterHandler<CanShareResponseMessage>();
         }
 
         public const string _Version = KeepInventory.Core.Version;

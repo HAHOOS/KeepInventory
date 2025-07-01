@@ -2,20 +2,16 @@
 
 using BoneLib;
 
-using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow;
-
-using UnityEngine;
 
 using KeepInventory.Saves.V2;
 using System.Collections.Generic;
 using System.Linq;
 using Il2CppSLZ.Marrow.Data;
-using Il2CppSLZ.Marrow.Utilities;
 using MelonLoader.Pastel;
-using Il2CppSLZ.Marrow.Pool;
 using System.Threading.Tasks;
 using KeepInventory.Managers;
+using KeepInventory.Helper;
 
 namespace KeepInventory.Utilities
 {
@@ -54,14 +50,14 @@ namespace KeepInventory.Utilities
                 {
                     if (!SaveManager.Saves.Any(x => x.ID == save.ID))
                     {
-                        LabFusion.Utilities.FusionNotifier.Send(new LabFusion.Utilities.FusionNotification()
+                        LabFusion.UI.Popups.Notifier.Send(new LabFusion.UI.Popups.Notification()
                         {
                             Title = "KeepInventory | Save shared!",
                             SaveToMenu = true,
                             ShowPopup = true,
                             Message = $"{player.Username} has shared a save with you called '<color=#{save.Color}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
                             PopupLength = 15f,
-                            Type = LabFusion.Utilities.NotificationType.INFORMATION,
+                            Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
                             OnAccepted = () => SaveManager.RegisterSave(save),
                             OnDeclined = () => Core.Logger.Msg("Save share ignored")
                         });
@@ -75,17 +71,17 @@ namespace KeepInventory.Utilities
             return LabFusion.Network.NetworkInfo.HasServer;
         }
 
-        internal static void Internal_ShareSave(byte smallId, Save save)
+        internal static void Internal_ShareSave(byte SmallID, Save save)
         {
-            if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(smallId, out LabFusion.Entities.NetworkPlayer plr))
-                KeepInventory.Fusion.Managers.ShareManager.Share(save, plr.PlayerId);
+            if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(SmallID, out LabFusion.Entities.NetworkPlayer plr))
+                KeepInventory.Fusion.Managers.ShareManager.Share(save, plr.PlayerID);
             else
-                throw new Exception($"Player with small ID {smallId} could not be found");
+                throw new Exception($"Player with small ID {SmallID} could not be found");
         }
 
-        public static void ShareSave(byte smallId, Save save)
+        public static void ShareSave(byte SmallID, Save save)
         {
-            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) Internal_ShareSave(smallId, save);
+            if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) Internal_ShareSave(SmallID, save);
         }
 
         internal async static Task<List<FusionPlayer>> Internal_GetShareablePlayers()
@@ -94,8 +90,8 @@ namespace KeepInventory.Utilities
             List<FusionPlayer> players = [];
             foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
             {
-                if (player != null && task.Contains(player.PlayerId.SmallId))
-                    players.Add(new FusionPlayer(player.PlayerId.SmallId, player.PlayerId.LongId, player.Username));
+                if (player != null && task.Contains(player.PlayerID.SmallID))
+                    players.Add(new FusionPlayer(player.PlayerID.SmallID, player.PlayerID.PlatformID, player.Username));
             }
             return players;
         }
@@ -117,7 +113,7 @@ namespace KeepInventory.Utilities
         {
             foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
             {
-                yield return new FusionPlayer(player.PlayerId.SmallId, player.PlayerId.LongId, player.Username);
+                yield return new FusionPlayer(player.PlayerID.SmallID, player.PlayerID.PlatformID, player.Username);
             }
         }
 
@@ -127,12 +123,12 @@ namespace KeepInventory.Utilities
             else return [];
         }
 
-        internal static byte Internal_GetLocalPlayerSmallId()
-            => LabFusion.Player.PlayerIdManager.LocalSmallId;
+        internal static byte Internal_GetLocalPlayerSmallID()
+            => LabFusion.Player.PlayerIDManager.LocalSmallID;
 
-        public static byte GetLocalPlayerSmallId()
+        public static byte GetLocalPlayerSmallID()
         {
-            if (Core.HasFusion && IsConnected) return Internal_GetLocalPlayerSmallId();
+            if (Core.HasFusion && IsConnected) return Internal_GetLocalPlayerSmallID();
             else return 0;
         }
 
@@ -197,69 +193,6 @@ namespace KeepInventory.Utilities
             }
         }
 
-        // This only exists until Fusion 1.10 releases
-        internal static void Fusion_SpawnInSlot(this InventorySlotReceiver receiver, Barcode barcode, Action<GameObject> callback = null)
-        {
-            if (!LabFusion.Network.NetworkInfo.HasServer)
-                return;
-
-            if (!MarrowGame.assetWarehouse.HasCrate(barcode))
-                return;
-
-            if (barcode == null || string.IsNullOrWhiteSpace(barcode.ID) || receiver == null)
-                return;
-
-            var head = LabFusion.Data.RigData.Refs.RigManager.physicsRig.m_head;
-
-            var info = new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
-            {
-                rotation = head.rotation,
-                position = (head.position + (head.forward * 1.5f)),
-                spawnable = new Spawnable() { crateRef = new SpawnableCrateReference(barcode), policyData = null },
-                spawnEffect = false,
-                spawnCallback = (callbackInfo) =>
-                {
-                    try
-                    {
-                        LabFusion.Entities.NetworkEntity slotEntity = null;
-
-                        if (!LabFusion.Entities.InventorySlotReceiverExtender.Cache.TryGet(receiver, out var _slotEntity))
-                            return;
-                        else
-                            slotEntity = _slotEntity;
-
-                        var weaponExtender = callbackInfo.entity.GetExtender<LabFusion.Entities.WeaponSlotExtender>();
-
-                        if (weaponExtender == null)
-                            return;
-
-                        var slotExtender = slotEntity.GetExtender<LabFusion.Entities.InventorySlotReceiverExtender>();
-                        if (slotExtender == null)
-                            return;
-
-                        byte? index = (byte?)slotExtender.GetIndex(receiver);
-
-                        if (!index.HasValue)
-                            return;
-
-                        LabFusion.Extensions.InteractableHostExtensions.TryDetach(weaponExtender.Component.interactableHost);
-
-                        var component = slotExtender.GetComponent(index.Value);
-
-                        component.InsertInSlot(weaponExtender.Component.interactableHost);
-
-                        callback?.InvokeActionSafe(callbackInfo.spawned);
-                    }
-                    catch (Exception ex)
-                    {
-                        Error($"An unexpected error has occurred while trying to spawn & holster a spawnable, exception:\n{ex}");
-                    }
-                }
-            };
-
-            LabFusion.RPC.NetworkAssetSpawner.Spawn(info);
-        }
-
         internal static bool GamemodeCheck()
         {
             if (!IsConnected) return false;
@@ -302,18 +235,18 @@ namespace KeepInventory.Utilities
         {
             LabFusion.RPC.NetworkAssetSpawner.Spawn(new LabFusion.RPC.NetworkAssetSpawner.SpawnRequestInfo
             {
-                position = Player.Head.position,
-                rotation = Player.Head.rotation,
-                spawnable = gun.defaultMagazine.spawnable,
-                spawnEffect = false,
-                spawnCallback = (spawn) =>
+                Position = Player.Head.position,
+                Rotation = Player.Head.rotation,
+                Spawnable = gun.defaultMagazine.spawnable,
+                SpawnEffect = false,
+                SpawnCallback = (spawn) =>
                 {
-                    var gunExt = LabFusion.Entities.GunExtender.Cache.Get(gun);
+                    var gunExt = LabFusion.Marrow.Extenders.GunExtender.Cache.Get(gun);
                     if (gunExt == null)
                         return;
 
                     var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
-                    var mag = spawn.spawned.GetComponent<Magazine>();
+                    var mag = spawn.Spawned.GetComponent<Magazine>();
 
                     if (socketExtender == null || mag == null)
                         return;
@@ -363,7 +296,7 @@ namespace KeepInventory.Utilities
 
         internal static void MsgFusionPrefix(string message)
         {
-            MsgPrefix("Fusion", message, System.Drawing.Color.Cyan);
+            MsgPrefix("Fusion", message, UnityEngine.Color.cyan);
         }
 
         internal static void Warn(string message)
@@ -376,16 +309,16 @@ namespace KeepInventory.Utilities
             Core.Logger.Warning($"[Fusion] {message}");
         }
 
-        internal static void MsgPrefix(string prefix, string message, System.Drawing.Color color)
+        internal static void MsgPrefix(string prefix, string message, UnityEngine.Color color)
         {
-            Core.Logger.Msg($"[{prefix.Pastel(color)}] {message}");
+            Core.Logger.Msg($"[{prefix.Pastel(color.ToHEX())}] {message}");
         }
     }
 
-    public class FusionPlayer(byte smallId, ulong longId, string displayName)
+    public class FusionPlayer(byte SmallID, ulong PlatformID, string displayName)
     {
         public string DisplayName { get; } = displayName;
-        public byte SmallId { get; } = smallId;
-        public ulong LongId { get; } = longId;
+        public byte SmallID { get; } = SmallID;
+        public ulong PlatformID { get; } = PlatformID;
     }
 }

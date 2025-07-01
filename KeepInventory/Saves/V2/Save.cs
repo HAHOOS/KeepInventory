@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -9,7 +8,7 @@ using System.Text.Json.Serialization;
 using KeepInventory.Helper;
 using KeepInventory.Managers;
 
-using Color = System.Drawing.Color;
+using UnityEngine;
 
 namespace KeepInventory.Saves.V2
 {
@@ -49,30 +48,30 @@ namespace KeepInventory.Saves.V2
         }
 
         [JsonIgnore]
-        public Color DrawingColor = System.Drawing.Color.FromArgb(255, 255, 255);
+        public UnityEngine.Color DrawingColor = UnityEngine.Color.white;
 
         [JsonPropertyName("Color")]
         public string Color
         {
-            get => $"{DrawingColor.R:X2}{DrawingColor.G:X2}{DrawingColor.B:X2}";
+            get => $"{(int)(DrawingColor.r):X2}{(int)(DrawingColor.g):X2} {(int)(DrawingColor.b):X2}";
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {
-                    DrawingColor = System.Drawing.Color.White;
+                    DrawingColor = UnityEngine.Color.white;
                 }
                 else
                 {
-                    Color translated;
+                    UnityEngine.Color translated;
                     var old = DrawingColor;
                     try
                     {
-                        translated = ColorTranslator.FromHtml(value.StartsWith("#") ? value : $"#{value}");
+                        translated = value.FromHEX();
                     }
                     catch (Exception ex)
                     {
                         Core.Logger.Error($"Failed to convert HEX color to Drawing Color, defaulting to white, exception:\n{ex}");
-                        translated = System.Drawing.Color.White;
+                        translated = UnityEngine.Color.white;
                     }
                     DrawingColor = translated;
                     OnPropertyChanged?.Invoke(nameof(Color), old, DrawingColor);

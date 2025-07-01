@@ -111,19 +111,7 @@ namespace KeepInventory.Menu
 
         private static bool SharingEnabled()
         {
-            if (!NetworkInfo.HasServer)
-                return false;
-
-            if (NetworkInfo.IsServer)
-                return true;
-
-            if (!NetworkPlayerManager.TryGetPlayer(PlayerIdManager.HostSmallId, out NetworkPlayer host))
-                return false;
-
-            if (host.PlayerId?.Metadata?.TryGetMetadata("HasKeepInventory", out string val) != true)
-                return false;
-
-            return bool.Parse(val);
+            return NetworkInfo.HasServer;
         }
 
         private void PropertyChanged(string name, object oldVal, object newVal)
@@ -333,19 +321,15 @@ namespace KeepInventory.Menu
             const float increment = 0.05f;
 
             Color.RGBToHSV(
-                new Color(CurrentSave.DrawingColor.R / 255, CurrentSave.DrawingColor.G / 255, CurrentSave.DrawingColor.B / 255),
+                CurrentSave.DrawingColor,
                 out float H,
                 out float S,
                 out float V);
 
             void apply()
             {
-                var unity = Color.HSVToRGB(H, S, V);
-                var color = System.Drawing.Color.FromArgb(0,
-                    (int)Math.Round(unity.r * 255, 0),
-                    (int)Math.Round(unity.g * 255, 0),
-                    (int)Math.Round(unity.b * 255, 0));
-                CurrentSave.Color = $"{color.R:X2}{color.G:X2}{color.B:X2}";
+                var color = Color.HSVToRGB(H, S, V);
+                CurrentSave.Color = $"{(int)(color.r):X2}{(int)(color.g):X2}{(int)(color.b):X2}";
                 CurrentSave.TrySaveToFile(false);
                 BoneMenu.UpdatePresetsPage();
                 preview.ElementName = $"Preview: <color=#{CurrentSave.Color ?? "FFFFFF"}>{CurrentSave.Name}</color>";
@@ -409,17 +393,17 @@ namespace KeepInventory.Menu
 
         internal void SetupFusion()
         {
-            LabFusion.Utilities.MultiplayerHooking.OnDisconnect += () =>
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += () =>
             {
                 SelectedPlayers?.Clear();
                 SetupShare();
             };
-            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += () => SetupShare();
-            LabFusion.Utilities.MultiplayerHooking.OnStartServer += () => SetupShare();
-            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoin += (__) => SetupShare();
-            LabFusion.Utilities.MultiplayerHooking.OnPlayerLeave += (player) =>
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += () => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += () => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoined += (__) => SetupShare();
+            LabFusion.Utilities.MultiplayerHooking.OnPlayerLeft += (player) =>
             {
-                SelectedPlayers?.Remove(player.SmallId);
+                SelectedPlayers?.Remove(player.SmallID);
                 SetupShare();
             };
         }
@@ -478,7 +462,7 @@ namespace KeepInventory.Menu
 
                 SharePage.Remove(waitElement);
                 var players = awaiter.GetResult();
-                players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
+                players.RemoveAll(x => x.SmallID == Utilities.Fusion.GetLocalPlayerSmallID());
                 if (players.Count == 0)
                 {
                     SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
@@ -487,9 +471,9 @@ namespace KeepInventory.Menu
                 {
                     foreach (var player in players)
                     {
-                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallId));
-                        element.OnStart += () => SelectedPlayers.Add(player.SmallId);
-                        element.OnCancel += () => SelectedPlayers.Remove(player.SmallId);
+                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallID));
+                        element.OnStart += () => SelectedPlayers.Add(player.SmallID);
+                        element.OnCancel += () => SelectedPlayers.Remove(player.SmallID);
                     }
                 }
             }

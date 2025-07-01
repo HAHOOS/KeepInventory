@@ -174,11 +174,11 @@ namespace KeepInventory.Menu
             });
             SharingBlacklistPage ??= SharingPage.CreatePage("Blacklist", Color.red);
             SetupSharingBlacklist();
-            LabFusion.Utilities.MultiplayerHooking.OnDisconnect += SetupSharingBlacklist;
-            LabFusion.Utilities.MultiplayerHooking.OnJoinServer += SetupSharingBlacklist;
-            LabFusion.Utilities.MultiplayerHooking.OnStartServer += SetupSharingBlacklist;
-            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoin += (_) => SetupSharingBlacklist();
-            LabFusion.Utilities.MultiplayerHooking.OnPlayerLeave += (_) => SetupSharingBlacklist();
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += SetupSharingBlacklist;
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += SetupSharingBlacklist;
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += SetupSharingBlacklist;
+            LabFusion.Utilities.MultiplayerHooking.OnPlayerJoined += (_) => SetupSharingBlacklist();
+            LabFusion.Utilities.MultiplayerHooking.OnPlayerLeft += (_) => SetupSharingBlacklist();
         }
 
         internal static void SetupSharingBlacklist()
@@ -187,7 +187,7 @@ namespace KeepInventory.Menu
             SharingBlacklistPage.CreateFunction("Refresh", Color.yellow, SetupSharingBlacklist);
             SharingBlacklistPage.CreateBlank();
             var players = Utilities.Fusion.GetPlayers();
-            players.RemoveAll(x => x.SmallId == Utilities.Fusion.GetLocalPlayerSmallId());
+            players.RemoveAll(x => x.SmallID == Utilities.Fusion.GetLocalPlayerSmallID());
             if (players.Count == 0)
             {
                 SharingBlacklistPage.CreateLabel("Nothing to show here :(", Color.white);
@@ -199,12 +199,12 @@ namespace KeepInventory.Menu
                     var element = SharingBlacklistPage.CreateToggleFunction(player.DisplayName, Color.white, null);
                     element.OnStart += () =>
                     {
-                        Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Add(player.LongId);
+                        Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Add(player.PlatformID);
                         Fusion.Managers.ShareManager.Category.SaveToFile(false);
                     };
                     element.OnCancel += () =>
                     {
-                        Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Remove(player.LongId);
+                        Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Remove(player.PlatformID);
                         Fusion.Managers.ShareManager.Category.SaveToFile(false);
                     };
                 }

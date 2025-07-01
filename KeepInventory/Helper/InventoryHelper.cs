@@ -56,25 +56,18 @@ namespace KeepInventory.Helper
                 return;
             }
 
-            if (Utilities.Fusion.IsConnected)
+            if (receiver._slottedWeapon?.interactableHost != null)
             {
-                Utilities.Fusion.Fusion_SpawnInSlot(receiver, barcode, callback);
+                receiver._weaponHost?.ForceDetach();
+                receiver.DropWeapon();
             }
-            else
+            var task = receiver.SpawnInSlotAsync(barcode);
+            var awaiter = task.GetAwaiter();
+            awaiter.OnCompleted((Action)(() =>
             {
-                if (receiver._slottedWeapon?.interactableHost != null)
-                {
-                    receiver._weaponHost?.ForceDetach();
-                    receiver.DropWeapon();
-                }
-                var task = receiver.SpawnInSlotAsync(barcode);
-                var awaiter = task.GetAwaiter();
-                awaiter.OnCompleted((Action)(() =>
-                {
-                    if (awaiter.GetResult())
-                        callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
-                }));
-            }
+                if (awaiter.GetResult())
+                    callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
+            }));
         }
     }
 }

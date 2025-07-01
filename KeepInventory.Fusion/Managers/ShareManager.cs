@@ -9,8 +9,8 @@ using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
 using LabFusion.Network;
+using LabFusion.Network.Serialization;
 using LabFusion.Player;
-using LabFusion.Utilities;
 
 using MelonLoader;
 using MelonLoader.Utils;
@@ -41,12 +41,9 @@ namespace KeepInventory.Fusion.Managers
             Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory", "Sharing.cfg"));
             Category.SaveToFile(false);
             IsSetup = true;
-
-            MultiplayerHooking.OnStartServer += ()
-                => LocalPlayer.Metadata.TrySetMetadata("HasKeepInventory", bool.TrueString);
         }
 
-        public static void Share(Save save, PlayerId target)
+        public static void Share(Save save, byte target)
         {
             if (!IsSetup)
                 return;
@@ -56,13 +53,12 @@ namespace KeepInventory.Fusion.Managers
 
             ShareSaveMessageData messageData = new()
             {
-                Sender = PlayerIdManager.LocalId,
-                Target = target,
+                Sender = PlayerIDManager.LocalSmallID,
                 Data = JsonSerializer.Serialize(save, SaveManager.SerializeOptions)
             };
-            using var writer = FusionWriter.Create();
-            writer.Write(messageData);
-            using FusionMessage msg = FusionMessage.ModuleCreate<ShareSaveMessage>(writer);
+            using var writer = NetWriter.Create();
+            writer.SerializeValue(ref messageData);
+            using NetMessage msg = NetMessage.ModuleCreate<ShareSaveMessage>(writer, new MessageRoute(target, NetworkChannel.Reliable));
             MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, msg);
         }
 
@@ -84,7 +80,7 @@ namespace KeepInventory.Fusion.Managers
             return !string.IsNullOrWhiteSpace(data) && IsJson(data);
         }
 
-        public static bool IsPlayerAllowed(PlayerId playerId)
+        public static bool IsPlayerAllowed(PlayerID playerId)
         {
             if (!IsSetup)
                 return true;
@@ -92,7 +88,7 @@ namespace KeepInventory.Fusion.Managers
             if (!Entry_SharingEnabled.Value)
                 return false;
 
-            if (Entry_SharingBlacklist.Value.Contains(playerId.LongId))
+            if (Entry_SharingBlacklist.Value.Contains(playerId.PlatformID))
                 return false;
 
             return true;
@@ -120,10 +116,10 @@ namespace KeepInventory.Fusion.Managers
 
             if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(x =>
             {
-                var id = PlayerIdManager.GetPlayerId(x);
+                var id = PlayerIDManager.GetPlayerID(x);
                 if (id != null)
                 {
-                    if (Entry_SharingBlacklist.Value.Contains(id.LongId))
+                    if (Entry_SharingBlacklist.Value.Contains(id.PlatformID))
                         return true;
                 }
                 return false;
@@ -139,9 +135,9 @@ namespace KeepInventory.Fusion.Managers
             var data = CanShareMessageData.Create();
             AwaitingID = data.ID;
 
-            using var writer = FusionWriter.Create();
-            writer.Write(data);
-            using var message = FusionMessage.ModuleCreate<CanShareRequestMessage>(writer);
+            using var writer = NetWriter.Create();
+            writer.SerializeValue(ref data);
+            using var message = NetMessage.ModuleCreate<CanShareRequestMessage>(writer, CommonMessageRoutes.ReliableToOtherClients);
             MessageSender.SendToServer(NetworkChannel.Reliable, message);
             var last = DateTime.Now;
             CanShareResponseMessage.LastMessage = DateTime.Now;

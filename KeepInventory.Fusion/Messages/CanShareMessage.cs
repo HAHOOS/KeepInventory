@@ -3,36 +3,22 @@ using System.Linq;
 
 using KeepInventory.Fusion.Managers;
 
-using LabFusion.Data;
 using LabFusion.Network;
+using LabFusion.Network.Serialization;
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
 
 namespace KeepInventory.Fusion.Messages
 {
-    public class CanShareMessageData : IFusionSerializable
+    public class CanShareMessageData : INetSerializable
     {
-        public PlayerId Sender;
-        public PlayerId Target;
+        public byte Sender;
         public string ID;
 
-        public void Deserialize(FusionReader reader)
+        public void Serialize(INetSerializer writer)
         {
-            Sender = PlayerIdManager.GetPlayerId(reader.ReadByte());
-
-            byte? target = reader.ReadByteNullable();
-            if (target != null)
-                Target = PlayerIdManager.GetPlayerId((byte)target);
-
-            ID = reader.ReadString();
-        }
-
-        public void Serialize(FusionWriter writer)
-        {
-            writer.Write(Sender.SmallId);
-            byte? smallId = Target?.SmallId;
-            writer.Write(smallId);
-            writer.Write(ID);
+            writer.SerializeValue(ref Sender);
+            writer.SerializeValue(ref ID);
         }
 
         public static string GenerateRandomID(int length)
@@ -47,17 +33,7 @@ namespace KeepInventory.Fusion.Messages
             return new CanShareMessageData()
             {
                 ID = ID,
-                Sender = PlayerIdManager.LocalId
-            };
-        }
-
-        public static CanShareMessageData Create(byte target, string ID)
-        {
-            return new CanShareMessageData()
-            {
-                ID = ID,
-                Target = PlayerIdManager.GetPlayerId(target),
-                Sender = PlayerIdManager.LocalId
+                Sender = PlayerIDManager.LocalSmallID,
             };
         }
 
@@ -65,47 +41,38 @@ namespace KeepInventory.Fusion.Messages
         {
             return new CanShareMessageData()
             {
-                ID = $"{PlayerIdManager.LocalSmallId}-{GenerateRandomID(7)}",
-                Sender = PlayerIdManager.LocalId
+                ID = $"{PlayerIDManager.LocalSmallID}-{GenerateRandomID(7)}",
+                Sender = PlayerIDManager.LocalID
             };
         }
     }
 
     public class CanShareRequestMessage : ModuleMessageHandler
     {
-        public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
+        protected override void OnHandleMessage(ReceivedMessage message)
         {
-            if (isServerHandled)
-            {
-                using var _msg = FusionMessage.ModuleCreate<CanShareRequestMessage>(bytes);
-                MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, _msg);
-            }
-
-            FusionModule.logger.Log("[REQUEST] Request received");
-
-            using var reader = FusionReader.Create(bytes);
-            var msg = reader.ReadFusionSerializable<CanShareMessageData>();
+            var msg = message.ReadData<CanShareMessageData>();
             if (msg == null)
                 return;
 
             FusionModule.logger.Log("[REQUEST] Msg is not null");
 
-            if (!msg.Sender.IsValid || msg.Sender.IsMe)
+            if (!PlayerIDManager.SmallIDLookup.TryGetValue(msg.Sender, out PlayerID id) || id == null)
                 return;
 
             FusionModule.logger.Log("[REQUEST] Sender is not me");
 
-            if (!ShareManager.IsPlayerAllowed(msg.Sender))
+            if (!ShareManager.IsPlayerAllowed(id))
                 return;
 
             FusionModule.logger.Log("[REQUEST] Sender is allowed");
 
-            var responseData = CanShareMessageData.Create(msg.Sender.SmallId, msg.ID);
+            var responseData = CanShareMessageData.Create(msg.ID);
 
-            using var writer = FusionWriter.Create();
-            writer.Write(responseData);
-            using var message = FusionMessage.ModuleCreate<CanShareResponseMessage>(writer);
-            MessageSender.SendToServer(NetworkChannel.Reliable, message);
+            using var writer = NetWriter.Create();
+            writer.SerializeValue(ref responseData);
+            using var _message = NetMessage.ModuleCreate<CanShareResponseMessage>(writer, new(msg.Sender, NetworkChannel.Reliable));
+            MessageSender.SendToServer(NetworkChannel.Reliable, _message);
         }
     }
 
@@ -113,24 +80,15 @@ namespace KeepInventory.Fusion.Messages
     {
         public static DateTime LastMessage { get; internal set; } = DateTime.Now;
 
-        public override void HandleMessage(byte[] bytes, bool isServerHandled = false)
+        protected override void OnHandleMessage(ReceivedMessage message)
         {
-            if (isServerHandled)
-            {
-                using var _msg = FusionMessage.ModuleCreate<CanShareResponseMessage>(bytes);
-                MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, _msg);
-            }
-
-            FusionModule.logger.Log("[RESPONSE] Response received");
-
-            using var reader = FusionReader.Create(bytes);
-            var msg = reader.ReadFusionSerializable<CanShareMessageData>();
+            var msg = message.ReadData<CanShareMessageData>();
             if (msg == null)
                 return;
 
             FusionModule.logger.Log("[RESPONSE] Msg not null");
 
-            if (!msg.Sender.IsValid || msg.Sender.IsMe)
+            if (!PlayerIDManager.SmallIDLookup.TryGetValue(msg.Sender, out PlayerID id) || id == null)
                 return;
 
             FusionModule.logger.Log("[RESPONSE] Sender is not me");
@@ -140,19 +98,19 @@ namespace KeepInventory.Fusion.Messages
 
             FusionModule.logger.Log("[RESPONSE] Awaiting ID is not empty");
 
-            if (ShareManager.PlayerResponses.Contains(msg.Sender.SmallId))
+            if (ShareManager.PlayerResponses.Contains(msg.Sender))
                 return;
 
             FusionModule.logger.Log("[RESPONSE] Player Responses does not contain sender");
 
-            if (!ShareManager.IsPlayerAllowed(msg.Sender))
+            if (!ShareManager.IsPlayerAllowed(id))
                 return;
 
             FusionModule.logger.Log("[RESPONSE] Player is allowed");
 
             LastMessage = DateTime.Now;
 
-            ShareManager.PlayerResponses.Add(msg.Sender.SmallId);
+            ShareManager.PlayerResponses.Add(msg.Sender);
         }
     }
 }

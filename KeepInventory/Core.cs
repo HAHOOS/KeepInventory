@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 
 using BoneLib;
 using BoneLib.BoneMenu;
@@ -17,7 +14,6 @@ using KeepInventory.Menu;
 using KeepInventory.Utilities;
 
 using MelonLoader;
-using MelonLoader.Pastel;
 
 using Semver;
 
@@ -200,9 +196,6 @@ namespace KeepInventory
                 LoggerInstance.Error($"An unexpected error has occurred while trying to check if KeepInventory is the latest version, exception:\n{e}");
             }
         }
-
-        internal static void MsgPrefix(string message, string prefix, System.Drawing.Color color)
-            => Logger.Msg($"[{prefix.Pastel(color)}] {message}");
 
         private void LevelUnloadedEvent()
         {
