@@ -19,8 +19,3 @@ A BONELAB code mod that lets you keep your inventory when switching between leve
 If you find any bugs, I recommend creating an [issue](https://github.com/HAHOOS/KeepInventory/issues). This will really help the development of the mod
 
 The "Box" asset used in the logo is under the [MIT License](https://github.com/twbs/icons/blob/main/LICENSE)
-
-## Possible bugs
-
-- Saved gun with the slide locked might not load with it locked
-- Guns not being put in inventory slots for new players in Fusion (I have asked Lakatrazz and he said it's a problem with Fusion)
