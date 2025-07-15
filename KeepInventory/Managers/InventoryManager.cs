@@ -113,8 +113,6 @@ namespace KeepInventory.Managers
                 return;
             }
 
-            Utilities.Fusion.RemoveRigCreateEvent();
-
             try
             {
                 if (save.InventorySlots?.Count > 0)
@@ -125,11 +123,13 @@ namespace KeepInventory.Managers
                         Core.Logger.Error("RigManager does not exist, cannot load saved items!");
                         return;
                     }
+
                     if (rigManager.inventory == null)
                     {
                         Core.Logger.Error("Inventory does not exist, cannot load saved items!");
                         return;
                     }
+
                     var list = rigManager.GetComponentsInChildren<InventorySlotReceiver>().ToList();
 
                     foreach (var item in save.InventorySlots)
@@ -292,18 +292,10 @@ namespace KeepInventory.Managers
                     }
                 }
 
-                if (Core.HasFusion)
+                if (PreferencesManager.ItemSaving.Value)
                 {
-                    Core.Logger.Msg("Checking if client is connected to a Fusion server");
-                    Utilities.Fusion.SpawnSavedItems(save);
-                }
-                else
-                {
-                    if (PreferencesManager.ItemSaving.Value)
-                    {
-                        Core.Logger.Msg("Spawning in slots saved items");
-                        SpawnSavedItems(save);
-                    }
+                    Core.Logger.Msg("Spawning in slots saved items");
+                    SpawnSavedItems(save);
                 }
             }
             catch (Exception ex)

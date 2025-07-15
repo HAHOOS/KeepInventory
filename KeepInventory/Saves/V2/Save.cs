@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 using KeepInventory.Helper;
 using KeepInventory.Managers;
@@ -53,7 +54,7 @@ namespace KeepInventory.Saves.V2
         [JsonPropertyName("Color")]
         public string Color
         {
-            get => $"{(int)(DrawingColor.r):X2}{(int)(DrawingColor.g):X2} {(int)(DrawingColor.b):X2}";
+            get => $"{(int)(DrawingColor.r):X2}{(int)(DrawingColor.g):X2}{(int)(DrawingColor.b):X2}";
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
@@ -300,21 +301,32 @@ namespace KeepInventory.Saves.V2
             if (!string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath))
             {
                 Saving = true;
-                SaveManager.IgnoredFilePaths.Add(FilePath);
                 if (printMessage) Core.Logger.Msg($"Saving '{ID}' to file...");
                 try
                 {
                     var serialized = JsonSerializer.Serialize<Save>(this, SaveManager.SerializeOptions);
-                    File.WriteAllText(FilePath, serialized);
-                    if (printMessage) Core.Logger.Msg($"Saved '{ID}' to file successfully!");
-                    Saving = false;
-                    SaveManager.IgnoredFilePaths.Remove(FilePath);
+                    var file = File.Create(FilePath);
+                    using var writer = new StreamWriter(file);
+                    writer.Write(serialized);
+                    writer.Flush();
+                    file.Position = 0;
+                    file.DisposeAsync().AsTask().ContinueWith((task) =>
+                     {
+                         if (task.IsCompletedSuccessfully)
+                         {
+                             if (printMessage) Core.Logger.Msg($"Saved '{ID}' to file successfully!");
+                         }
+                         else
+                         {
+                             if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file, exception:\n{task.Exception}");
+                         }
+                         Saving = false;
+                     });
                 }
                 catch (Exception ex)
                 {
                     if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file, exception:\n{ex}");
                     Saving = false;
-                    SaveManager.IgnoredFilePaths.Remove(FilePath);
                     throw;
                 }
             }
@@ -362,7 +374,6 @@ namespace KeepInventory.Saves.V2
                     throw new Exception($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
                 }
             }
-            if (!Saving) SaveManager.IgnoredFilePaths.Remove(FilePath);
         }
 
         public override string ToString()

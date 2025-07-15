@@ -15,17 +15,21 @@ namespace KeepInventory.Managers
         public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");
 
         internal static MelonPreferences_Category PrefsCategory;
+
         internal static MelonPreferences_Entry<bool> ItemSaving;
         internal static MelonPreferences_Entry<bool> AmmoSaving;
         internal static MelonPreferences_Entry<bool> SaveGunData;
-        internal static MelonPreferences_Entry<string> DefaultSave;
         internal static MelonPreferences_Entry<bool> SaveOnLevelUnload;
         internal static MelonPreferences_Entry<bool> LoadOnLevelLoad;
+        internal static MelonPreferences_Entry<bool> ShowNotifications;
+        internal static MelonPreferences_Entry<bool> HolsterHeldWeaponsOnDeath;
+
         internal static MelonPreferences_Entry<List<string>> BlacklistedLevels;
         internal static MelonPreferences_Entry<List<string>> EnabledBlacklist;
-        internal static MelonPreferences_Entry<bool> ShowNotifications;
+
+        internal static MelonPreferences_Entry<string> DefaultSave;
+
         internal static MelonPreferences_Entry<int> ConfigVersion;
-        internal static MelonPreferences_Entry<bool> HolsterHeldWeaponsOnDeath;
 
         internal static void Setup()
         {

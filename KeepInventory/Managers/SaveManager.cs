@@ -166,20 +166,13 @@ namespace KeepInventory.Managers
                 if (!File.Exists(path))
                 {
                     IgnoredFilePaths.Add(path);
-                    try
-                    {
-                        var file = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
-                        save.FilePath = path;
-                        var serialized = JsonSerializer.Serialize(save, SerializeOptions);
-                        file.Write(Encoding.UTF8.GetBytes(serialized));
-                        file.Flush();
-                        file.Position = 0;
-                        file.Dispose();
-                    }
-                    finally
-                    {
-                        IgnoredFilePaths.Remove(path);
-                    }
+                    var file = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+                    save.FilePath = path;
+                    var serialized = JsonSerializer.Serialize(save, SerializeOptions);
+                    file.Write(Encoding.UTF8.GetBytes(serialized));
+                    file.Flush();
+                    file.Position = 0;
+                    file.Dispose();
                 }
             }
             Core.Logger.Msg($"Registered save with ID '{save.ID}'");
@@ -300,8 +293,30 @@ namespace KeepInventory.Managers
             }
             else
             {
-                return LastWrite[file] == write;
+                bool equal = LastWrite[file] == write;
+                LastWrite[file] = write;
+                return equal;
             }
+        }
+
+        internal static bool IsIgnored(string path)
+        {
+            string fullPath = Path.GetFullPath(path);
+
+            if (!IgnoredFilePaths.Any())
+                return false;
+
+            bool pass = IgnoredFilePaths.Any(x =>
+            {
+                var _path = Path.GetFullPath(x);
+                bool equal = _path == fullPath;
+                if (equal)
+                    IgnoredFilePaths.Remove(x);
+                return equal;
+            }
+            );
+
+            return pass;
         }
 
         internal static void CreateFileWatcher()
@@ -312,7 +327,7 @@ namespace KeepInventory.Managers
             FileSystemWatcher.Error += (x, y) => Core.Logger.Error($"An unexpected error was thrown by the file watcher for the saves, exception:\n{y.GetException()}");
             FileSystemWatcher.Deleted += (x, y) =>
             {
-                if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                if (IsIgnored(y.FullPath)) return;
                 LastWrite.Remove(y.FullPath);
                 if (y.FullPath.EndsWith(".json"))
                 {
@@ -322,7 +337,7 @@ namespace KeepInventory.Managers
             };
             FileSystemWatcher.Created += (x, y) =>
             {
-                if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                if (IsIgnored(y.FullPath)) return;
                 if (y.FullPath.EndsWith(".json"))
                 {
                     if (Check(y.FullPath)) RegisterSave(y.FullPath);
@@ -335,8 +350,8 @@ namespace KeepInventory.Managers
             };
             FileSystemWatcher.Changed += (x, y) =>
             {
-                if (IgnoredFilePaths.Contains(y.FullPath)) return;
                 if (PreventDoubleTrigger(y.FullPath)) return;
+                if (IsIgnored(y.FullPath)) return;
                 if (y.FullPath.EndsWith(".json"))
                 {
                     if (Check(y.FullPath))
@@ -353,7 +368,7 @@ namespace KeepInventory.Managers
             };
             FileSystemWatcher.Renamed += (x, y) =>
             {
-                if (IgnoredFilePaths.Contains(y.FullPath)) return;
+                if (IsIgnored(y.FullPath)) return;
                 if (LastWrite.ContainsKey(y.OldFullPath))
                 {
                     var old = LastWrite[y.OldFullPath];

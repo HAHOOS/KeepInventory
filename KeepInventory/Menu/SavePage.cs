@@ -11,10 +11,6 @@ using KeepInventory.Helper;
 using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
-using LabFusion.Entities;
-using LabFusion.Network;
-using LabFusion.Player;
-
 using MelonLoader;
 
 using UnityEngine;
@@ -111,7 +107,7 @@ namespace KeepInventory.Menu
 
         private static bool SharingEnabled()
         {
-            return NetworkInfo.HasServer;
+            return LabFusion.Network.NetworkInfo.HasServer;
         }
 
         private void PropertyChanged(string name, object oldVal, object newVal)
@@ -328,11 +324,10 @@ namespace KeepInventory.Menu
 
             void apply()
             {
-                var color = Color.HSVToRGB(H, S, V);
-                CurrentSave.Color = $"{(int)(color.r):X2}{(int)(color.g):X2}{(int)(color.b):X2}";
-                CurrentSave.TrySaveToFile(false);
+                CurrentSave.Color = Color.HSVToRGB(H, S, V).ToHEX();
                 BoneMenu.UpdatePresetsPage();
                 preview.ElementName = $"Preview: <color=#{CurrentSave.Color ?? "FFFFFF"}>{CurrentSave.Name}</color>";
+                CurrentSave.TrySaveToFile(false);
             }
 
             ColorPage.CreateFloat("Hue", Color.red, H, increment, 0, 1, (val) =>

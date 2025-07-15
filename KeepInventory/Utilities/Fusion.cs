@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 using BoneLib;
 
 using Il2CppSLZ.Marrow;
-
-using KeepInventory.Saves.V2;
-using System.Collections.Generic;
-using System.Linq;
 using Il2CppSLZ.Marrow.Data;
-using MelonLoader.Pastel;
-using System.Threading.Tasks;
-using KeepInventory.Managers;
+using Il2CppSLZ.VRMK;
+
 using KeepInventory.Helper;
+using KeepInventory.Managers;
+using KeepInventory.Saves.V2;
+
+using MelonLoader.Pastel;
 
 namespace KeepInventory.Utilities
 {
@@ -141,58 +143,6 @@ namespace KeepInventory.Utilities
         private static bool Internal_IsLocalPlayer(this RigManager rigManager)
             => LabFusion.Utilities.FusionPlayer.IsLocalPlayer(rigManager);
 
-        private static Action RigCreatedEvent;
-
-        internal static void RemoveRigCreateEvent_FSL()
-        {
-            if (RigCreatedEvent != null)
-            {
-                KeepInventory.Fusion.FusionModule.OnRigCreated -= RigCreatedEvent;
-                RigCreatedEvent = null;
-            }
-        }
-
-        internal static void RemoveRigCreateEvent()
-        {
-            if (Core.HasFusion && Core.IsFusionLibraryInitialized) RemoveRigCreateEvent_FSL();
-        }
-
-        internal static void SpawnSavedItems_FSL(Save save)
-        {
-            if (Player.RigManager == null)
-            {
-                Core.Logger.Msg("Rig not found, awaiting");
-
-                void _event() => InventoryManager.SpawnSavedItems(save);
-                RigCreatedEvent = _event;
-                KeepInventory.Fusion.FusionModule.OnRigCreated += _event;
-            }
-            else
-            {
-                Core.Logger.Msg("Rig found, spawning");
-                InventoryManager.SpawnSavedItems(save);
-            }
-        }
-
-        internal static void SpawnSavedItems(Save save)
-        {
-            if (IsConnected)
-            {
-                Core.Logger.Msg("Client is connected to a server");
-                if (PreferencesManager.ItemSaving.Value)
-                {
-                    if (Core.IsFusionLibraryInitialized) SpawnSavedItems_FSL(save);
-                    else InventoryManager.SpawnSavedItems(save);
-                }
-            }
-            else
-            {
-                Core.Logger.Msg("Client is not connected to a server, spawning locally");
-                if (PreferencesManager.ItemSaving.Value)
-                    InventoryManager.SpawnSavedItems(save);
-            }
-        }
-
         internal static bool GamemodeCheck()
         {
             if (!IsConnected) return false;
@@ -212,6 +162,12 @@ namespace KeepInventory.Utilities
                 else return Internal_IsGamemodeStarted();
             }
         }
+
+        internal static void HookOnRigCreated(Action<RigManager> action)
+            => LabFusion.Player.LocalPlayer.OnLocalRigCreated += action;
+
+        internal static void HookOnAvatarChanged(Action<Avatar, string> action)
+            => LabFusion.Player.LocalAvatar.OnAvatarChanged += (av, barcode) => action?.Invoke(av, barcode);
 
         internal static bool Internal_IsGamemodeStarted()
             => LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted;
