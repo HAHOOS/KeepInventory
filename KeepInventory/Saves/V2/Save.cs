@@ -52,29 +52,19 @@ namespace KeepInventory.Saves.V2
         public UnityEngine.Color DrawingColor = UnityEngine.Color.white;
 
         [JsonPropertyName("Color")]
-        public string Color
+        public float[] Color
         {
-            get => $"{(int)(DrawingColor.r):X2}{(int)(DrawingColor.g):X2}{(int)(DrawingColor.b):X2}";
+            get => [DrawingColor.r * 255, DrawingColor.g * 255, DrawingColor.b * 255];
             set
             {
-                if (string.IsNullOrWhiteSpace(value))
+                if (value == null || value.Length != 3)
                 {
                     DrawingColor = UnityEngine.Color.white;
                 }
                 else
                 {
-                    UnityEngine.Color translated;
                     var old = DrawingColor;
-                    try
-                    {
-                        translated = value.FromHEX();
-                    }
-                    catch (Exception ex)
-                    {
-                        Core.Logger.Error($"Failed to convert HEX color to Drawing Color, defaulting to white, exception:\n{ex}");
-                        translated = UnityEngine.Color.white;
-                    }
-                    DrawingColor = translated;
+                    DrawingColor = new Color(value[0] / 255, value[1] / 255, value[2] / 255);
                     OnPropertyChanged?.Invoke(nameof(Color), old, DrawingColor);
                 }
             }
@@ -205,7 +195,7 @@ namespace KeepInventory.Saves.V2
         }
 
         [JsonConstructor]
-        public Save(int Version, string Name, string ID, string Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
+        public Save(int Version, string Name, string ID, float[] Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)
             {

@@ -118,7 +118,7 @@ namespace KeepInventory.Menu
             if (Page == null)
                 throw new ArgumentNullException(nameof(Page));
 
-            Page.Name = $"<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>";
+            Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
             Clear();
             Core.DefaultSaveChanged += Setup;
             CurrentSave.OnPropertyChanged += PropertyChanged;
@@ -128,6 +128,7 @@ namespace KeepInventory.Menu
             {
                 CurrentSave.Name = value;
                 CurrentSave.TrySaveToFile(false);
+                Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
                 BoneMenu.UpdatePresetsPage();
             });
             Name.Value = CurrentSave.Name;
@@ -312,7 +313,7 @@ namespace KeepInventory.Menu
 
         private void SetupColor()
         {
-            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.Color}>{CurrentSave.Name}</color>", Color.white, null);
+            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>", Color.white, null);
 
             const float increment = 0.05f;
 
@@ -324,15 +325,17 @@ namespace KeepInventory.Menu
 
             void apply()
             {
-                CurrentSave.Color = Color.HSVToRGB(H, S, V).ToHEX();
-                BoneMenu.UpdatePresetsPage();
-                preview.ElementName = $"Preview: <color=#{CurrentSave.Color ?? "FFFFFF"}>{CurrentSave.Name}</color>";
+                CurrentSave.Color = Color.HSVToRGB(H, S, V).ToArray();
+                preview.ElementName = $"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
                 CurrentSave.TrySaveToFile(false);
+                BoneMenu.UpdatePresetsPage();
+                BoneLib.BoneMenu.Menu.OpenPage(ColorPage);
             }
 
             ColorPage.CreateFloat("Hue", Color.red, H, increment, 0, 1, (val) =>
             {
                 H = val;
+
                 apply();
             });
             ColorPage.CreateFloat("Saturation", Color.green, S, increment, 0, 1, (val) =>

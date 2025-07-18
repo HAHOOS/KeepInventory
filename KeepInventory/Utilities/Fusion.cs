@@ -7,6 +7,8 @@ using BoneLib;
 
 using Il2CppSLZ.Marrow;
 using Il2CppSLZ.Marrow.Data;
+using Il2CppSLZ.Marrow.Utilities;
+using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.VRMK;
 
 using KeepInventory.Helper;
@@ -14,6 +16,8 @@ using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
 using MelonLoader.Pastel;
+
+using UnityEngine;
 
 namespace KeepInventory.Utilities
 {
@@ -165,9 +169,6 @@ namespace KeepInventory.Utilities
 
         internal static void HookOnRigCreated(Action<RigManager> action)
             => LabFusion.Player.LocalPlayer.OnLocalRigCreated += action;
-
-        internal static void HookOnAvatarChanged(Action<Avatar, string> action)
-            => LabFusion.Player.LocalAvatar.OnAvatarChanged += (av, barcode) => action?.Invoke(av, barcode);
 
         internal static bool Internal_IsGamemodeStarted()
             => LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted;

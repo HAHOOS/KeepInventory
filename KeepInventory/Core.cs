@@ -61,8 +61,6 @@ namespace KeepInventory
         internal static bool IsLatestVersion { get; private set; } = true;
         internal static Package ThunderstorePackage { get; private set; }
 
-        private static bool WaitForAvatarChange;
-
         public override void OnInitializeMelon()
         {
             MLAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == "MelonLoader");
@@ -87,19 +85,7 @@ namespace KeepInventory
                     FailedFLLoad = true;
             }
 
-            if (!HasFusion)
-            {
-                Hooking.OnLevelLoaded += LevelLoadedEvent;
-            }
-            else
-            {
-                Utilities.Fusion.HookOnRigCreated((_) => WaitForAvatarChange = true);
-                Utilities.Fusion.HookOnAvatarChanged((_, _) =>
-                {
-                    MelonCoroutines.Start(LevelLoadedFusion());
-                });
-            }
-
+            Hooking.OnLevelLoaded += LevelLoadedEvent;
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
@@ -155,14 +141,6 @@ namespace KeepInventory
             AmmoManager.Track("heavy");
             AmmoManager.Init();
             LoggerInstance.Msg("Initialized.");
-        }
-
-        private IEnumerator LevelLoadedFusion()
-        {
-            yield return new WaitForSeconds(0.25f);
-            if (WaitForAvatarChange)
-                LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level));
-            WaitForAvatarChange = false;
         }
 
         public override void OnDeinitializeMelon()
