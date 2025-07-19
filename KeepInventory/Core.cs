@@ -92,43 +92,43 @@ namespace KeepInventory
             if (HasFusion) Utilities.Fusion.Setup();
 
             BlacklistManager.Add(new("default_labworks", "LABWORKS", true, [
-                "volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen",
-                "volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks02Museum",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks03Streets",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks08Tower",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks11Arena",
-                "volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom",
-                "volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01",
-                "volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02"
+                new("volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen"),
+                new("volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks02Museum"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks03Streets"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks08Tower"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks11Arena"),
+                new("volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom"),
+                new("volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01"),
+                new("volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02")
             ]));
             BlacklistManager.Add(new("default_bonelab", "BONELAB", true, [
-                CommonBarcodes.Maps.Home,
-                CommonBarcodes.Maps.Ascent,
-                CommonBarcodes.Maps.Descent,
-                CommonBarcodes.Maps.MineDive,
-                CommonBarcodes.Maps.LongRun,
-                CommonBarcodes.Maps.BigAnomaly,
-                CommonBarcodes.Maps.BigAnomaly2,
-                CommonBarcodes.Maps.StreetPuncher,
-                CommonBarcodes.Maps.SprintBridge,
-                CommonBarcodes.Maps.MagmaGate,
-                CommonBarcodes.Maps.Moonbase,
-                CommonBarcodes.Maps.MonogonMotorway,
-                CommonBarcodes.Maps.PillarClimb,
-                CommonBarcodes.Maps.ContainerYard,
-                CommonBarcodes.Maps.FantasyArena,
-                CommonBarcodes.Maps.TunnelTipper,
-                CommonBarcodes.Maps.DropPit,
-                CommonBarcodes.Maps.NeonTrial,
-                CommonBarcodes.Maps.MainMenu,
+                new(CommonBarcodes.Maps.Home),
+                new(CommonBarcodes.Maps.Ascent),
+                new(CommonBarcodes.Maps.Descent),
+                new(CommonBarcodes.Maps.MineDive),
+                new(CommonBarcodes.Maps.LongRun),
+                new(CommonBarcodes.Maps.BigAnomaly),
+                new(CommonBarcodes.Maps.BigAnomaly2),
+                new(CommonBarcodes.Maps.StreetPuncher),
+                new(CommonBarcodes.Maps.SprintBridge),
+                new(CommonBarcodes.Maps.MagmaGate),
+                new(CommonBarcodes.Maps.Moonbase),
+                new(CommonBarcodes.Maps.MonogonMotorway),
+                new(CommonBarcodes.Maps.PillarClimb),
+                new(CommonBarcodes.Maps.ContainerYard),
+                new(CommonBarcodes.Maps.FantasyArena),
+                new(CommonBarcodes.Maps.TunnelTipper),
+                new(CommonBarcodes.Maps.DropPit),
+                new(CommonBarcodes.Maps.NeonTrial),
+                new(CommonBarcodes.Maps.MainMenu),
             ]));
 
             PreferencesManager.Setup();
@@ -218,6 +218,7 @@ namespace KeepInventory
 
         private void LevelLoadedEvent(LevelInfo obj)
         {
+            BoneMenu.SetupPredefinedBlacklists();
             levelInfo = obj;
             if (InitialLoad)
             {

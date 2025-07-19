@@ -15,6 +15,7 @@ namespace KeepInventory.Managers
         public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");
 
         internal static MelonPreferences_Category PrefsCategory;
+        internal static MelonPreferences_Category BlacklistCategory;
 
         internal static MelonPreferences_Entry<bool> ItemSaving;
         internal static MelonPreferences_Entry<bool> AmmoSaving;
@@ -25,7 +26,7 @@ namespace KeepInventory.Managers
         internal static MelonPreferences_Entry<bool> HolsterHeldWeaponsOnDeath;
 
         internal static MelonPreferences_Entry<List<string>> BlacklistedLevels;
-        internal static MelonPreferences_Entry<List<string>> EnabledBlacklist;
+        internal static MelonPreferences_Entry<List<BlacklistItem>> PredefinedBlacklist;
 
         internal static MelonPreferences_Entry<string> DefaultSave;
 
@@ -55,12 +56,6 @@ namespace KeepInventory.Managers
             LoadOnLevelLoad = PrefsCategory.CreateEntry<bool>("LoadOnLevelLoad", true, "Load On Level Load",
                 description: "If true, the saved inventory will be automatically loaded when you get loaded into a level thats not blacklisted");
 
-            BlacklistedLevels = PrefsCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
-                description: "List of levels that will not save/load inventory");
-            EnabledBlacklist = PrefsCategory.CreateEntry<List<string>>("EnabledBlacklist", ["default_labworks", "default_bonelab"], "Enabled Blacklist",
-                description: "List of blacklist IDs that should be used");
-            LoadBlacklist();
-
             ShowNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
                 description: "If true, notifications will be shown in-game regarding errors or other things");
             ConfigVersion = PrefsCategory.CreateEntry<int>("ConfigVersion", 1, "Config Version",
@@ -69,6 +64,16 @@ namespace KeepInventory.Managers
                 description: "If true, when you die all of the weapons you were holding get holstered if possible");
 
             PrefsCategory.SaveToFile(false);
+
+            BlacklistCategory = MelonPreferences.CreateCategory("KeepInventory_Blacklist", "Blacklist");
+            PredefinedBlacklist = BlacklistCategory.CreateEntry<List<BlacklistItem>>("PredefinedBlacklist", [new("default_labworks"), new("default_bonelab")], "Predefined Blacklist",
+                description: "List of predefined blacklists whether they are enabled or not etc.");
+            BlacklistedLevels = BlacklistCategory.CreateEntry<List<string>>("BlacklistedLevels", [], "Blacklisted Levels",
+                description: "List of levels that will not save/load inventory");
+
+            BlacklistCategory.SetFilePath(Path.Combine(KI_PreferencesDirectory, "Blacklist.cfg"));
+
+            LoadBlacklist();
         }
 
         public static void Save()
@@ -87,17 +92,18 @@ namespace KeepInventory.Managers
 
         internal static void LoadBlacklist()
         {
-            if (EnabledBlacklist == null)
+            if (BlacklistCategory == null)
                 return;
 
             List<string> ids = [];
             BlacklistManager.Blacklist.ForEach(x => ids.Add(x.ID));
-            EnabledBlacklist.Value.ForEach(x =>
+            PredefinedBlacklist.Value.ForEach(x =>
             {
-                if (BlacklistManager.HasItem(x))
+                if (BlacklistManager.HasItem(x.ID))
                 {
-                    BlacklistManager.Enable(x);
-                    ids.Remove(x);
+                    BlacklistManager.SetEnabled(x.ID, x.Enabled);
+                    x.AllowedLevels.ForEach(y => BlacklistManager.AllowLevel(x.ID, y));
+                    ids.Remove(x.ID);
                 }
             });
             ids.ForEach(x =>
@@ -105,18 +111,67 @@ namespace KeepInventory.Managers
                 if (BlacklistManager.HasItem(x))
                     BlacklistManager.Disable(x);
             });
-            BoneMenu.SetupPredefinedBlacklist();
+            BoneMenu.SetupPredefinedBlacklists();
         }
 
         internal static void SaveBlacklist()
         {
-            if (EnabledBlacklist == null)
+            if (BlacklistCategory == null)
                 return;
 
-            List<string> ids = [];
-            BlacklistManager.Blacklist.ForEach(x => { if (x.Enabled) ids.Add(x.ID); });
-            EnabledBlacklist.Value = ids;
-            PrefsCategory.SaveToFile(false);
+            List<BlacklistItem> ids = [];
+            BlacklistManager.Blacklist.ForEach(x =>
+            {
+                var item = new BlacklistItem(x.ID, x.Enabled);
+                x.Levels.ForEach(x =>
+                {
+                    if (!x.IsBlacklisted && !item.AllowedLevels.Contains(x.Barcode))
+                    {
+                        item.AllowedLevels.Add(x.Barcode);
+                    }
+                });
+                ids.Add(item);
+            });
+            PredefinedBlacklist.Value = ids;
+            BlacklistCategory.SaveToFile(false);
+            BoneMenu.SetupPredefinedBlacklists();
+        }
+    }
+
+    internal class BlacklistItem
+    {
+        public string ID { get; set; }
+
+        public bool Enabled { get; set; } = true;
+
+        public List<string> AllowedLevels { get; set; } = [];
+
+        public BlacklistItem()
+        {
+        }
+
+        public BlacklistItem(string id)
+        {
+            ID = id;
+        }
+
+        public BlacklistItem(string id, bool enabled)
+        {
+            ID = id;
+            Enabled = enabled;
+        }
+
+        public BlacklistItem(string id, bool enabled, List<string> allowedLevels)
+        {
+            ID = id;
+            Enabled = enabled;
+            AllowedLevels = allowedLevels;
+        }
+
+        public BlacklistItem(string id, List<string> allowedLevels)
+        {
+            ID = id;
+            AllowedLevels = allowedLevels;
         }
     }
 }

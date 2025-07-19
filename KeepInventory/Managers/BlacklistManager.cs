@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Il2CppSLZ.Marrow.SceneStreaming;
@@ -14,8 +15,14 @@ namespace KeepInventory.Managers
 
         public static void Add(Blacklist blacklist)
         {
+            if (blacklist == null)
+                throw new ArgumentException("Blacklist param is null", nameof(blacklist));
+
+            if (string.IsNullOrWhiteSpace(blacklist.ID) || string.IsNullOrWhiteSpace(blacklist.DisplayName))
+                throw new ArgumentException("Blacklist ID and/or Display Name cannot be null / empty!", nameof(blacklist));
+
             if (HasItem(blacklist))
-                return;
+                throw new ArgumentException("Blacklist with such ID already exists", nameof(blacklist));
 
             _blacklist.Add(blacklist);
             PreferencesManager.LoadBlacklist();
@@ -24,7 +31,7 @@ namespace KeepInventory.Managers
         public static void Remove(string id)
         {
             if (!HasItem(id))
-                return;
+                throw new ArgumentException("Blacklist with such ID doesn't exist");
 
             _blacklist.RemoveAll(x => x.ID == id);
         }
@@ -39,7 +46,7 @@ namespace KeepInventory.Managers
             => _blacklist.Any(x => x.ID == id);
 
         public static bool IsLevelBlacklisted(Barcode barcode)
-            => _blacklist.Any(x => x.Enabled && x.Levels.Any(x => x.ID == barcode.ID));
+            => _blacklist.Any(x => x.Enabled && x.Levels.Any(x => x.IsBlacklisted && x.Barcode == barcode.ID));
 
         public static bool IsLevelBlacklisted(this LevelCrate levelCrate)
             => IsLevelBlacklisted(levelCrate.Barcode);
@@ -47,10 +54,42 @@ namespace KeepInventory.Managers
         public static bool IsLevelBlacklisted(this LevelCrateReference levelCrate)
            => IsLevelBlacklisted(levelCrate.Barcode);
 
+        public static bool HasLevel(string id, string barcode)
+        {
+            if (!HasItem(id))
+                throw new ArgumentException("Blacklist with provided ID does not exist", nameof(id));
+
+            return _blacklist.FirstOrDefault(x => x.ID == id).Levels.Any(x => x.Barcode == barcode);
+        }
+
+        public static void SetLevelBlacklisted(string id, string barcode, bool blacklisted)
+        {
+            if (!HasItem(id))
+                throw new ArgumentException("Blacklist with provided ID does not exist", nameof(id));
+
+            if (!HasLevel(id, barcode))
+                throw new ArgumentException("Level with the provided barcode does not exist in the blacklist", nameof(barcode));
+
+            _blacklist.FirstOrDefault(x => x.ID == id).Levels.FirstOrDefault(x => x.Barcode == barcode).IsBlacklisted = blacklisted;
+            PreferencesManager.SaveBlacklist();
+        }
+
+        public static void AllowLevel(string id, string barcode)
+            => SetLevelBlacklisted(id, barcode, false);
+
+        public static void AllowLevel(string id, Barcode barcode)
+            => AllowLevel(id, barcode?.ID);
+
+        public static void BlacklistLevel(string id, string barcode)
+            => SetLevelBlacklisted(id, barcode, true);
+
+        public static void BlacklistLevel(string id, Barcode barcode)
+            => BlacklistLevel(id, barcode?.ID);
+
         public static bool IsCurrentLevelBlacklisted()
             => IsLevelBlacklisted(SceneStreamer.Session.Level.Barcode);
 
-        private static void SetEnabled(string id, bool enabled)
+        public static void SetEnabled(string id, bool enabled)
         {
             _blacklist.FirstOrDefault(x => x.ID == id)?.SetEnabled(enabled);
             PreferencesManager.SaveBlacklist();
@@ -83,22 +122,12 @@ namespace KeepInventory.Managers
 
     public class Blacklist
     {
-        public Blacklist(string id, string displayName, bool enabled = true, params List<Barcode> levels)
+        public Blacklist(string id, string displayName, bool enabled = true, params List<Level> levels)
         {
             ID = id;
             DisplayName = displayName;
             Enabled = enabled;
             Levels = [.. levels];
-        }
-
-        public Blacklist(string id, string displayName, bool enabled = true, params List<string> levels)
-        {
-            ID = id;
-            DisplayName = displayName;
-            Enabled = enabled;
-            List<Barcode> barcodes = [];
-            levels.ForEach(x => barcodes.Add(new(x)));
-            Levels = [.. barcodes];
         }
 
         public string ID { get; set; }
@@ -107,9 +136,38 @@ namespace KeepInventory.Managers
 
         public bool Enabled { get; set; }
 
-        public Barcode[] Levels { get; set; }
+        public Level[] Levels { get; set; }
 
         public void SetEnabled(bool value)
             => Enabled = value;
+    }
+
+    public class Level
+    {
+        public string Barcode { get; set; }
+
+        public bool IsBlacklisted { get; set; } = true;
+
+        public Level(string barcode, bool isBlacklisted)
+        {
+            Barcode = barcode;
+            IsBlacklisted = isBlacklisted;
+        }
+
+        public Level(Barcode barcode, bool isBlacklisted)
+        {
+            Barcode = barcode?.ID;
+            IsBlacklisted = isBlacklisted;
+        }
+
+        public Level(string barcode)
+        {
+            Barcode = barcode;
+        }
+
+        public Level(Barcode barcode)
+        {
+            Barcode = barcode?.ID;
+        }
     }
 }

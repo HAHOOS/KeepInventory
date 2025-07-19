@@ -50,7 +50,7 @@ namespace KeepInventory.Menu
             BlacklistPage = ModPage.CreatePage("Blacklist", Color.red);
 
             PredefinedBlacklistPage = BlacklistPage.CreatePage("Predefined Blacklists", Color.cyan);
-            SetupPredefinedBlacklist();
+            SetupPredefinedBlacklists();
 
             BlacklistViewPage = BlacklistPage.CreatePage("View All", Color.magenta);
             SetupBlacklistView();
@@ -120,7 +120,9 @@ namespace KeepInventory.Menu
             IsSetup = true;
         }
 
-        internal static void SetupPredefinedBlacklist()
+        private static readonly Dictionary<string, Page> PredefinedBlacklistPages = [];
+
+        internal static void SetupPredefinedBlacklists()
         {
             if (PredefinedBlacklistPage == null)
                 return;
@@ -128,9 +130,40 @@ namespace KeepInventory.Menu
             PredefinedBlacklistPage.RemoveAll();
             foreach (var blacklist in BlacklistManager.Blacklist)
             {
-                var elem = PredefinedBlacklistPage.CreateToggleFunction($"{blacklist.DisplayName} ({blacklist.Levels.Length})", Color.red, new Color(0, 1, 0), null, blacklist.Enabled);
-                elem.OnStart += () => BlacklistManager.Enable(blacklist);
-                elem.OnCancel += () => BlacklistManager.Disable(blacklist);
+                if (!PredefinedBlacklistPages.ContainsKey(blacklist.ID))
+                    PredefinedBlacklistPages.Add(blacklist.ID, PredefinedBlacklistPage.CreatePage(blacklist.DisplayName, blacklist.Enabled ? Color.red : new Color(0, 1, 0), createLink: false));
+
+                PredefinedBlacklistPage.CreateFunction($"{blacklist.DisplayName} ({blacklist.Levels.Length})", blacklist.Enabled ? Color.red : new Color(0, 1, 0), () => BoneLib.BoneMenu.Menu.OpenPage(PredefinedBlacklistPages[blacklist.ID]));
+                SetupPredefinedBlacklistPage(blacklist.ID);
+            }
+        }
+
+        internal static void SetupPredefinedBlacklistPage(string id)
+        {
+            var page = PredefinedBlacklistPages[id];
+            if (page == null)
+                return;
+
+            var blacklist = BlacklistManager.Blacklist.FirstOrDefault(x => x.ID == id);
+            if (blacklist == null)
+                return;
+
+            page.Name = blacklist.DisplayName;
+            page.Color = blacklist.Enabled ? Color.red : new Color(0, 1, 0);
+
+            page.RemoveAll();
+            page.CreateLabel($"ID: {blacklist.ID}", Color.white);
+            page.CreateLabel($"DisplayName: {blacklist.DisplayName}", Color.white);
+            page.CreateLabel($"Level Count: {blacklist.Levels.Length}", Color.white);
+            page.CreateBool("Enabled", Color.green, blacklist.Enabled, (val) => BlacklistManager.SetEnabled(id, val));
+            page.CreateBlank();
+            foreach (var level in blacklist.Levels)
+            {
+                var _level = new LevelCrateReference(level.Barcode);
+                var title = _level?.Crate?.Title;
+                var elem = page.CreateToggleFunction(string.IsNullOrWhiteSpace(title) ? level.Barcode : $"{title} ({level.Barcode})", Color.red, new Color(0, 1, 0), null, !level.IsBlacklisted);
+                elem.OnStart += () => BlacklistManager.SetLevelBlacklisted(blacklist.ID, level.Barcode, false);
+                elem.OnCancel += () => BlacklistManager.SetLevelBlacklisted(blacklist.ID, level.Barcode, true);
             }
         }
 
