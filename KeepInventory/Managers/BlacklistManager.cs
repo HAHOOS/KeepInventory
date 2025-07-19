@@ -48,6 +48,9 @@ namespace KeepInventory.Managers
         public static bool IsLevelBlacklisted(Barcode barcode)
             => _blacklist.Any(x => x.Enabled && x.Levels.Any(x => x.IsBlacklisted && x.Barcode == barcode.ID));
 
+        public static bool IsLevelInBlacklist(Barcode barcode)
+            => _blacklist.Any(x => x.Levels.Any(x => x.IsBlacklisted && x.Barcode == barcode.ID));
+
         public static bool IsLevelBlacklisted(this LevelCrate levelCrate)
             => IsLevelBlacklisted(levelCrate.Barcode);
 
@@ -86,8 +89,8 @@ namespace KeepInventory.Managers
         public static void BlacklistLevel(string id, Barcode barcode)
             => BlacklistLevel(id, barcode?.ID);
 
-        public static bool IsCurrentLevelBlacklisted()
-            => IsLevelBlacklisted(SceneStreamer.Session.Level.Barcode);
+        public static bool IsCurrentLevelInBlacklist()
+            => IsLevelInBlacklist(SceneStreamer.Session.Level.Barcode);
 
         public static void SetEnabled(string id, bool enabled)
         {

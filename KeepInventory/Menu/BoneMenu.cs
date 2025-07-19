@@ -57,8 +57,11 @@ namespace KeepInventory.Menu
 
             Core.statusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
             {
-                if (BlacklistManager.IsCurrentLevelBlacklisted())
+                if (BlacklistManager.IsCurrentLevelInBlacklist())
+                {
+                    BLHelper.SendNotification("Failure", "The current level is already in a predefined blacklist. Use the predefined blacklist to blacklist this level instead", true, 4f, BoneLib.Notifications.NotificationType.Error);
                     return;
+                }
 
                 List<string> blacklistList = PreferencesManager.BlacklistedLevels.Value;
                 if (blacklistList.Contains(Core.levelInfo.barcode))
