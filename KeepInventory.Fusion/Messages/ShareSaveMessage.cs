@@ -33,7 +33,7 @@ namespace KeepInventory.Fusion.Messages
             var message = received.ReadData<ShareSaveMessageData>();
             if (message == null)
             {
-                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] The received message could not be read or was null");
+                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel("#6495ED")}] The received message could not be read or was null");
                 return;
             }
 
@@ -42,7 +42,7 @@ namespace KeepInventory.Fusion.Messages
 
             if (!ShareManager.IsPlayerAllowed(id))
             {
-                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel(System.Drawing.Color.CornflowerBlue)}] A blacklisted player tried to share a save with you");
+                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel("#6495ED")}] A blacklisted player tried to share a save with you");
                 return;
             }
 

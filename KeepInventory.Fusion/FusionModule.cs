@@ -63,7 +63,7 @@ namespace KeepInventory.Fusion
         {
             if (logger == null && backupLogger == null) return;
             if (logger != null) logger.Log(message);
-            else MsgPrefix("Fusion", message, System.Drawing.Color.Cyan);
+            else MsgPrefix("Fusion", message, "#00FFFF");
         }
 
         internal static void Warn(string message)
@@ -80,9 +80,9 @@ namespace KeepInventory.Fusion
             else backupLogger.Warning($"[Fusion] {message}");
         }
 
-        internal static void MsgPrefix(string prefix, string message, System.Drawing.Color color)
+        internal static void MsgPrefix(string prefix, string message, string hex)
         {
-            backupLogger.Msg($"[{prefix.Pastel(color)}] {message}");
+            backupLogger.Msg($"[{prefix.Pastel(hex)}] {message}");
         }
     }
 }
