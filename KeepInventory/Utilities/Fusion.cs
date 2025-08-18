@@ -61,7 +61,7 @@ namespace KeepInventory.Utilities
                             Title = "KeepInventory | Save shared!",
                             SaveToMenu = true,
                             ShowPopup = true,
-                            Message = $"{player.Username} has shared a save with you called '<color=#{save.Color}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
+                            Message = $"{player.Username} has shared a save with you called '<color=#{save.DrawingColor.ToHEX()}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
                             PopupLength = 15f,
                             Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
                             OnAccepted = () => SaveManager.RegisterSave(save),
