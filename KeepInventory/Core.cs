@@ -47,7 +47,6 @@ namespace KeepInventory
         public static event Action DefaultSaveChanged;
 
         public static Core Instance { get; internal set; }
-        internal static Assembly MLAssembly;
 
         internal static MelonLogger.Instance Logger { get; private set; }
 
@@ -63,7 +62,6 @@ namespace KeepInventory
 
         public override void OnInitializeMelon()
         {
-            MLAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x => x.GetName().Name == "MelonLoader");
             Logger = LoggerInstance;
             Instance = this;
 

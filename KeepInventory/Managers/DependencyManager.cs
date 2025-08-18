@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -28,8 +29,16 @@ namespace KeepInventory.Managers
                             var stream = assembly.GetManifestResourceStream(_path);
                             if (stream?.Length > 0)
                             {
-                                var bytes = StreamToByteArray(stream);
-                                System.Reflection.Assembly.Load(bytes);
+                                List<byte> bytes = [];
+                                while (true)
+                                {
+                                    var _byte = stream.ReadByte();
+                                    if (_byte == -1)
+                                        break;
+
+                                    bytes.Add((byte)_byte);
+                                }
+                                System.Reflection.Assembly.Load([.. bytes]);
                                 Core.Logger.Msg($"Loaded {name}");
                             }
                             else
@@ -47,7 +56,7 @@ namespace KeepInventory.Managers
                 }
                 else
                 {
-                    Core.Logger.Error("Executing assembly was somehow not found, cannot not load Fusion Support Library");
+                    Core.Logger.Error($"Executing assembly was somehow not found, cannot not load {name}");
                     return false;
                 }
             }
@@ -57,17 +66,6 @@ namespace KeepInventory.Managers
                 return false;
             }
             return true;
-        }
-        public static byte[] StreamToByteArray(Stream stream)
-        {
-            byte[] buffer = new byte[16 * 1024];
-            using MemoryStream ms = new();
-            int read;
-            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                ms.Write(buffer, 0, read);
-            }
-            return ms.ToArray();
         }
     }
 }

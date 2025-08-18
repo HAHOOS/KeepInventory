@@ -296,10 +296,9 @@ namespace KeepInventory.Saves.V2
                 {
                     var serialized = JsonSerializer.Serialize<Save>(this, SaveManager.SerializeOptions);
                     var file = File.Create(FilePath);
-                    using var writer = new StreamWriter(file);
-                    writer.Write(serialized);
-                    writer.Flush();
+                    using var writer = new StreamWriter(file) { AutoFlush = true };
                     file.Position = 0;
+                    writer.Write(serialized);
                     file.DisposeAsync().AsTask().ContinueWith((task) =>
                      {
                          if (task.IsCompletedSuccessfully)

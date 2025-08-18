@@ -384,6 +384,11 @@ namespace KeepInventory.Menu
                 CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Light Ammo", Color.green, light, id, 0, int.MaxValue, (value)=> CurrentSave.LightAmmo = value) : new LabelElement($"Light Ammo: {light}", Color.green).Element,
                 CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Medium Ammo", Color.yellow, medium, id, 0, int.MaxValue, (value)=> CurrentSave.MediumAmmo = value) : new LabelElement($"Medium Ammo: {light}", Color.yellow).Element,
                 CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Heavy Ammo", Color.red, heavy, id, 0, int.MaxValue, (value)=> CurrentSave.HeavyAmmo = value) : new LabelElement($"Heavy Ammo: {light}", Color.red).Element,
+                CurrentSave.CanBeOverwrittenByPlayer ? new FunctionElement("<color=#00FF00>Save updated ammo</color>", Color.white, () =>
+                {
+                        CurrentSave.TrySaveToFile(false);
+                        SetupAmmo();
+                }) : null
             ];
 
             elements.ForEach(element => { if (element != null) AmmoPage.Add(element); });
