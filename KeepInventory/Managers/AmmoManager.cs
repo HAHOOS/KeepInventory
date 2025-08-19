@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using MelonLoader;
 
 using Il2CppSLZ.Marrow;
 
-using MelonLoader;
+using System.Collections.Generic;
 
 namespace KeepInventory.Managers
 {

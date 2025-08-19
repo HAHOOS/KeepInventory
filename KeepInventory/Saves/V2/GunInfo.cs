@@ -1,9 +1,10 @@
-﻿using Il2CppSLZ.Marrow;
-using Il2CppSLZ.Marrow.Data;
-using static Il2CppSLZ.Marrow.Gun;
-
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Data;
+
+using static Il2CppSLZ.Marrow.Gun;
 
 namespace KeepInventory.Saves.V2
 {

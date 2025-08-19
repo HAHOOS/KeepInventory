@@ -1,8 +1,8 @@
 ﻿using System;
 
-using BoneLib.BoneMenu;
-
 using UnityEngine;
+
+using BoneLib.BoneMenu;
 
 namespace KeepInventory.Menu
 {

@@ -4,9 +4,9 @@ using HarmonyLib;
 
 using Il2CppSLZ.Marrow;
 
-using KeepInventory.Utilities;
 using KeepInventory.Helper;
 using KeepInventory.Managers;
+using KeepInventory.Utilities;
 
 namespace KeepInventory.Patches
 {

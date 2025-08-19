@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
 
-using KeepInventory.Helper;
 using KeepInventory.Menu;
+using KeepInventory.Helper;
 
 using MelonLoader;
 using MelonLoader.Utils;

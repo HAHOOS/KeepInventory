@@ -167,8 +167,8 @@ namespace KeepInventory.Utilities
             }
         }
 
-        internal static void HookOnRigCreated(Action<RigManager> action)
-            => LabFusion.Player.LocalPlayer.OnLocalRigCreated += action;
+        internal static void TargetLevelLoadEvent(Action action)
+            => LabFusion.Utilities.MultiplayerHooking.OnTargetLevelLoaded += () => action.Invoke();
 
         internal static bool Internal_IsGamemodeStarted()
             => LabFusion.SDK.Gamemodes.GamemodeManager.IsGamemodeStarted;

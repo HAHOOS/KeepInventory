@@ -1,8 +1,8 @@
-﻿using Il2CppSLZ.Marrow.Warehouse;
-
-using System.Text.Json;
+﻿using System.Text.Json;
 
 using Tomlet.Attributes;
+
+using Il2CppSLZ.Marrow.Warehouse;
 
 namespace KeepInventory.Saves.V1
 {
@@ -11,8 +11,10 @@ namespace KeepInventory.Saves.V1
         public string SlotName { get; set; }
         public string Barcode { get; set; }
         public SpawnableType Type { get; set; }
+
         [TomlNonSerialized]
         public GunInfo GunInfo { get; set; }
+
         [TomlProperty("GunInfo")]
         public string GunInfo_JSON
         {
@@ -29,13 +31,16 @@ namespace KeepInventory.Saves.V1
                 }
             }
         }
+
         public enum SpawnableType
         {
             Gun,
             Other
         }
+
         public SaveSlot()
         { }
+
         public SaveSlot(string slotName, Barcode barcode)
         {
             SlotName = slotName;
@@ -43,6 +48,7 @@ namespace KeepInventory.Saves.V1
             Type = SpawnableType.Other;
             GunInfo = null;
         }
+
         public SaveSlot(string slotName, Barcode barcode, SpawnableType type)
         {
             SlotName = slotName;
@@ -50,6 +56,7 @@ namespace KeepInventory.Saves.V1
             Type = type;
             GunInfo = null;
         }
+
         public SaveSlot(string slotName, Barcode barcode, SpawnableType type, GunInfo gunInfo)
         {
             SlotName = slotName;
@@ -57,6 +64,7 @@ namespace KeepInventory.Saves.V1
             Type = type;
             GunInfo = gunInfo;
         }
+
         public SaveSlot(string slotName, Barcode barcode, SpawnableType type, string gunInfoJSON)
         {
             SlotName = slotName;
@@ -64,6 +72,7 @@ namespace KeepInventory.Saves.V1
             Type = type;
             GunInfo_JSON = gunInfoJSON;
         }
+
         public SaveSlot(string slotName, Barcode barcode, GunInfo gunInfo)
         {
             SlotName = slotName;
@@ -71,6 +80,7 @@ namespace KeepInventory.Saves.V1
             Type = SpawnableType.Gun;
             GunInfo = gunInfo;
         }
+
         public SaveSlot(string slotName, Barcode barcode, string gunInfoJSON)
         {
             SlotName = slotName;

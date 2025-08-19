@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections;
 using System.Linq;
-using System.Reflection;
 
 using BoneLib;
 using BoneLib.BoneMenu;
 using BoneLib.Notifications;
 
-using Il2CppSLZ.Marrow.SceneStreaming;
 using Il2CppSLZ.Marrow.Warehouse;
+using Il2CppSLZ.Marrow.SceneStreaming;
 
+using KeepInventory.Menu;
 using KeepInventory.Helper;
 using KeepInventory.Managers;
-using KeepInventory.Menu;
 using KeepInventory.Utilities;
 
 using MelonLoader;
@@ -83,7 +81,11 @@ namespace KeepInventory
                     FailedFLLoad = true;
             }
 
-            Hooking.OnLevelLoaded += LevelLoadedEvent;
+            if (!HasFusion)
+                Hooking.OnLevelLoaded += LevelLoadedEvent;
+            else
+                Utilities.Fusion.TargetLevelLoadEvent(() => LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level)));
+
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();

@@ -1,9 +1,6 @@
 ﻿using Il2CppSLZ.Marrow.Warehouse;
 
-using System.Text.Json;
 using System.Text.Json.Serialization;
-
-using Tomlet.Attributes;
 
 namespace KeepInventory.Saves.V2
 {
@@ -11,19 +8,25 @@ namespace KeepInventory.Saves.V2
     {
         [JsonPropertyName("SlotName")]
         public string SlotName { get; set; }
+
         [JsonPropertyName("Barcode")]
         public string Barcode { get; set; }
+
         [JsonPropertyName("Type")]
         public SpawnableType Type { get; set; }
+
         [JsonPropertyName("GunInfo")]
         public GunInfo GunInfo { get; set; }
+
         public enum SpawnableType
         {
             Gun,
             Other
         }
+
         public SaveSlot()
         { }
+
         public SaveSlot(string slotName, Barcode barcode)
         {
             SlotName = slotName;
@@ -31,6 +34,7 @@ namespace KeepInventory.Saves.V2
             Type = SpawnableType.Other;
             GunInfo = null;
         }
+
         public SaveSlot(string slotName, Barcode barcode, SpawnableType type)
         {
             SlotName = slotName;
@@ -38,6 +42,7 @@ namespace KeepInventory.Saves.V2
             Type = type;
             GunInfo = null;
         }
+
         public SaveSlot(string slotName, Barcode barcode, SpawnableType type, GunInfo gunInfo)
         {
             SlotName = slotName;
@@ -45,6 +50,7 @@ namespace KeepInventory.Saves.V2
             Type = type;
             GunInfo = gunInfo;
         }
+
         public SaveSlot(string slotName, Barcode barcode, GunInfo gunInfo)
         {
             SlotName = slotName;
@@ -52,6 +58,7 @@ namespace KeepInventory.Saves.V2
             Type = SpawnableType.Gun;
             GunInfo = gunInfo;
         }
+
         public SaveSlot(V1.SaveSlot v1)
         {
             SlotName = v1.SlotName;

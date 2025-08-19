@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+using Tomlet;
+using Tomlet.Models;
+
+using MelonLoader.Utils;
 
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
 using KeepInventory.Utilities;
-
-using MelonLoader.Utils;
-
-using Tomlet;
-using Tomlet.Models;
 
 namespace KeepInventory.Managers
 {

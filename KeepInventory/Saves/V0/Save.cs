@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Tomlet.Attributes;
 
-using Tomlet.Attributes;
+using System.Collections.Generic;
 
 namespace KeepInventory.Saves.V0
 {
@@ -8,14 +8,19 @@ namespace KeepInventory.Saves.V0
     {
         [TomlPrecedingComment("The version of the save")]
         public readonly int Version = 0;
+
         [TomlPrecedingComment("The amount of light ammo left")]
         public int AmmoLight;
+
         [TomlPrecedingComment("The amount of medium ammo left")]
         public int AmmoMedium;
+
         [TomlPrecedingComment("The amount of heavy ammo left")]
         public int AmmoHeavy;
+
         [TomlPrecedingComment("List of all slots & the spawnables stored in them")]
         public Dictionary<string, string> ItemSlots = [];
+
         public Save()
         { }
     }
