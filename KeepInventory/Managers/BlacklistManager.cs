@@ -123,23 +123,15 @@ namespace KeepInventory.Managers
             => IsEnabled(blacklist.ID);
     }
 
-    public class Blacklist
+    public class Blacklist(string id, string displayName, bool enabled = true, params List<Level> levels)
     {
-        public Blacklist(string id, string displayName, bool enabled = true, params List<Level> levels)
-        {
-            ID = id;
-            DisplayName = displayName;
-            Enabled = enabled;
-            Levels = [.. levels];
-        }
+        public string ID { get; set; } = id;
 
-        public string ID { get; set; }
+        public string DisplayName { get; set; } = displayName;
 
-        public string DisplayName { get; set; }
+        public bool Enabled { get; set; } = enabled;
 
-        public bool Enabled { get; set; }
-
-        public Level[] Levels { get; set; }
+        public Level[] Levels { get; set; } = [.. levels];
 
         public void SetEnabled(bool value)
             => Enabled = value;
