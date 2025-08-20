@@ -58,8 +58,11 @@ namespace KeepInventory
         internal static bool IsLatestVersion { get; private set; } = true;
         internal static Package ThunderstorePackage { get; private set; }
 
+        internal static bool Deinit { get; private set; } = false;
+
         public override void OnInitializeMelon()
         {
+            Deinit = false;
             Logger = LoggerInstance;
             Instance = this;
 
@@ -145,6 +148,7 @@ namespace KeepInventory
 
         public override void OnDeinitializeMelon()
         {
+            Deinit = true;
             LoggerInstance.Msg("Deinitialize requested, cleaning up.");
             AmmoManager.Destroy();
             PreferencesManager.Save();
@@ -238,38 +242,40 @@ namespace KeepInventory
                 }
                 InitialLoad = false;
             }
-
-            if (!IsBlacklisted(obj.levelReference.Barcode))
+            if (CurrentSave != null)
             {
-                if (PreferencesManager.LoadOnLevelLoad.Value)
+                if (!IsBlacklisted(obj.levelReference.Barcode))
                 {
-                    if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
+                    if (PreferencesManager.LoadOnLevelLoad.Value)
                     {
-                        LoggerInstance.Warning("The Fusion Library is not loaded. Try restarting the game.");
-                    }
-                    else
-                    {
-                        try
+                        if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
                         {
-                            statusElement.ElementName = "Current level is not blacklisted";
-                            statusElement.ElementColor = Color.green;
-
-                            InventoryManager.LoadSavedInventory(CurrentSave);
+                            LoggerInstance.Warning("The Fusion Library is not loaded. Try restarting the game.");
                         }
-                        catch (System.Exception ex)
+                        else
                         {
-                            LoggerInstance.Error("An error occurred while loading the inventory", ex);
-                            BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
+                            try
+                            {
+                                statusElement.ElementName = "Current level is not blacklisted";
+                                statusElement.ElementColor = Color.green;
+
+                                InventoryManager.LoadSavedInventory(CurrentSave);
+                            }
+                            catch (System.Exception ex)
+                            {
+                                LoggerInstance.Error("An error occurred while loading the inventory", ex);
+                                BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                LoggerInstance.Warning("Not loading inventory because level is blacklisted");
-                BLHelper.SendNotification("This level is blacklisted from loading/saving inventory", "Blacklisted", true, 5f, BoneLib.Notifications.NotificationType.Warning);
-                statusElement.ElementName = "Current level is blacklisted";
-                statusElement.ElementColor = Color.red;
+                else
+                {
+                    LoggerInstance.Warning("Not loading inventory because level is blacklisted");
+                    BLHelper.SendNotification("This level is blacklisted from loading/saving inventory", "Blacklisted", true, 5f, BoneLib.Notifications.NotificationType.Warning);
+                    statusElement.ElementName = "Current level is blacklisted";
+                    statusElement.ElementColor = Color.red;
+                }
             }
         }
 

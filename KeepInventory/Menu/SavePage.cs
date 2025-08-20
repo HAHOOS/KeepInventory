@@ -115,6 +115,9 @@ namespace KeepInventory.Menu
 
         public void Setup()
         {
+            if (Core.Deinit)
+                return;
+
             if (Page == null)
                 throw new ArgumentNullException(nameof(Page));
 
