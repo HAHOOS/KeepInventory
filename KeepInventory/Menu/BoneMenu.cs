@@ -10,6 +10,7 @@ using KeepInventory.Helper;
 using KeepInventory.Managers;
 
 using Il2CppSLZ.Marrow.Warehouse;
+using LabFusion.Downloading.ModIO;
 
 namespace KeepInventory.Menu
 {
@@ -18,7 +19,6 @@ namespace KeepInventory.Menu
         public static Page AuthorPage { get; private set; }
         public static Page ModPage { get; private set; }
         public static Page SavesPage { get; private set; }
-        public static Page PresetsPage { get; private set; }
         public static Page SavingConfigPage { get; private set; }
         public static Page EventsPage { get; private set; }
         public static Page SharingPage { get; private set; }
@@ -99,6 +99,11 @@ namespace KeepInventory.Menu
                     }
                 }
             });
+
+            SavingConfigPage = ModPage.CreatePage("Saving Config", Color.yellow, 4);
+            SavingConfigPage.CreateBoolPref("Save Items", Color.white, ref PreferencesManager.ItemSaving, prefDefaultValue: true);
+            SavingConfigPage.CreateBoolPref("Save Ammo", Color.white, ref PreferencesManager.AmmoSaving, prefDefaultValue: true);
+            SavingConfigPage.CreateBoolPref("Save Gun Data", Color.white, ref PreferencesManager.SaveGunData, prefDefaultValue: true);
 
             OtherPage = ModPage.CreatePage("Other", Color.white);
             OtherPage.CreateBoolPref("Show Notifications", Color.green, ref PreferencesManager.ShowNotifications, prefDefaultValue: true);
@@ -251,17 +256,10 @@ namespace KeepInventory.Menu
         {
             SavesPage ??= ModPage.CreatePage("Saves", Color.cyan);
 
-            SavingConfigPage ??= SavesPage.CreatePage("Config", Color.yellow, 4);
-            SavingConfigPage.RemoveAll();
-            SavingConfigPage.CreateBoolPref("Save Items", Color.white, ref PreferencesManager.ItemSaving, prefDefaultValue: true);
-            SavingConfigPage.CreateBoolPref("Save Ammo", Color.white, ref PreferencesManager.AmmoSaving, prefDefaultValue: true);
-            SavingConfigPage.CreateBoolPref("Save Gun Data", Color.white, ref PreferencesManager.SaveGunData, prefDefaultValue: true);
+            SavesPage.RemoveAll();
 
-            PresetsPage ??= SavesPage.CreatePage("<color=#00FF00>Presets</color>", Color.white);
-            PresetsPage.RemoveAll();
-
-            var nameElement = PresetsPage.CreateString("Name", Color.white, string.Empty, null);
-            var createElement = PresetsPage.CreateFunction("<color=#00FF00>Create</color>", Color.white, () =>
+            var nameElement = SavesPage.CreateString("Name", Color.white, string.Empty, null);
+            var createElement = SavesPage.CreateFunction("<color=#00FF00>Create</color>", Color.white, () =>
             {
                 SaveManager.RegisterSave(new Saves.V2.Save()
                 {
@@ -276,7 +274,7 @@ namespace KeepInventory.Menu
                 });
             });
 
-            var func = PresetsPage.CreateToggleFunction("Remove [OFF]", Color.cyan, Color.red, null);
+            var func = SavesPage.CreateToggleFunction("Remove [OFF]", Color.cyan, Color.red, null);
             func.OnStart += () =>
             {
                 func.Element.ElementName = "Remove [ON]";
@@ -288,9 +286,9 @@ namespace KeepInventory.Menu
                 RemoveSavesOnPress = false;
             };
 
-            var refresh = PresetsPage.CreateFunction("Refresh", Color.yellow, () => SetupSaves());
+            var refresh = SavesPage.CreateFunction("Refresh", Color.yellow, () => SetupSaves());
 
-            var blank = PresetsPage.CreateBlank();
+            var blank = SavesPage.CreateBlank();
             if (defaultSaveElements.Count == 0)
             {
                 defaultSaveElements.Add(nameElement);
@@ -307,12 +305,12 @@ namespace KeepInventory.Menu
 
         internal static void UpdatePresetsPage()
         {
-            if (PresetsPage == null)
+            if (SavesPage == null)
                 return;
 
-            PresetsPage.RemoveAll();
+            SavesPage.RemoveAll();
 
-            defaultSaveElements.ForEach(PresetsPage.Add);
+            defaultSaveElements.ForEach(SavesPage.Add);
 
             foreach (var save in SaveManager.Saves)
             {
@@ -330,7 +328,7 @@ namespace KeepInventory.Menu
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
                 if (savePage == null)
                 {
-                    page = PresetsPage.CreatePage($"<color=#{save.Color}>{save.Name}</color>", Color.white, 0, false);
+                    page = SavesPage.CreatePage($"<color=#{save.Color}>{save.Name}</color>", Color.white, 0, false);
                     savePage = new SavePage(page, save);
                     SavePages.Add(savePage);
                 }
@@ -342,7 +340,7 @@ namespace KeepInventory.Menu
 
                 FunctionElement link = null;
 
-                link = PresetsPage.CreateFunction(Core.CurrentSave == save ? $"<color=#{save.DrawingColor.ToHEX() ?? "FFFFFF"}>+ {save.Name} +</color>" : $"<color=#{save.DrawingColor.ToHEX() ?? "FFFFFF"}>{save.Name}</color>", Color.white, () =>
+                link = SavesPage.CreateFunction(Core.CurrentSave == save ? $"<color=#{save.DrawingColor.ToHEX() ?? "FFFFFF"}>+ {save.Name} +</color>" : $"<color=#{save.DrawingColor.ToHEX() ?? "FFFFFF"}>{save.Name}</color>", Color.white, () =>
                 {
                     if (RemoveSavesOnPress)
                     {
@@ -351,7 +349,7 @@ namespace KeepInventory.Menu
                             try
                             {
                                 SaveManager.UnregisterSave(save.ID, true);
-                                PresetsPage.Remove(link);
+                                SavesPage.Remove(link);
                             }
                             catch (Exception ex)
                             {

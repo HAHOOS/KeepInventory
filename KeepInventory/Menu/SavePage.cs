@@ -191,7 +191,7 @@ namespace KeepInventory.Menu
             }
             else
             {
-                SaveInventoryFunction = Page.CreateFunction("Saving unavailable for this preset", Color.red, null);
+                SaveInventoryFunction = Page.CreateFunction("Saving unavailable for this save", Color.red, null);
                 SaveInventoryFunction.SetProperty(ElementProperties.NoBorder);
             }
             LoadInventoryFunction = Page.CreateFunction("Load inventory from save", Color.yellow, () => InventoryManager.LoadSavedInventory(CurrentSave));
