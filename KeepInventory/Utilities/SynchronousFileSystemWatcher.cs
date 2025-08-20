@@ -143,8 +143,9 @@ namespace KeepInventory.Utilities
             {
                 _watcher.Dispose();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                MelonLogger.Error($"SynchronousFileSystemWatcher | An exception occurred while disposing of FileSystemWatcher, exception:\n{ex}");
             }
             MelonEvents.OnUpdate.Unsubscribe(Update);
             GC.SuppressFinalize(this);
