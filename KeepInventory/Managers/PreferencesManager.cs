@@ -58,8 +58,6 @@ namespace KeepInventory.Managers
 
             ShowNotifications = PrefsCategory.CreateEntry<bool>("ShowNotifications", true, "Show Notifications",
                 description: "If true, notifications will be shown in-game regarding errors or other things");
-            ConfigVersion = PrefsCategory.CreateEntry<int>("ConfigVersion", 1, "Config Version",
-                description: "DO NOT CHANGE THIS AT ALL, THIS WILL BE USED FOR MIGRATING CONFIGS AND SHOULD NOT BE CHANGED AT ALL");
             HolsterHeldWeaponsOnDeath = PrefsCategory.CreateEntry<bool>("HolsterHeldWeaponsOnDeath", true, "Holster Held Weapons On Death",
                 description: "If true, when you die all of the weapons you were holding get holstered if possible");
 
