@@ -298,7 +298,7 @@ namespace KeepInventory.Saves.V2
                     using var writer = new StreamWriter(file) { AutoFlush = true };
                     file.Position = 0;
                     writer.Write(serialized);
-                    file.DisposeAsync().AsTask().ContinueWith((task) =>
+                    writer.DisposeAsync().AsTask().ContinueWith((task) =>
                      {
                          if (task.IsCompletedSuccessfully)
                          {
