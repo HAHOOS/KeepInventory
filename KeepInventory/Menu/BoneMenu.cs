@@ -10,7 +10,6 @@ using KeepInventory.Helper;
 using KeepInventory.Managers;
 
 using Il2CppSLZ.Marrow.Warehouse;
-using LabFusion.Downloading.ModIO;
 
 namespace KeepInventory.Menu
 {
