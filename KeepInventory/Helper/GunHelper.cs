@@ -9,12 +9,8 @@ namespace KeepInventory.Helper
 {
     public static class GunHelper
     {
-        public static void UpdateProperties(this Gun gun, GunInfo info, SaveSlot slot = null, string name = "N/A", string barcode = "N/A")
+        public static void UpdateProperties(this Gun gun, GunInfo info)
         {
-            if (string.IsNullOrWhiteSpace(name)) name = "N/A";
-            if (string.IsNullOrWhiteSpace(barcode)) barcode = "N/A";
-            string slotName = slot == null ? "N/A" : string.IsNullOrWhiteSpace(slot.SlotName) ? "N/A" : slot.SlotName;
-
             if (gun != null && info != null)
             {
                 try

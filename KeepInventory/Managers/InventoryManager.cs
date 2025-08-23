@@ -146,7 +146,7 @@ namespace KeepInventory.Managers
                                         if (item.GunInfo != null && obj != null)
                                         {
                                             foreach (var gun in obj.GetComponents<Gun>())
-                                                gun.UpdateProperties(item.GunInfo, item, crate.Crate.name, item.Barcode);
+                                                gun.UpdateProperties(item.GunInfo);
                                         }
                                     }
 
