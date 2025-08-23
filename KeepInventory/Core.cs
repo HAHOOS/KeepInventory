@@ -228,7 +228,7 @@ namespace KeepInventory
             {
                 if (FailedFLLoad)
                 {
-                    BLHelper.SendNotification("Failure", "The Fusion Support Library has failed to load, meaning the fusion support for the mod will be disabled. If this will occur again, please report it to the developer (discord @hahoos)", true, 10f, BoneLib.Notifications.NotificationType.Error);
+                    BLHelper.SendNotification("Failure", "The Fusion Library has failed to load, which will cause the Sharing feature to not work. If this occurs again, create an issue on Github or DM the developer (@hahoos)", true, 10f, BoneLib.Notifications.NotificationType.Error);
                     IsFusionLibraryInitialized = false;
                 }
                 if (!IsLatestVersion && ThunderstorePackage != null)
@@ -248,24 +248,17 @@ namespace KeepInventory
                 {
                     if (PreferencesManager.LoadOnLevelLoad.Value)
                     {
-                        if (HasFusion && Utilities.Fusion.IsConnected && !IsFusionLibraryInitialized)
+                        try
                         {
-                            LoggerInstance.Warning("The Fusion Library is not loaded. Try restarting the game.");
-                        }
-                        else
-                        {
-                            try
-                            {
-                                statusElement.ElementName = "Current level is not blacklisted";
-                                statusElement.ElementColor = Color.green;
+                            statusElement.ElementName = "Current level is not blacklisted";
+                            statusElement.ElementColor = Color.green;
 
-                                InventoryManager.LoadSavedInventory(CurrentSave);
-                            }
-                            catch (System.Exception ex)
-                            {
-                                LoggerInstance.Error("An error occurred while loading the inventory", ex);
-                                BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
-                            }
+                            InventoryManager.LoadSavedInventory(CurrentSave);
+                        }
+                        catch (System.Exception ex)
+                        {
+                            LoggerInstance.Error("An error occurred while loading the inventory", ex);
+                            BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
                         }
                     }
                 }
