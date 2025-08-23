@@ -78,7 +78,7 @@ namespace KeepInventory.Menu
                     }
                     catch (Exception ex)
                     {
-                        Core.Logger.Error($"An unexpected error has occurred while unblacklisting the current level\n{ex}");
+                        Core.Logger.Error($"An unexpected error has occurred while unblacklisting the current level", ex);
                         BLHelper.SendNotification("Failure", "An unexpected error has occurred while unblacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
                     }
                 }
@@ -93,7 +93,7 @@ namespace KeepInventory.Menu
                     }
                     catch (Exception ex)
                     {
-                        Core.Logger.Error($"An unexpected error has occurred while removing the current level from blacklist\n{ex}");
+                        Core.Logger.Error($"An unexpected error has occurred while removing the current level from blacklist", ex);
                         BLHelper.SendNotification("Failure", "An unexpected error has occurred while blacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
                     }
                 }

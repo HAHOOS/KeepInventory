@@ -86,7 +86,7 @@ namespace KeepInventory.Managers
             }
             catch (Exception e)
             {
-                Core.Logger.Error($"An unexpected error has occurred while saving preferences\n{e}");
+                Core.Logger.Error($"An unexpected error has occurred while saving preferences", e);
             }
         }
 

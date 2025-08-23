@@ -266,7 +266,7 @@ namespace KeepInventory.Saves.V2
                          }
                          else
                          {
-                             if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file, exception:\n{task.Exception}");
+                             if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file", task.Exception);
                          }
                          Saving = false;
                      });

@@ -255,7 +255,7 @@ namespace KeepInventory
 
                             InventoryManager.LoadSavedInventory(CurrentSave);
                         }
-                        catch (System.Exception ex)
+                        catch (Exception ex)
                         {
                             LoggerInstance.Error("An error occurred while loading the inventory", ex);
                             BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
