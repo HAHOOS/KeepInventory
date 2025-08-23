@@ -331,6 +331,7 @@ namespace KeepInventory.Managers
                 LastWrite.Remove(y.FullPath);
                 if (y.FullPath.EndsWith(".json"))
                 {
+                    Core.Logger.Msg($"{y.Name} has been deleted, unregistering save");
                     var saves = Saves.Where(x => x.FilePath == y.FullPath);
                     saves.ForEach(x => UnregisterSave(x.ID));
                 }
@@ -338,14 +339,10 @@ namespace KeepInventory.Managers
             FileSystemWatcher.Created += (x, y) =>
             {
                 if (IsIgnored(y.FullPath)) return;
-                if (y.FullPath.EndsWith(".json"))
+                if (y.FullPath.EndsWith(".json") && Check(y.FullPath))
                 {
-                    if (Check(y.FullPath)) RegisterSave(y.FullPath);
-                    else Core.Logger.Error($"{y.Name} was created, but is not suitable to be a save");
-                }
-                else
-                {
-                    Core.Logger.Warning($"A file was created in the Saves directory that has an unsupported file format: '{Path.GetExtension(y.FullPath)}'");
+                    Core.Logger.Msg($"{y.Name} has been created, registering save");
+                    RegisterSave(y.FullPath);
                 }
             };
             FileSystemWatcher.Changed += (x, y) =>
@@ -363,6 +360,8 @@ namespace KeepInventory.Managers
                     else
                     {
                         Core.Logger.Error($"{y.Name} was updated, but is not suitable to be a save");
+                        var saves = Saves.Where(x => x.FilePath == y.FullPath && x.IsFileWatcherEnabled);
+                        saves.ForEach(x => UnregisterSave(x.ID));
                     }
                 }
             };
