@@ -352,10 +352,10 @@ namespace KeepInventory.Utilities
         public bool IsLatestVersion(string current)
         {
             if (string.IsNullOrWhiteSpace(current)) return false;
-            if (this.Latest == null || this.Latest.SemVersion == null) return false;
+            if (this.Latest == null || this.Latest.SemanticVersion == null) return false;
             if (SemVersion.TryParse(current, out var version))
             {
-                return version >= this.Latest.SemVersion;
+                return version >= this.Latest.SemanticVersion;
             }
             return false;
         }
@@ -363,15 +363,15 @@ namespace KeepInventory.Utilities
         public bool IsLatestVersion(SemVersion current)
         {
             if (current == null) return false;
-            if (this.Latest == null || this.Latest.SemVersion == null) return false;
-            return current >= this.Latest.SemVersion;
+            if (this.Latest == null || this.Latest.SemanticVersion == null) return false;
+            return current >= this.Latest.SemanticVersion;
         }
 
         public bool IsLatestVersion(Version current)
         {
             if (current == null) return false;
-            if (this.Latest == null || this.Latest.SemVersion == null) return false;
-            return new SemVersion(current) >= this.Latest.SemVersion;
+            if (this.Latest == null || this.Latest.SemanticVersion == null) return false;
+            return new SemVersion(current) >= this.Latest.SemanticVersion;
         }
     }
 
@@ -388,10 +388,10 @@ namespace KeepInventory.Utilities
         [JsonPropertyName("version_number")]
         [JsonInclude]
         public string Version
-        { get { return SemVersion.ToString(); } internal set { SemVersion = Semver.SemVersion.Parse(value); } }
+        { get { return SemanticVersion.ToString(); } internal set { SemanticVersion = Semver.SemVersion.Parse(value); } }
 
         [JsonIgnore]
-        public SemVersion SemVersion { get; internal set; }
+        public SemVersion SemanticVersion { get; internal set; }
 
         [JsonPropertyName("full_name")]
         [JsonInclude]
@@ -485,18 +485,18 @@ namespace KeepInventory.Utilities
         [JsonPropertyName("latest_version")]
         [JsonInclude]
         public string LatestVersion
-        { get { return LatestSemVersion.ToString(); } internal set { LatestSemVersion = Semver.SemVersion.Parse(value); } }
+        { get { return LatestSemanticVersion.ToString(); } internal set { LatestSemanticVersion = Semver.SemVersion.Parse(value); } }
 
         [JsonIgnore]
-        public SemVersion LatestSemVersion { get; internal set; }
+        public SemVersion LatestSemanticVersion { get; internal set; }
 
         public bool IsLatestVersion(string current)
         {
             if (string.IsNullOrWhiteSpace(current)) return false;
-            if (this.LatestSemVersion == null) return false;
+            if (this.LatestSemanticVersion == null) return false;
             if (SemVersion.TryParse(current, out var version))
             {
-                return version >= this.LatestSemVersion;
+                return version >= this.LatestSemanticVersion;
             }
             return false;
         }
@@ -504,15 +504,15 @@ namespace KeepInventory.Utilities
         public bool IsLatestVersion(SemVersion current)
         {
             if (current == null) return false;
-            if (this.LatestSemVersion == null) return false;
-            return current >= this.LatestSemVersion;
+            if (this.LatestSemanticVersion == null) return false;
+            return current >= this.LatestSemanticVersion;
         }
 
         public bool IsLatestVersion(Version current)
         {
             if (current == null) return false;
-            if (this.LatestSemVersion == null) return false;
-            return new SemVersion(current) >= this.LatestSemVersion;
+            if (this.LatestSemanticVersion == null) return false;
+            return new SemVersion(current) >= this.LatestSemanticVersion;
         }
     }
 

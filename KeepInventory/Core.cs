@@ -177,7 +177,7 @@ namespace KeepInventory
                         }
                         else
                         {
-                            if (SemVersion.Parse(Version) == ThunderstorePackage.Latest.SemVersion)
+                            if (SemVersion.Parse(Version) == ThunderstorePackage.Latest.SemanticVersion)
                             {
                                 LoggerInstance.Msg($"Latest version of KeepInventory is installed! --> v{Version}");
                             }
