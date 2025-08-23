@@ -181,19 +181,11 @@ namespace KeepInventory.Menu
                     BLHelper.SendNotification("Warning", $"<color=#{CurrentSave.Color}>{CurrentSave}</color> is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
                 }
             }) : Page.CreateLabel("Save is default", Color.white);
-            if (CurrentSave.CanBeOverwrittenByPlayer)
-            {
-                SaveInventoryFunction = Page.CreateFunction("Save inventory to save", Color.cyan, () =>
+            SaveInventoryFunction = Page.CreateFunction("Save inventory to save", Color.cyan, () =>
             {
                 InventoryManager.SaveInventory(CurrentSave, PreferencesManager.ShowNotifications.Value);
                 Setup();
             });
-            }
-            else
-            {
-                SaveInventoryFunction = Page.CreateFunction("Saving unavailable for this save", Color.red, null);
-                SaveInventoryFunction.SetProperty(ElementProperties.NoBorder);
-            }
             LoadInventoryFunction = Page.CreateFunction("Load inventory from save", Color.yellow, () => InventoryManager.LoadSavedInventory(CurrentSave));
         }
 
@@ -218,49 +210,35 @@ namespace KeepInventory.Menu
 
             page?.RemoveAll();
 
-            if (CurrentSave.CanBeOverwrittenByPlayer)
+            page.CreateBool("Is Mag", Color.white, info.IsMag, (val) => info.IsMag = val);
+            page.CreateBool("Is Bullet In Chamber", Color.white, info.IsBulletInChamber, (val) => info.IsBulletInChamber = val);
+            page.CreateEnum("Fire Mode", Color.yellow, info.FireMode, (val) => info.FireMode = (FireMode)val);
+            page.CreateInt("Rounds Left", Color.cyan, info.RoundsLeft, IncrementValues[IncrementIndex], 0, int.MaxValue, (val) => info.RoundsLeft = val);
+            page.CreateFunction($"Increment: {IncrementValues[IncrementIndex]}", Color.magenta, () =>
             {
-                page.CreateBool("Is Mag", Color.white, info.IsMag, (val) => info.IsMag = val);
-                page.CreateBool("Is Bullet In Chamber", Color.white, info.IsBulletInChamber, (val) => info.IsBulletInChamber = val);
-                page.CreateEnum("Fire Mode", Color.yellow, info.FireMode, (val) => info.FireMode = (FireMode)val);
-                page.CreateInt("Rounds Left", Color.cyan, info.RoundsLeft, IncrementValues[IncrementIndex], 0, int.MaxValue, (val) => info.RoundsLeft = val);
-                page.CreateFunction($"Increment: {IncrementValues[IncrementIndex]}", Color.magenta, () =>
-                {
-                    NextIncrement();
-                    PopulateGunInfoPage(page, slot);
-                });
-                page.CreateEnum("Hammer State", Color.yellow, info.HammerState, (val) => info.HammerState = (HammerStates)val);
-                page.CreateEnum("Slide State", Color.cyan, info.SlideState, (val) => info.SlideState = (SlideStates)val);
-                page.CreateEnum("Cartridge State", Color.magenta, info.CartridgeState, (val) => info.CartridgeState = (CartridgeStates)val);
-                page.CreateBool("Has Fired Once", Color.red, info.HasFiredOnce, (val) => info.HasFiredOnce = val);
-                page.CreateFunction("<color=#00FF00>Save updated gun info</color>", Color.white, () =>
-                {
-                    int index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName && x.Barcode == slot.Barcode);
-                    if (index == -1)
-                    {
-                        BLHelper.SendNotification("Failure", "Cannot save updated gun info, the original slot cannot be found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
-                    }
-                    else
-                    {
-                        var copy = CurrentSave.InventorySlots[index];
-                        copy.GunInfo = info;
-                        CurrentSave.InventorySlots[index] = copy;
-                        CurrentSave.TrySaveToFile(false);
-                        SetupSlots();
-                    }
-                });
-            }
-            else
+                NextIncrement();
+                PopulateGunInfoPage(page, slot);
+            });
+            page.CreateEnum("Hammer State", Color.yellow, info.HammerState, (val) => info.HammerState = (HammerStates)val);
+            page.CreateEnum("Slide State", Color.cyan, info.SlideState, (val) => info.SlideState = (SlideStates)val);
+            page.CreateEnum("Cartridge State", Color.magenta, info.CartridgeState, (val) => info.CartridgeState = (CartridgeStates)val);
+            page.CreateBool("Has Fired Once", Color.red, info.HasFiredOnce, (val) => info.HasFiredOnce = val);
+            page.CreateFunction("<color=#00FF00>Save updated gun info</color>", Color.white, () =>
             {
-                page.CreateLabel($"Is Mag: {info.IsMag}", Color.white);
-                page.CreateLabel($"Is Bullet In Chamber: {info.IsBulletInChamber}", Color.white);
-                page.CreateLabel($"Fire Mode: {Enum.GetName(info.FireMode)}", Color.yellow);
-                page.CreateLabel($"Rounds Left: {info.RoundsLeft}", Color.cyan);
-                page.CreateLabel($"Hammer State: {Enum.GetName(info.HammerState)}", Color.yellow);
-                page.CreateLabel($"Slide State: {Enum.GetName(info.SlideState)}", Color.cyan);
-                page.CreateLabel($"Cartridge State: {Enum.GetName(info.CartridgeState)}", Color.magenta);
-                page.CreateLabel($"Has Fired Once: {info.HasFiredOnce}", Color.red);
-            }
+                int index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName && x.Barcode == slot.Barcode);
+                if (index == -1)
+                {
+                    BLHelper.SendNotification("Failure", "Cannot save updated gun info, the original slot cannot be found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                }
+                else
+                {
+                    var copy = CurrentSave.InventorySlots[index];
+                    copy.GunInfo = info;
+                    CurrentSave.InventorySlots[index] = copy;
+                    CurrentSave.TrySaveToFile(false);
+                    SetupSlots();
+                }
+            });
         }
 
         private void SetupSlots()
@@ -379,22 +357,19 @@ namespace KeepInventory.Menu
             int medium = CurrentSave.MediumAmmo;
             int heavy = CurrentSave.HeavyAmmo;
 
-            List<Element> elements = [
-                CurrentSave.CanBeOverwrittenByPlayer ? new FunctionElement($"Increment/Decrement by {id}", Color.cyan, () => {
-                    ammoIDIndex++;
-                    SetupAmmo();
-                }) : null,
-                CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Light Ammo", Color.green, light, id, 0, int.MaxValue, (value)=> CurrentSave.LightAmmo = value) : new LabelElement($"Light Ammo: {light}", Color.green).Element,
-                CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Medium Ammo", Color.yellow, medium, id, 0, int.MaxValue, (value)=> CurrentSave.MediumAmmo = value) : new LabelElement($"Medium Ammo: {light}", Color.yellow).Element,
-                CurrentSave.CanBeOverwrittenByPlayer ? new IntElement("Heavy Ammo", Color.red, heavy, id, 0, int.MaxValue, (value)=> CurrentSave.HeavyAmmo = value) : new LabelElement($"Heavy Ammo: {light}", Color.red).Element,
-                CurrentSave.CanBeOverwrittenByPlayer ? new FunctionElement("<color=#00FF00>Save updated ammo</color>", Color.white, () =>
-                {
-                        CurrentSave.TrySaveToFile(false);
-                        SetupAmmo();
-                }) : null
-            ];
-
-            elements.ForEach(element => { if (element != null) AmmoPage.Add(element); });
+            AmmoPage.CreateFunction($"Increment/Decrement by {id}", Color.cyan, () =>
+            {
+                ammoIDIndex++;
+                SetupAmmo();
+            });
+            AmmoPage.CreateInt("Light Ammo", Color.green, light, id, 0, int.MaxValue, (value) => CurrentSave.LightAmmo = value);
+            AmmoPage.CreateInt("Medium Ammo", Color.yellow, medium, id, 0, int.MaxValue, (value) => CurrentSave.MediumAmmo = value);
+            AmmoPage.CreateInt("Heavy Ammo", Color.red, heavy, id, 0, int.MaxValue, (value) => CurrentSave.HeavyAmmo = value);
+            AmmoPage.CreateFunction("<color=#00FF00>Save updated ammo</color>", Color.white, () =>
+            {
+                CurrentSave.TrySaveToFile(false);
+                SetupAmmo();
+            });
         }
 
         internal void SetupFusion()

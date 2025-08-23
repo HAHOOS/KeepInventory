@@ -267,8 +267,6 @@ namespace KeepInventory.Menu
                     HeavyAmmo = 0,
                     LightAmmo = 0,
                     MediumAmmo = 0,
-                    CanBeOverwrittenByPlayer = true,
-                    IsHidden = false,
                     ID = $"{nameElement.Value.ToLower()}-{SaveManager.GenerateRandomID(6)}"
                 });
             });
@@ -322,7 +320,6 @@ namespace KeepInventory.Menu
                 {
                     Core.Logger.Error("ID is null or empty, cannot generate element");
                 }
-                if (save.IsHidden) continue;
                 Page page = null;
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
                 if (savePage == null)

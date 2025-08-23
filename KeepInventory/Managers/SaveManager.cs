@@ -113,8 +113,8 @@ namespace KeepInventory.Managers
                                         }
                                     }
                                     Save save = null;
-                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, true, false, (Saves.V0.Save)_value);
-                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, true, false, (Saves.V1.Save)_value);
+                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, (Saves.V0.Save)_value);
+                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, (Saves.V1.Save)_value);
                                     RegisterSave(save, true);
                                     if (File.Exists(path1) && correct == 0) File.Delete(path1);
                                     if (File.Exists(path2) && correct == 1) File.Delete(path2);

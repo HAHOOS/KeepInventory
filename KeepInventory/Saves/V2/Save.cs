@@ -88,36 +88,6 @@ namespace KeepInventory.Saves.V2
         }
 
         [JsonIgnore]
-        private bool _isHidden;
-
-        [JsonPropertyName("IsHidden")]
-        public bool IsHidden
-        {
-            get { return _isHidden; }
-            set
-            {
-                var old = _isHidden;
-                _isHidden = value;
-                OnPropertyChanged?.Invoke(nameof(IsHidden), old, value);
-            }
-        }
-
-        [JsonIgnore]
-        private bool _canBeOverwrittenByPlayer;
-
-        [JsonPropertyName("CanBeOverwrittenByPlayer")]
-        public bool CanBeOverwrittenByPlayer
-        {
-            get { return _canBeOverwrittenByPlayer; }
-            set
-            {
-                var old = _canBeOverwrittenByPlayer;
-                _canBeOverwrittenByPlayer = value;
-                OnPropertyChanged?.Invoke(nameof(CanBeOverwrittenByPlayer), old, value);
-            }
-        }
-
-        [JsonIgnore]
         private int _lightAmmo = -1;
 
         [JsonPropertyName("LightAmmo")]
@@ -185,8 +155,6 @@ namespace KeepInventory.Saves.V2
             _name = old.Name;
             _id = old.ID;
             Color = old.Color;
-            _canBeOverwrittenByPlayer = old.CanBeOverwrittenByPlayer;
-            _isHidden = old.IsHidden;
             _lightAmmo = old.LightAmmo;
             _mediumAmmo = old.MediumAmmo;
             _heavyAmmo = old.HeavyAmmo;
@@ -194,7 +162,7 @@ namespace KeepInventory.Saves.V2
         }
 
         [JsonConstructor]
-        public Save(int Version, string Name, string ID, float[] Color, bool IsHidden, bool CanBeOverwrittenByPlayer, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
+        public Save(int Version, string Name, string ID, float[] Color, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)
             {
@@ -204,8 +172,6 @@ namespace KeepInventory.Saves.V2
             this._name = Name;
             this._id = ID;
             this.Color = Color;
-            this._isHidden = IsHidden;
-            this._canBeOverwrittenByPlayer = CanBeOverwrittenByPlayer;
             this._lightAmmo = LightAmmo;
             this._mediumAmmo = MediumAmmo;
             this._heavyAmmo = HeavyAmmo;
@@ -215,13 +181,11 @@ namespace KeepInventory.Saves.V2
                 throw new Exception("ID cannot be null or empty");
         }
 
-        public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V1.Save v1save)
+        public Save(string id, string name, Color color, V1.Save v1save)
         {
             _id = id;
             _name = name;
             DrawingColor = color;
-            _canBeOverwrittenByPlayer = canBeOverwritten;
-            _isHidden = isHidden;
             _lightAmmo = v1save.LightAmmo;
             _mediumAmmo = v1save.MediumAmmo;
             _heavyAmmo = v1save.HeavyAmmo;
@@ -230,13 +194,11 @@ namespace KeepInventory.Saves.V2
             _inventorySlots = _new;
         }
 
-        public Save(string id, string name, Color color, bool canBeOverwritten, bool isHidden, V0.Save v0save)
+        public Save(string id, string name, Color color, V0.Save v0save)
         {
             _id = id;
             _name = name;
             DrawingColor = color;
-            _canBeOverwrittenByPlayer = canBeOverwritten;
-            _isHidden = isHidden;
             _lightAmmo = v0save.AmmoLight;
             _mediumAmmo = v0save.AmmoMedium;
             _heavyAmmo = v0save.AmmoHeavy;
@@ -273,8 +235,6 @@ namespace KeepInventory.Saves.V2
                 Core.Logger.Error("The new ID is null or empty, will not overwrite");
                 throw new ArgumentException("The new ID is null or empty, will not overwrite");
             }
-            if (this.CanBeOverwrittenByPlayer != save.CanBeOverwrittenByPlayer) this.CanBeOverwrittenByPlayer = save.CanBeOverwrittenByPlayer;
-            if (this.IsHidden != save.IsHidden) this.IsHidden = save.IsHidden;
             if (this.Name != save.Name) this.Name = save.Name;
             if (this.Color != save.Color) this.Color = save.Color;
             if (this.InventorySlots != save.InventorySlots) this.InventorySlots = save.InventorySlots;
