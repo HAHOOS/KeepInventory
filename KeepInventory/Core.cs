@@ -199,7 +199,7 @@ namespace KeepInventory
             }
             catch (Exception e)
             {
-                LoggerInstance.Error($"An unexpected error has occurred while trying to check if KeepInventory is the latest version, exception:\n{e}");
+                LoggerInstance.Error("An unexpected error has occurred while trying to check if KeepInventory is the latest version", e);
             }
         }
 

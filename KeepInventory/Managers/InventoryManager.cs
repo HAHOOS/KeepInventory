@@ -99,7 +99,7 @@ namespace KeepInventory.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error occurred while saving the inventory", ex);
+                Core.Logger.Error("An unexpected error occurred while saving the inventory", ex);
                 if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
         }

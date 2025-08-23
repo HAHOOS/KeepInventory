@@ -414,7 +414,7 @@ namespace KeepInventory.Menu
                         catch (Exception ex)
                         {
                             BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
-                            Core.Logger.Error($"An unexpected error has occurred while trying to share save", ex);
+                            Core.Logger.Error("An unexpected error has occurred while trying to share save", ex);
                         }
                     });
                     SharePage.CreateBlank();
@@ -439,7 +439,7 @@ namespace KeepInventory.Menu
                 }
                 catch (Exception ex)
                 {
-                    Core.Logger.Error($"An unexpected error occurred while setting up share page", ex);
+                    Core.Logger.Error("An unexpected error occurred while setting up share page", ex);
                 }
             }
         }

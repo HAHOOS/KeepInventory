@@ -117,7 +117,7 @@ namespace KeepInventory.Utilities
                             }
                             catch (Exception ex)
                             {
-                                MelonLogger.Error($"SynchronousFileSystemWatcher | An unexpected error has occurred while running Disposed event", ex);
+                                MelonLogger.Error("SynchronousFileSystemWatcher | An unexpected error has occurred while running Disposed event", ex);
                             }
                             finally
                             {
@@ -127,7 +127,7 @@ namespace KeepInventory.Utilities
                     }
                     catch (Exception ex)
                     {
-                        MelonLogger.Error($"SynchronousFileSystemWatcher | An unexpected error has occurred while triggering file system watcher events", ex);
+                        MelonLogger.Error("SynchronousFileSystemWatcher | An unexpected error has occurred while triggering file system watcher events", ex);
                     }
                     finally
                     {
@@ -145,7 +145,7 @@ namespace KeepInventory.Utilities
             }
             catch (Exception ex)
             {
-                MelonLogger.Error($"SynchronousFileSystemWatcher | An exception occurred while disposing of FileSystemWatcher", ex);
+                MelonLogger.Error("SynchronousFileSystemWatcher | An exception occurred while disposing of FileSystemWatcher", ex);
             }
             MelonEvents.OnUpdate.Unsubscribe(Update);
             GC.SuppressFinalize(this);

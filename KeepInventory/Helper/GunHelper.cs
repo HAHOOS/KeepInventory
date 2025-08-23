@@ -60,7 +60,7 @@ namespace KeepInventory.Helper
                 }
                 catch (Exception ex)
                 {
-                    Core.Logger.Error($"An unexpected error has occurred while applying gun info", ex);
+                    Core.Logger.Error("An unexpected error has occurred while applying gun info", ex);
                     BLHelper.SendNotification("Error", "Failed to successfully apply gun info to the gun, check the console or logs for more info", true, 3f, BoneLib.Notifications.NotificationType.Error);
                 }
             }

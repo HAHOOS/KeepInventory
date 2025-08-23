@@ -44,7 +44,7 @@ namespace KeepInventory.Utilities
             catch (Exception ex)
             {
                 Core.FailedFLLoad = true;
-                Core.Logger.Error($"An unexpected error has occurred while setting up and/or loading the fusion module", ex);
+                Core.Logger.Error("An unexpected error has occurred while setting up and/or loading the fusion module", ex);
             }
         }
 

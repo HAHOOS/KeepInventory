@@ -350,7 +350,7 @@ namespace KeepInventory.Menu
                             catch (Exception ex)
                             {
                                 BLHelper.SendNotification("Error", "Failed to remove save, check logs or console for more information", true, 2f, BoneLib.Notifications.NotificationType.Error);
-                                Core.Logger.Error($"An unexpected error has occurred while attempting to remove save", ex);
+                                Core.Logger.Error("An unexpected error has occurred while attempting to remove save", ex);
                             }
                         }, () => Core.Logger.Msg("Save removal denied"));
                     }
