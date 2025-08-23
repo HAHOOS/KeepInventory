@@ -2,8 +2,8 @@
 
 using KeepInventory.Fusion;
 
-[assembly: AssemblyTitle("Library containing most of the functionality with LabFusion for KeepInventory")]
-[assembly: AssemblyDescription("Library containing most of the functionality with LabFusion for KeepInventory")]
+[assembly: AssemblyTitle("Library containing some of the functionality with LabFusion (at this moment, its only sharing saves) for KeepInventory")]
+[assembly: AssemblyDescription("Library containing some of the functionality with LabFusion (at this moment, its only sharing saves) for KeepInventory")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("HAHOOS")]
 [assembly: AssemblyProduct("KeepInventory Fusion Library")]
