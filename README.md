@@ -5,17 +5,14 @@
 <a align="center" href="https://github.com/HAHOOS/KeepInventory/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/HAHOOS/KeepInventory?style=for-the-badge"></a>
 </div>
 
+/gamerule keepInventory true
 
-
-## What is this?
-
-A BONELAB code mod that lets you keep your inventory when switching between levels that do not save your inventory or when rejoining the game. It features:
-- **Full [Fusion](https://thunderstore.io/c/bonelab/p/Lakatrazz/Fusion/) Support, including sharing saves with others!**
-- Multiple save slots
-- Saving data about **guns** and loading them!
-- Customizability, such as disabling inventory loading on level load, or saving/loading ammo
+A BONELAB Code Mod that allows you to save your inventory for future use. It features:
+- A save system that allows you to create, modify and delete saves in BoneMenu and files without needing to restart
+- **Fusion Support**, including sharing saves with other players
+- Blacklisting levels from loading/saving inventory
 - And much more!
 
-If you find any bugs, I recommend creating an [issue](https://github.com/HAHOOS/KeepInventory/issues). This will really help the development of the mod
+If you find any bugs within the mod, make sure to report the issue by DMing me (@hahoos on Discord) or creating an [issue](https://github.com/HAHOOS/KeepInventory/issues) on Github!
 
 The "Box" asset used in the logo is under the [MIT License](https://github.com/twbs/icons/blob/main/LICENSE)
