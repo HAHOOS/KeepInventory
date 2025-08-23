@@ -30,8 +30,6 @@ namespace KeepInventory.Managers
 
         internal static MelonPreferences_Entry<string> DefaultSave;
 
-        internal static MelonPreferences_Entry<int> ConfigVersion;
-
         internal static void Setup()
         {
             if (!Directory.Exists(KI_PreferencesDirectory))
