@@ -25,10 +25,6 @@ namespace KeepInventory.Fusion
             logger = LoggerInstance;
             MsgFusionPrefix("Registering ShareSaveMessage");
             ModuleMessageManager.RegisterHandler<ShareSaveMessage>();
-            MsgFusionPrefix("Registering CanShareRequestMessage");
-            ModuleMessageManager.RegisterHandler<CanShareRequestMessage>();
-            MsgFusionPrefix("Registering CanShareResponseMessage");
-            ModuleMessageManager.RegisterHandler<CanShareResponseMessage>();
         }
 
         public const string _Version = KeepInventory.Core.Version;

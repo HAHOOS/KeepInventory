@@ -11,6 +11,7 @@ using KeepInventory.Saves.V2;
 using LabFusion.Network;
 using LabFusion.Network.Serialization;
 using LabFusion.Player;
+using LabFusion.Utilities;
 
 using MelonLoader;
 using MelonLoader.Utils;
@@ -27,20 +28,25 @@ namespace KeepInventory.Fusion.Managers
 
         private static bool IsSetup;
 
-        internal static List<byte> PlayerResponses = [];
-
-        internal static string AwaitingID = string.Empty;
+        private const string SHARING_KEY = "KeepInventory_SharingEnabled";
 
         public static void Setup()
         {
             Category = MelonPreferences.CreateCategory("KeepInventory_Sharing");
             Entry_SharingEnabled = Category.CreateEntry("Enabled", true, "Enabled",
                 description: "Can people share saves to you and can you share.");
+            Entry_SharingEnabled.OnEntryValueChanged.Subscribe((_, _) => InitialMetadata());
             Entry_SharingBlacklist = Category.CreateEntry<List<ulong>>("Blacklist", [], "Blacklist",
                 description: "List of long IDs of players that you do not want to allow sharing saves from");
             Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory", "Sharing.cfg"));
             Category.SaveToFile(false);
+            LocalPlayer.OnApplyInitialMetadata += InitialMetadata;
             IsSetup = true;
+        }
+
+        private static void InitialMetadata()
+        {
+            LocalPlayer.Metadata.Metadata.TrySetMetadata(SHARING_KEY, Entry_SharingEnabled.Value.ToString());
         }
 
         public static void Share(Save save, byte target)
@@ -100,19 +106,15 @@ namespace KeepInventory.Fusion.Managers
                 OnShared?.Invoke(save, sender);
         }
 
-        private const int Timeout = 500;
-
-        public async static Task<List<byte>> GetAllShareablePlayers()
+        public static List<byte> GetAllShareablePlayers()
         {
             if (!IsSetup)
                 return [];
 
-            FusionModule.logger.Log("Is set up");
-
             if (Entry_SharingEnabled?.Value == false)
                 return [];
 
-            FusionModule.logger.Log("Sharing enabled");
+            List<byte> result = [];
 
             if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(x =>
             {
@@ -121,6 +123,8 @@ namespace KeepInventory.Fusion.Managers
                 {
                     if (Entry_SharingBlacklist.Value.Contains(id.PlatformID))
                         return true;
+                    else if (id.Metadata.Metadata.TryGetMetadata(SHARING_KEY, out string val) && val == bool.TrueString)
+                        result.Add(id.SmallID);
                 }
                 return false;
             }))
@@ -128,24 +132,7 @@ namespace KeepInventory.Fusion.Managers
                 return [];
             }
 
-            FusionModule.logger.Log("There are people not on the blacklist");
-
-            PlayerResponses.Clear();
-
-            var data = CanShareMessageData.Create();
-            AwaitingID = data.ID;
-
-            using var writer = NetWriter.Create();
-            writer.SerializeValue(ref data);
-            using var message = NetMessage.ModuleCreate<CanShareRequestMessage>(writer, CommonMessageRoutes.ReliableToOtherClients);
-            MessageSender.SendToServer(NetworkChannel.Reliable, message);
-            var last = DateTime.Now;
-            CanShareResponseMessage.LastMessage = DateTime.Now;
-            while ((DateTime.Now - CanShareResponseMessage.LastMessage).TotalMilliseconds < Timeout) await Task.Delay(50);
-            var resp = new List<byte>(PlayerResponses);
-            PlayerResponses.Clear();
-            AwaitingID = string.Empty;
-            return resp;
+            return result;
         }
     }
 }

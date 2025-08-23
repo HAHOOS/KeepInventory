@@ -414,8 +414,6 @@ namespace KeepInventory.Menu
             };
         }
 
-        private bool isSettingUpShare = false;
-
         internal void SetupShare()
         {
             if (!SharingEnabled())
@@ -424,11 +422,10 @@ namespace KeepInventory.Menu
                 if (BoneLib.BoneMenu.Menu.CurrentPage == SharePage)
                     BoneLib.BoneMenu.Menu.OpenPage(Page);
             }
-            if (SharePage != null && !isSettingUpShare)
+            if (SharePage != null)
             {
                 try
                 {
-                    isSettingUpShare = true;
                     SharePage?.RemoveAll();
                     SharePage.CreateFunction("Refresh", Color.yellow, () => SetupShare());
                     SharePage.CreateFunction("Share", Color.cyan, () =>
@@ -448,44 +445,28 @@ namespace KeepInventory.Menu
                     });
                     SharePage.CreateBlank();
                     var waitElement = SharePage.CreateLabel("Checking for players...", Color.white);
-                    MelonCoroutines.Start(PlayerList_SetupShare(waitElement, () => isSettingUpShare = false));
+                    var players = Utilities.Fusion.GetShareablePlayers();
+
+                    SharePage.Remove(waitElement);
+                    players.RemoveAll(x => x.SmallID == Utilities.Fusion.GetLocalPlayerSmallID());
+                    if (players.Count == 0)
+                    {
+                        SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
+                    }
+                    else
+                    {
+                        foreach (var player in players)
+                        {
+                            var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallID));
+                            element.OnStart += () => SelectedPlayers.Add(player.SmallID);
+                            element.OnCancel += () => SelectedPlayers.Remove(player.SmallID);
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
                     Core.Logger.Error($"An unexpected error occurred while setting up share page:\n{ex}");
-                    isSettingUpShare = false;
                 }
-            }
-        }
-
-        internal System.Collections.IEnumerator PlayerList_SetupShare(FunctionElement waitElement, Action callback = null)
-        {
-            try
-            {
-                var task = Utilities.Fusion.GetShareablePlayers().ConfigureAwait(false);
-                var awaiter = task.GetAwaiter();
-                while (!awaiter.IsCompleted) yield return null;
-
-                SharePage.Remove(waitElement);
-                var players = awaiter.GetResult();
-                players.RemoveAll(x => x.SmallID == Utilities.Fusion.GetLocalPlayerSmallID());
-                if (players.Count == 0)
-                {
-                    SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
-                }
-                else
-                {
-                    foreach (var player in players)
-                    {
-                        var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallID));
-                        element.OnStart += () => SelectedPlayers.Add(player.SmallID);
-                        element.OnCancel += () => SelectedPlayers.Remove(player.SmallID);
-                    }
-                }
-            }
-            finally
-            {
-                callback?.Invoke();
             }
         }
     }

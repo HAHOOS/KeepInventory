@@ -90,29 +90,24 @@ namespace KeepInventory.Utilities
             if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected) Internal_ShareSave(SmallID, save);
         }
 
-        internal async static Task<List<FusionPlayer>> Internal_GetShareablePlayers()
+        internal static List<FusionPlayer> Internal_GetShareablePlayers()
         {
-            var task = await KeepInventory.Fusion.Managers.ShareManager.GetAllShareablePlayers();
+            var plrs = KeepInventory.Fusion.Managers.ShareManager.GetAllShareablePlayers();
             List<FusionPlayer> players = [];
             foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
             {
-                if (player != null && task.Contains(player.PlayerID.SmallID))
+                if (player != null && plrs.Contains(player.PlayerID.SmallID))
                     players.Add(new FusionPlayer(player.PlayerID.SmallID, player.PlayerID.PlatformID, player.Username));
             }
             return players;
         }
 
-        public static async Task<List<FusionPlayer>> GetShareablePlayers()
+        public static List<FusionPlayer> GetShareablePlayers()
         {
             if (Core.HasFusion && Core.IsFusionLibraryInitialized && IsConnected)
-            {
-                var players = await Internal_GetShareablePlayers();
-                return players;
-            }
+                return Internal_GetShareablePlayers();
             else
-            {
                 return [];
-            }
         }
 
         internal static IEnumerable<FusionPlayer> Internal_GetPlayers()
