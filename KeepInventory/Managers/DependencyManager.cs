@@ -61,7 +61,7 @@ namespace KeepInventory.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error occurred while loading {name}:\n{ex}");
+                Core.Logger.Error($"An unexpected error occurred while loading {name}", ex);
                 return false;
             }
             return true;

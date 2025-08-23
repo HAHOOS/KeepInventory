@@ -57,7 +57,7 @@ namespace KeepInventory.Managers
                         }
                         catch (Exception ex)
                         {
-                            Core.Logger.Error($"An unexpected error has occurred while loading '{item.Name}', exception:\n{ex}");
+                            Core.Logger.Error($"An unexpected error has occurred while loading '{item.Name}'", ex);
                         }
                     }
                 }
@@ -123,7 +123,7 @@ namespace KeepInventory.Managers
                             }
                             catch (Exception ex)
                             {
-                                Core.Logger.Error($"An unexpected error occurred while migrating old save file, exception:\n{ex}");
+                                Core.Logger.Error($"An unexpected error occurred while migrating old save file", ex);
                             }
                         }
                         else
@@ -133,7 +133,7 @@ namespace KeepInventory.Managers
                     }
                     catch (Exception ex)
                     {
-                        Core.Logger.Error($"An unexpected error has occurred while attempting to check and migrate an old save file, exception:\n{ex}");
+                        Core.Logger.Error($"An unexpected error has occurred while attempting to check and migrate an old save file", ex);
                     }
                 }
             }
@@ -231,7 +231,7 @@ namespace KeepInventory.Managers
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"Unable to check the integrity of the file, because an unexpected error has occurred, exception:\n{ex}");
+                Core.Logger.Error($"Unable to check the integrity of the file, because an unexpected error has occurred", ex);
                 return false;
             }
             if (string.IsNullOrWhiteSpace(text) || !IsJSON(text) || text == "{}")
@@ -268,7 +268,7 @@ namespace KeepInventory.Managers
                 }
                 catch (Exception ex)
                 {
-                    Core.Logger.Error($"An unexpected error has occurred while deserializing save, exception:\n{ex}");
+                    Core.Logger.Error($"An unexpected error has occurred while deserializing save", ex);
                     return false;
                 }
             }
@@ -324,7 +324,7 @@ namespace KeepInventory.Managers
             LastWrite.Clear();
             FileSystemWatcher?.Dispose();
             FileSystemWatcher = new SynchronousFileSystemWatcher(SavesDirectory) { EnableRaisingEvents = true };
-            FileSystemWatcher.Error += (x, y) => Core.Logger.Error($"An unexpected error was thrown by the file watcher for the saves, exception:\n{y.GetException()}");
+            FileSystemWatcher.Error += (x, y) => Core.Logger.Error($"An unexpected error was thrown by the file watcher for the saves", y.GetException());
             FileSystemWatcher.Deleted += (x, y) =>
             {
                 if (IsIgnored(y.FullPath)) return;

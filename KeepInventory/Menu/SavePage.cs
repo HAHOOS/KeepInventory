@@ -174,7 +174,6 @@ namespace KeepInventory.Menu
                 {
                     Core.CurrentSave = CurrentSave;
                     BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.Color}>{CurrentSave}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
-                    Setup();
                 }
                 else
                 {
@@ -415,7 +414,7 @@ namespace KeepInventory.Menu
                         catch (Exception ex)
                         {
                             BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
-                            Core.Logger.Error($"An unexpected error has occurred while trying to share save, exception:\n{ex}");
+                            Core.Logger.Error($"An unexpected error has occurred while trying to share save", ex);
                         }
                     });
                     SharePage.CreateBlank();
@@ -440,7 +439,7 @@ namespace KeepInventory.Menu
                 }
                 catch (Exception ex)
                 {
-                    Core.Logger.Error($"An unexpected error occurred while setting up share page:\n{ex}");
+                    Core.Logger.Error($"An unexpected error occurred while setting up share page", ex);
                 }
             }
         }

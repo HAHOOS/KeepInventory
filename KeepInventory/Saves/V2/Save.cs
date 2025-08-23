@@ -273,7 +273,7 @@ namespace KeepInventory.Saves.V2
                 }
                 catch (Exception ex)
                 {
-                    if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file, exception:\n{ex}");
+                    if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file", ex);
                     Saving = false;
                     throw;
                 }

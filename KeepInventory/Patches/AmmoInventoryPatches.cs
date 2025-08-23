@@ -31,7 +31,7 @@ namespace KeepInventory.Patches
             }
             catch (Exception ex)
             {
-                Core.Logger.Error($"An unexpected error has occurred while attempting to add saved ammo, exception:\n{ex}");
+                Core.Logger.Error($"An unexpected error has occurred while attempting to add saved ammo", ex);
             }
             finally
             {

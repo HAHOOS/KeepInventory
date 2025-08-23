@@ -48,7 +48,11 @@ namespace KeepInventory.Managers
                 description: "If true, will save and load data about guns stored in slots, info such as rounds left etc.");
             DefaultSave = PrefsCategory.CreateEntry<string>("DefaultSave", string.Empty, "Default Save",
                 description: "ID of the save that will be used for things such as loading inventory on load or saving the inventory on level unload");
-
+            DefaultSave.OnEntryValueChanged.Subscribe((_, _) =>
+            {
+                if (!Core.Deinit)
+                    BoneMenu.SetupSaves();
+            });
             SaveOnLevelUnload = PrefsCategory.CreateEntry<bool>("SaveOnLevelUnload", true, "Save On Level Unload",
                 description: "If true, during level unload, the inventory will be automatically saved");
             LoadOnLevelLoad = PrefsCategory.CreateEntry<bool>("LoadOnLevelLoad", true, "Load On Level Load",
