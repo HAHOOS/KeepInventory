@@ -13,6 +13,7 @@ using Il2CppSLZ.VRMK;
 
 using KeepInventory.Helper;
 using KeepInventory.Managers;
+using KeepInventory.Menu;
 using KeepInventory.Saves.V2;
 
 using MelonLoader.Pastel;
@@ -54,14 +55,14 @@ namespace KeepInventory.Utilities
             {
                 if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(sender, out LabFusion.Entities.NetworkPlayer player))
                 {
-                    if (!SaveManager.Saves.Any(x => x.ID == save.ID))
+                    if (!SaveManager.Saves.Any(x => x.ID == save.ID) && LabFusion.Network.MetadataHelper.TryGetDisplayName(player.PlayerID, out string name))
                     {
                         LabFusion.UI.Popups.Notifier.Send(new LabFusion.UI.Popups.Notification()
                         {
                             Title = "KeepInventory | Save shared!",
                             SaveToMenu = true,
                             ShowPopup = true,
-                            Message = $"{player.Username} has shared a save with you called '<color=#{save.DrawingColor.ToHEX()}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
+                            Message = $"{name} has shared a save with you called '<color=#{save.DrawingColor.ToHEX()}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
                             PopupLength = 15f,
                             Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
                             OnAccepted = () => SaveManager.RegisterSave(save),
@@ -70,6 +71,28 @@ namespace KeepInventory.Utilities
                     }
                 }
             };
+            LabFusion.Utilities.MultiplayerHooking.OnStartedServer += OnJoinLeave;
+            LabFusion.Utilities.MultiplayerHooking.OnJoinedServer += OnJoinLeave;
+            LabFusion.Utilities.MultiplayerHooking.OnDisconnected += OnJoinLeave;
+        }
+
+        public static bool SharingEnabled
+        {
+            get
+            {
+                if (Core.IsFusionLibraryInitialized && Core.HasFusion)
+                    return Internal_SharingEnabled();
+                else
+                    return false;
+            }
+        }
+
+        private static bool Internal_SharingEnabled()
+            => KeepInventory.Fusion.Managers.ShareManager.Entry_SharingEnabled?.Value ?? false;
+
+        private static void OnJoinLeave()
+        {
+            BoneMenu.SetupSaves();
         }
 
         internal static bool Internal_IsConnected()
@@ -94,10 +117,12 @@ namespace KeepInventory.Utilities
         {
             var plrs = KeepInventory.Fusion.Managers.ShareManager.GetAllShareablePlayers();
             List<FusionPlayer> players = [];
-            foreach (var player in LabFusion.Entities.NetworkPlayer.Players)
+            foreach (var plr in plrs)
             {
-                if (player != null && plrs.Contains(player.PlayerID.SmallID))
-                    players.Add(new FusionPlayer(player.PlayerID.SmallID, player.PlayerID.PlatformID, player.Username));
+                var player = LabFusion.Player.PlayerIDManager.GetPlayerID(plr);
+                if (player == null) continue;
+                else if (LabFusion.Network.MetadataHelper.TryGetDisplayName(player, out string name))
+                    players.Add(new FusionPlayer(plr, player.PlatformID, name));
             }
             return players;
         }

@@ -159,7 +159,7 @@ namespace KeepInventory.Managers
                                         var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
                                         var awaiter = task.GetAwaiter();
                                         void notGun() => action(receiver._weaponHost.GetHostGameObject());
-                                        awaiter.OnCompleted(notGun);
+                                        awaiter.OnCompleted((Il2CppSystem.Action)notGun);
                                     }
                                 }
                                 else

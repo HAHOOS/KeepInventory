@@ -24,6 +24,7 @@ namespace KeepInventory.Saves.V2
             Other
         }
 
+        [JsonConstructor]
         public SaveSlot()
         { }
 

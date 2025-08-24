@@ -12,6 +12,10 @@ using UnityEngine;
 
 namespace KeepInventory.Saves.V2
 {
+    [JsonSourceGenerationOptions(WriteIndented = true,
+            IncludeFields = true,
+            IgnoreReadOnlyFields = false,
+            IgnoreReadOnlyProperties = false)]
     public class Save
     {
         [JsonPropertyName("Version")]
@@ -146,6 +150,7 @@ namespace KeepInventory.Saves.V2
             }
         }
 
+        [JsonConstructor]
         public Save()
         {
         }
@@ -161,7 +166,6 @@ namespace KeepInventory.Saves.V2
             _inventorySlots = [.. old.InventorySlots];
         }
 
-        [JsonConstructor]
         public Save(int Version, string Name, string ID, float[] Color, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
         {
             if (Version != 2)

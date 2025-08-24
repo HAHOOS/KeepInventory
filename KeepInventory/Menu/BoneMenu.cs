@@ -236,7 +236,7 @@ namespace KeepInventory.Menu
             {
                 foreach (var player in players)
                 {
-                    var element = SharingBlacklistPage.CreateToggleFunction(player.DisplayName, Color.white, null);
+                    var element = SharingBlacklistPage.CreateToggleFunction(player.DisplayName, Color.white, null, Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Contains(player.PlatformID));
                     element.OnStart += () =>
                     {
                         Fusion.Managers.ShareManager.Entry_SharingBlacklist.Value.Add(player.PlatformID);

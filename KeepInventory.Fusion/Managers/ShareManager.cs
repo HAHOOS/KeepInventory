@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using KeepInventory.Fusion.Messages;
 using KeepInventory.Managers;
@@ -15,6 +14,7 @@ using LabFusion.Utilities;
 
 using MelonLoader;
 using MelonLoader.Utils;
+using KeepInventory.Helper;
 
 namespace KeepInventory.Fusion.Managers
 {
@@ -41,6 +41,8 @@ namespace KeepInventory.Fusion.Managers
             Category.SetFilePath(Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory", "Sharing.cfg"));
             Category.SaveToFile(false);
             LocalPlayer.OnApplyInitialMetadata += InitialMetadata;
+            MultiplayerHooking.OnStartedServer += InitialMetadata;
+            MultiplayerHooking.OnJoinedServer += InitialMetadata;
             IsSetup = true;
         }
 
@@ -123,14 +125,18 @@ namespace KeepInventory.Fusion.Managers
                 {
                     if (Entry_SharingBlacklist.Value.Contains(id.PlatformID))
                         return true;
-                    else if (id.Metadata.Metadata.TryGetMetadata(SHARING_KEY, out string val) && val == bool.TrueString)
-                        result.Add(id.SmallID);
                 }
                 return false;
             }))
             {
                 return [];
             }
+
+            LabFusion.Player.PlayerIDManager.PlayerIDs.ForEach(id =>
+            {
+                if (id.Metadata.Metadata.TryGetMetadata(SHARING_KEY, out string val) && val == bool.TrueString)
+                    result.Add(id.SmallID);
+            });
 
             return result;
         }

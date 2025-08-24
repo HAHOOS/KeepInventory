@@ -78,7 +78,7 @@ namespace KeepInventory.Menu
         public FunctionElement SaveInventoryFunction { get; private set; }
         public FunctionElement LoadInventoryFunction { get; private set; }
 
-        public List<byte> SelectedPlayers { get; }
+        public List<byte> SelectedPlayers { get; } = [];
 
         public void Clear()
         {
@@ -88,6 +88,8 @@ namespace KeepInventory.Menu
             SlotsPage?.RemoveAll();
             SharePage?.RemoveAll();
             ColorPage?.RemoveAll();
+
+            ShareLink = null;
 
             ID = null;
             Name = null;
@@ -103,11 +105,6 @@ namespace KeepInventory.Menu
 
             Core.DefaultSaveChanged -= Setup;
             CurrentSave.OnPropertyChanged -= PropertyChanged;
-        }
-
-        private static bool SharingEnabled()
-        {
-            return LabFusion.Network.NetworkInfo.HasServer;
         }
 
         private void PropertyChanged(string name, object oldVal, object newVal)
@@ -159,12 +156,13 @@ namespace KeepInventory.Menu
 
             if (Core.HasFusion && Core.IsFusionLibraryInitialized)
             {
-                if (SharingEnabled())
+                if (Utilities.Fusion.IsConnected && Utilities.Fusion.SharingEnabled)
                 {
                     SharePage ??= Page.CreatePage("Share", Color.cyan, 0, false);
                     ShareLink ??= Page.CreatePageLink(SharePage);
                     SetupShare();
                 }
+
                 SetupFusion();
             }
 
@@ -390,9 +388,10 @@ namespace KeepInventory.Menu
 
         internal void SetupShare()
         {
-            if (!SharingEnabled())
+            if (!Core.IsFusionLibraryInitialized || !Utilities.Fusion.IsConnected || !Utilities.Fusion.SharingEnabled)
             {
                 Page.Remove(ShareLink);
+                ShareLink = null;
                 if (BoneLib.BoneMenu.Menu.CurrentPage == SharePage)
                     BoneLib.BoneMenu.Menu.OpenPage(Page);
             }
@@ -431,9 +430,13 @@ namespace KeepInventory.Menu
                     {
                         foreach (var player in players)
                         {
-                            var element = SharePage.CreateToggleFunction(player.DisplayName, Color.white, null, SelectedPlayers.Contains(player.SmallID));
-                            element.OnStart += () => SelectedPlayers.Add(player.SmallID);
-                            element.OnCancel += () => SelectedPlayers.Remove(player.SmallID);
+                            SharePage.CreateToggleFunction(player.DisplayName, Color.white, new Color(0, 1, 0), (elem) =>
+                            {
+                                if (elem.IsRunning)
+                                    SelectedPlayers.Add(player.SmallID);
+                                else
+                                    SelectedPlayers.Remove(player.SmallID);
+                            }, SelectedPlayers.Contains(player.SmallID));
                         }
                     }
                 }

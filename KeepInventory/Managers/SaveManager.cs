@@ -14,6 +14,7 @@ using MelonLoader.Utils;
 using KeepInventory.Helper;
 using KeepInventory.Saves.V2;
 using KeepInventory.Utilities;
+using KeepInventory.Menu;
 
 namespace KeepInventory.Managers
 {
@@ -175,6 +176,9 @@ namespace KeepInventory.Managers
                     file.Dispose();
                 }
             }
+            if (BoneMenu.IsSetup && !Core.Deinit)
+                BoneMenu.SetupSaves();
+
             Core.Logger.Msg($"Registered save with ID '{save.ID}'");
         }
 
