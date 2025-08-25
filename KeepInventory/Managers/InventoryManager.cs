@@ -236,22 +236,24 @@ namespace KeepInventory.Managers
             if (ammoInventory == null)
             {
                 Core.Logger.Error("Ammo inventory is null");
-                return;
-            }
-            if (!HelperMethods.CheckIfAssemblyLoaded("infiniteammo"))
-            {
-                ammoInventory.ClearAmmo();
-                Core.Logger.Msg($"Adding light ammo: {save.LightAmmo}");
-                AddAmmo(AmmoType.Light, save.LightAmmo);
-                Core.Logger.Msg($"Adding medium ammo: {save.MediumAmmo}");
-                AddAmmo(AmmoType.Medium, save.MediumAmmo);
-                Core.Logger.Msg($"Adding heavy ammo: {save.HeavyAmmo}");
-                AddAmmo(AmmoType.Heavy, save.HeavyAmmo);
             }
             else
             {
-                Core.Logger.Warning("Game contains InfiniteAmmo mod, not adding ammo");
-                return;
+                if (!HelperMethods.CheckIfAssemblyLoaded("infiniteammo"))
+                {
+                    ammoInventory.ClearAmmo();
+                    Core.Logger.Msg($"Adding light ammo: {save.LightAmmo}");
+                    AddAmmo(AmmoType.Light, save.LightAmmo);
+                    Core.Logger.Msg($"Adding medium ammo: {save.MediumAmmo}");
+                    AddAmmo(AmmoType.Medium, save.MediumAmmo);
+                    Core.Logger.Msg($"Adding heavy ammo: {save.HeavyAmmo}");
+                    AddAmmo(AmmoType.Heavy, save.HeavyAmmo);
+                }
+                else
+                {
+                    Core.Logger.Warning("Game contains InfiniteAmmo mod, not adding ammo");
+                    return;
+                }
             }
             if (!PreferencesManager.ItemSaving.Value)
             {
