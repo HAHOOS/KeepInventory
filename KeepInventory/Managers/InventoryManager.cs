@@ -1,18 +1,19 @@
 ﻿using System;
 using System.Linq;
-
-using Il2CppSLZ.Marrow;
-using Il2CppSLZ.Marrow.Pool;
-using Il2CppSLZ.Marrow.Warehouse;
-using Il2CppSLZ.Marrow.Utilities;
+using System.Text.RegularExpressions;
 
 using BoneLib;
 
-using UnityEngine;
+using Il2CppSLZ.Marrow;
+using Il2CppSLZ.Marrow.Pool;
+using Il2CppSLZ.Marrow.Utilities;
+using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
 using KeepInventory.Patches;
 using KeepInventory.Saves.V2;
+
+using UnityEngine;
 
 namespace KeepInventory.Managers
 {
@@ -34,42 +35,34 @@ namespace KeepInventory.Managers
                 {
                     Core.Logger.Msg("Saving items in inventory slots");
 
-                    bool notFound = false;
-                    var rigManager = Player.RigManager;
-                    if (rigManager == null)
-                    {
-                        Core.Logger.Warning("RigManager does not exist, cannot save inventory slots");
-                        notFound = true;
-                    }
-
-                    if (!notFound)
+                    if (Player.RigManager != null)
                     {
                         save.InventorySlots?.Clear();
-                        foreach (var item in rigManager.GetAllSlots())
+                        foreach (var item in Player.RigManager.GetAllSlots())
                         {
-                            if (item == null || item?._weaponHost == null || item?._weaponHost.GetTransform() == null) continue;
-                            if (item?._weaponHost != null)
+                            var transform = item?._weaponHost?.GetTransform();
+                            if (transform == null)
+                                continue;
+
+                            var gun = transform.GetComponent<Gun>();
+                            GunInfo gunInfo = null;
+                            if (gun != null)
+                                gunInfo = GunInfo.Parse(gun);
+
+                            var poolee = transform.GetComponent<Poolee>();
+                            string name = item.GetSlotName();
+                            if (poolee != null)
                             {
-                                var gun = item._weaponHost.GetTransform().GetComponent<Gun>();
-                                GunInfo gunInfo = null;
-                                if (gun != null)
-                                {
-                                    gunInfo = GunInfo.Parse(gun);
-                                }
-                                var poolee = item._weaponHost.GetTransform().GetComponent<Poolee>();
-                                if (poolee != null)
-                                {
-                                    string name = item.GetSlotName();
-                                    var barcode = poolee.SpawnableCrate.Barcode;
-                                    if (gunInfo != null && PreferencesManager.SaveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
-                                        save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
-                                    else
-                                        save.InventorySlots.Add(new SaveSlot(name, barcode));
-                                }
+                                var barcode = poolee.SpawnableCrate.Barcode;
+                                Core.Logger.Msg($"[{name}] Saving slot: {RemoveUnityRichText(poolee.SpawnableCrate.Title)} ({barcode})");
+                                if (gunInfo != null && PreferencesManager.SaveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
+                                    save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
                                 else
-                                {
-                                    Core.Logger.Warning($"[{item.transform.parent.name}] Could not find poolee of the spawnable in the inventory slot");
-                                }
+                                    save.InventorySlots.Add(new SaveSlot(name, barcode));
+                            }
+                            else
+                            {
+                                Core.Logger.Warning($"[{name}] Could not find poolee of the spawnable in the inventory slot");
                             }
                         }
                         if (save.InventorySlots.Count == 0)
@@ -79,18 +72,16 @@ namespace KeepInventory.Managers
                     }
                     else
                     {
-                        Core.Logger.Error("Could not save inventory, because some required game objects were not found. Items from the earlier save will be kept");
-                        if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, because some required game objects were not found, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
+                        Core.Logger.Error("Could not save inventory, because the RigManager is missing");
+                        if (notifications) BLHelper.SendNotification("Failure", "Failed to save the inventory, because the RigManager is missing", true, 5f, BoneLib.Notifications.NotificationType.Error);
                     }
                 }
                 if (PreferencesManager.AmmoSaving.Value)
                 {
                     save.LightAmmo = AmmoManager.GetValue("light");
-                    Core.Logger.Msg("Saved Light Ammo: " + save.LightAmmo);
                     save.MediumAmmo = AmmoManager.GetValue("medium");
-                    Core.Logger.Msg("Saved Medium Ammo: " + save.MediumAmmo);
                     save.HeavyAmmo = AmmoManager.GetValue("heavy");
-                    Core.Logger.Msg("Saved Heavy Ammo: " + save.HeavyAmmo);
+                    Core.Logger.Msg($"Saved ammo {save.LightAmmo}L / {save.MediumAmmo}M / {save.HeavyAmmo}H");
                 }
                 save.SaveToFile(true);
                 Core.Logger.Msg("Successfully saved inventory");
@@ -150,28 +141,13 @@ namespace KeepInventory.Managers
                                         }
                                     }
 
-                                    if (Core.HasFusion && Utilities.Fusion.IsConnected)
-                                    {
-                                        receiver.SpawnInSlot(crate.Crate.Barcode, action);
-                                    }
-                                    else
-                                    {
-                                        var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
-                                        var awaiter = task.GetAwaiter();
-                                        void notGun() => action(receiver._weaponHost.GetHostGameObject());
-                                        awaiter.OnCompleted((Il2CppSystem.Action)notGun);
-                                    }
+                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
+                                    receiver.SpawnInSlot(crate.Crate.Barcode, action);
                                 }
                                 else
                                 {
-                                    if (Core.HasFusion && Utilities.Fusion.IsConnected)
-                                    {
-                                        receiver.SpawnInSlot(crate.Crate.Barcode);
-                                    }
-                                    else
-                                    {
-                                        var task = receiver.SpawnInSlotAsync(crate.Crate.Barcode);
-                                    }
+                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
+                                    receiver.SpawnInSlot(crate.Crate.Barcode);
                                 }
                             }
                             else
@@ -198,6 +174,14 @@ namespace KeepInventory.Managers
                 Core.Logger.Error("An error occurred while loading the inventory", ex);
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
+        }
+
+        public static string RemoveUnityRichText(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return "N/A";
+
+            return Regex.Replace(text, "<(.*?)>", string.Empty);
         }
 
         private static void AddAmmo(AmmoType type, int count)
@@ -242,11 +226,9 @@ namespace KeepInventory.Managers
                 if (!HelperMethods.CheckIfAssemblyLoaded("infiniteammo"))
                 {
                     ammoInventory.ClearAmmo();
-                    Core.Logger.Msg($"Adding light ammo: {save.LightAmmo}");
+                    Core.Logger.Msg($"Adding ammo {save.LightAmmo}L / {save.MediumAmmo}M / {save.HeavyAmmo}H");
                     AddAmmo(AmmoType.Light, save.LightAmmo);
-                    Core.Logger.Msg($"Adding medium ammo: {save.MediumAmmo}");
                     AddAmmo(AmmoType.Medium, save.MediumAmmo);
-                    Core.Logger.Msg($"Adding heavy ammo: {save.HeavyAmmo}");
                     AddAmmo(AmmoType.Heavy, save.HeavyAmmo);
                 }
                 else
