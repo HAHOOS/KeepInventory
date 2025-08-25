@@ -5,8 +5,6 @@ using System.Collections.Generic;
 
 using BoneLib.BoneMenu;
 
-using MelonLoader;
-
 using UnityEngine;
 
 using KeepInventory.Helper;

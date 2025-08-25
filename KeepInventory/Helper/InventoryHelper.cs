@@ -61,13 +61,13 @@ namespace KeepInventory.Helper
                 receiver._weaponHost?.ForceDetach();
                 receiver.DropWeapon();
             }
+
             var task = receiver.SpawnInSlotAsync(barcode);
-            var awaiter = task.GetAwaiter();
-            awaiter.OnCompleted((Il2CppSystem.Action)(() =>
+            if (callback != null)
             {
-                if (awaiter.GetResult())
-                    callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
-            }));
+                var awaiter = task.GetAwaiter();
+                awaiter.OnCompleted((Il2CppSystem.Action)(() => callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject)));
+            }
         }
     }
 }

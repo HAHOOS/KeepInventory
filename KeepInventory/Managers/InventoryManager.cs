@@ -137,7 +137,10 @@ namespace KeepInventory.Managers
                                         if (item.GunInfo != null && obj != null)
                                         {
                                             foreach (var gun in obj.GetComponents<Gun>())
+                                            {
+                                                Core.Logger.Msg($"[{item.SlotName}] Applying gun info for item: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
                                                 gun.UpdateProperties(item.GunInfo);
+                                            }
                                         }
                                     }
 
