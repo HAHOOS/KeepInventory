@@ -267,7 +267,7 @@ namespace KeepInventory.Utilities
                     callback?.Invoke();
                 }
 
-                awaiter.OnCompleted((Action)something);
+                awaiter.OnCompleted((Il2CppSystem.Action)something);
             }
         }
 

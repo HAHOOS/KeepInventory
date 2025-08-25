@@ -63,7 +63,7 @@ namespace KeepInventory.Helper
             }
             var task = receiver.SpawnInSlotAsync(barcode);
             var awaiter = task.GetAwaiter();
-            awaiter.OnCompleted((Action)(() =>
+            awaiter.OnCompleted((Il2CppSystem.Action)(() =>
             {
                 if (awaiter.GetResult())
                     callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject);
