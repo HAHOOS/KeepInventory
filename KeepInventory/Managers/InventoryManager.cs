@@ -124,7 +124,8 @@ namespace KeepInventory.Managers
 
                     foreach (var item in save.InventorySlots)
                     {
-                        void spawn(InventorySlotReceiver receiver)
+                        InventorySlotReceiver slot = rigManager.FindSlot(item.SlotName);
+                        if (slot != null)
                         {
                             if (MarrowGame.assetWarehouse.HasCrate(new Barcode(item.Barcode)))
                             {
@@ -145,12 +146,12 @@ namespace KeepInventory.Managers
                                     }
 
                                     Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
-                                    receiver.SpawnInSlot(crate.Crate.Barcode, action);
+                                    slot.SpawnInSlot(crate.Crate.Barcode, action);
                                 }
                                 else
                                 {
                                     Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
-                                    receiver.SpawnInSlot(crate.Crate.Barcode);
+                                    slot.SpawnInSlot(crate.Crate.Barcode);
                                 }
                             }
                             else
@@ -158,11 +159,10 @@ namespace KeepInventory.Managers
                                 Core.Logger.Warning($"[{item.SlotName}] Could not find crate with the following barcode: {item.Barcode}");
                             }
                         }
-                        InventorySlotReceiver slot = rigManager.FindSlot(item.SlotName);
-                        if (slot != null)
-                            spawn(slot);
                         else
+                        {
                             Core.Logger.Warning($"[{item.SlotName}] No slot was found with the provided name. It is possible that an avatar that was used during the saving had more slots than the current one");
+                        }
                     }
                 }
                 else
