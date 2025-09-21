@@ -12,9 +12,8 @@ namespace KeepInventory.Helper
 {
     public static class InventoryHelper
     {
-        public static readonly Dictionary<string, string> Aliases = new() {
-            {"HeadSlotContainer", "Head" }
-        };
+        private static Dictionary<string, string> _aliases = new() { { "HeadSlotContainer", "Head" } };
+        public static Dictionary<string, string> Aliases => _aliases;
 
         public static List<InventorySlotReceiver> GetAllSlots(this RigManager rigManager)
         {
