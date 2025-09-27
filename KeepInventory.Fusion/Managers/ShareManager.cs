@@ -121,12 +121,7 @@ namespace KeepInventory.Fusion.Managers
             if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(x =>
             {
                 var id = PlayerIDManager.GetPlayerID(x);
-                if (id != null)
-                {
-                    if (Entry_SharingBlacklist.Value.Contains(id.PlatformID))
-                        return true;
-                }
-                return false;
+                return id != null && Entry_SharingBlacklist.Value.Contains(id.PlatformID);
             }))
             {
                 return [];

@@ -9,9 +9,9 @@ namespace KeepInventory.Menu
     public class ToggleFunctionElement
     {
         public readonly FunctionElement Element;
-        public Action<ToggleFunctionElement> Callback;
-        public Color OffColor;
-        public Color OnColor;
+        public Action<ToggleFunctionElement> Callback { get; set; }
+        public Color OffColor { get; set; }
+        public Color OnColor { get; set; }
         public bool IsRunning { get; private set; }
 
         public event Action OnStart;

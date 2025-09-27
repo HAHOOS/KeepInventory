@@ -19,7 +19,7 @@ namespace KeepInventory.Managers
 {
     public static class InventoryManager
     {
-        internal static bool LoadAmmoOnAwake = false;
+        internal static bool LoadAmmoOnAwake { get; set; }
 
         public static void SaveInventory(Save save, bool notifications = false)
         {
@@ -120,8 +120,6 @@ namespace KeepInventory.Managers
                         return;
                     }
 
-                    var list = rigManager.GetComponentsInChildren<InventorySlotReceiver>().ToList();
-
                     foreach (var item in save.InventorySlots)
                     {
                         InventorySlotReceiver slot = rigManager.FindSlot(item.SlotName);
@@ -195,7 +193,12 @@ namespace KeepInventory.Managers
                 Core.Logger.Warning("Game contains InfiniteAmmo mod, not adding ammo");
                 return;
             }
-            var ammoInventory = AmmoInventory.Instance ?? throw new Exception("Ammo inventory is null");
+            var ammoInventory = AmmoInventory.Instance;
+            if (ammoInventory == null)
+            {
+                Core.Logger.Error("Ammo Inventory is null");
+                return;
+            }
             ammoInventory._groupCounts[type.ToString().ToLower()] = count;
             ammoInventory.onAmmoUpdateCount?.Invoke(type.ToString().ToLower(), count);
             ammoInventory.onAmmoUpdate?.Invoke();

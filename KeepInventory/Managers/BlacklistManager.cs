@@ -45,17 +45,17 @@ namespace KeepInventory.Managers
         public static bool HasItem(string id)
             => _blacklist.Any(x => x.ID == id);
 
-        public static bool IsLevelBlacklisted(Barcode barcode)
+        public static bool IsLevelBlacklisted(this Barcode barcode)
             => _blacklist.Any(x => x.Enabled && x.Levels.Any(x => x.IsBlacklisted && x.Barcode == barcode.ID));
 
-        public static bool IsLevelInBlacklist(Barcode barcode)
+        public static bool IsLevelBlacklisted(this LevelCrate level)
+            => IsLevelBlacklisted(level?.Barcode);
+
+        public static bool IsLevelBlacklisted(this LevelCrateReference level)
+            => IsLevelBlacklisted(level?.Barcode);
+
+        public static bool IsLevelInBlacklist(this Barcode barcode)
             => _blacklist.Any(x => x.Levels.Any(x => x.IsBlacklisted && x.Barcode == barcode.ID));
-
-        public static bool IsLevelBlacklisted(this LevelCrate levelCrate)
-            => IsLevelBlacklisted(levelCrate.Barcode);
-
-        public static bool IsLevelBlacklisted(this LevelCrateReference levelCrate)
-           => IsLevelBlacklisted(levelCrate.Barcode);
 
         public static bool HasLevel(string id, string barcode)
         {

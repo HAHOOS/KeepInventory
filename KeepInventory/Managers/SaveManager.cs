@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Ignore Spelling: Unregister
+
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -24,7 +26,7 @@ namespace KeepInventory.Managers
 
         private static readonly List<Save> _Saves = [];
 
-        internal static List<string> IgnoredFilePaths = [];
+        internal static List<string> IgnoredFilePaths { get; } = [];
 
         public static readonly JsonSerializerOptions SerializeOptions = new()
         {
@@ -149,7 +151,7 @@ namespace KeepInventory.Managers
 
         public static void RegisterSave(Save save, bool createFile = true)
         {
-            ArgumentNullException.ThrowIfNull(save, nameof(save));
+            ArgumentNullException.ThrowIfNull(save);
             if (string.IsNullOrWhiteSpace(save.ID))
             {
                 throw new ArgumentNullException(nameof(save), "ID cannot be empty or null!");

@@ -10,16 +10,16 @@ namespace KeepInventory.Saves.V1
         public readonly int Version = 1;
 
         [TomlPrecedingComment("The amount of light ammo left")]
-        public int LightAmmo;
+        public int LightAmmo { get; set; }
 
         [TomlPrecedingComment("The amount of medium ammo left")]
-        public int MediumAmmo;
+        public int MediumAmmo { get; set; }
 
         [TomlPrecedingComment("The amount of heavy ammo left")]
-        public int HeavyAmmo;
+        public int HeavyAmmo { get; set; }
 
         [TomlPrecedingComment("List of all slots & the spawnables stored in them")]
-        public List<SaveSlot> InventorySlots = [];
+        public List<SaveSlot> InventorySlots { get; set; } = [];
 
         public Save()
         { }

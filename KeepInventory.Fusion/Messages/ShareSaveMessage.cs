@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿// Ignore Spelling: serializer
+
+using System.Text.Json;
 
 using KeepInventory.Fusion.Managers;
 using KeepInventory.Managers;
@@ -15,15 +17,37 @@ namespace KeepInventory.Fusion.Messages
 {
     public class ShareSaveMessageData : INetSerializable
     {
-        public byte Sender;
-        public string Data;
+        private byte _sender;
+
+        // I have no clue how to resolve this warning, tried everything, so I'm just gonna disable it here
+#pragma warning disable S2292 // Trivial properties should be auto-implemented
+
+        public byte Sender
+        {
+            get => _sender;
+            set => _sender = value;
+        }
+
+        private string _data;
+
+        public string Data
+        {
+            get => _data;
+            set => _data = value;
+        }
+
+#pragma warning restore S2292 // Trivial properties should be auto-implemented
+
         public Save Save => JsonSerializer.Deserialize<Save>(Data, SaveManager.SerializeOptions);
 
-        public void Serialize(INetSerializer writer)
+        public void Serialize(INetSerializer serializer)
         {
-            writer.SerializeValue(ref Sender);
-            writer.SerializeValue(ref Data);
+            serializer.SerializeValue(ref _sender);
+            serializer.SerializeValue(ref _data);
         }
+
+        public static ShareSaveMessageData Create(byte sender, string data)
+            => new() { Sender = sender, _data = data };
     }
 
     public class ShareSaveMessage : ModuleMessageHandler
@@ -33,7 +57,7 @@ namespace KeepInventory.Fusion.Messages
             var message = received.ReadData<ShareSaveMessageData>();
             if (message == null)
             {
-                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel("#6495ED")}] The received message could not be read or was null");
+                FusionModule.MsgFusionPrefix("[ShareSave] The received message could not be read or was null");
                 return;
             }
 
@@ -42,7 +66,7 @@ namespace KeepInventory.Fusion.Messages
 
             if (!ShareManager.IsPlayerAllowed(id))
             {
-                FusionModule.MsgFusionPrefix($"[{"ShareSave".Pastel("#6495ED")}] A blacklisted player tried to share a save with you");
+                FusionModule.MsgFusionPrefix("[ShareSave] A blacklisted player tried to share a save with you");
                 return;
             }
 

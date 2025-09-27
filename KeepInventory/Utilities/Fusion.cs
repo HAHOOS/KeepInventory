@@ -53,22 +53,20 @@ namespace KeepInventory.Utilities
         {
             KeepInventory.Fusion.Managers.ShareManager.OnShared += (save, sender) =>
             {
-                if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(sender, out LabFusion.Entities.NetworkPlayer player))
+                if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(sender, out LabFusion.Entities.NetworkPlayer player)
+                    && !SaveManager.Saves.Any(x => x.ID == save.ID) && LabFusion.Network.MetadataHelper.TryGetDisplayName(player.PlayerID, out string name))
                 {
-                    if (!SaveManager.Saves.Any(x => x.ID == save.ID) && LabFusion.Network.MetadataHelper.TryGetDisplayName(player.PlayerID, out string name))
+                    LabFusion.UI.Popups.Notifier.Send(new LabFusion.UI.Popups.Notification()
                     {
-                        LabFusion.UI.Popups.Notifier.Send(new LabFusion.UI.Popups.Notification()
-                        {
-                            Title = "KeepInventory | Save shared!",
-                            SaveToMenu = true,
-                            ShowPopup = true,
-                            Message = $"{name} has shared a save with you called '<color=#{save.DrawingColor.ToHEX()}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
-                            PopupLength = 15f,
-                            Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
-                            OnAccepted = () => SaveManager.RegisterSave(save),
-                            OnDeclined = () => Core.Logger.Msg("Save share ignored")
-                        });
-                    }
+                        Title = "KeepInventory | Save shared!",
+                        SaveToMenu = true,
+                        ShowPopup = true,
+                        Message = $"{name} has shared a save with you called '<color=#{save.DrawingColor.ToHEX()}>{save.Name}</color>'. Go to the LabFusion notifications menu, press accept to add save, decline will disregard this",
+                        PopupLength = 15f,
+                        Type = LabFusion.UI.Popups.NotificationType.INFORMATION,
+                        OnAccepted = () => SaveManager.RegisterSave(save),
+                        OnDeclined = () => Core.Logger.Msg("Save share ignored")
+                    });
                 }
             };
             LabFusion.Utilities.MultiplayerHooking.OnStartedServer += OnJoinLeave;
@@ -105,7 +103,7 @@ namespace KeepInventory.Utilities
             if (LabFusion.Entities.NetworkPlayerManager.TryGetPlayer(SmallID, out LabFusion.Entities.NetworkPlayer plr))
                 KeepInventory.Fusion.Managers.ShareManager.Share(save, plr.PlayerID);
             else
-                throw new Exception($"Player with small ID {SmallID} could not be found");
+                throw new KeyNotFoundException($"Player with small ID {SmallID} could not be found");
         }
 
         public static void ShareSave(byte SmallID, Save save)
@@ -253,6 +251,9 @@ namespace KeepInventory.Utilities
             }
             else
             {
+                // cant reproduce an issue so its kind of a desperate attempt to fix it
+                gun.ammoSocket.EjectMagazine();
+
                 var task = gun.ammoSocket.ForceLoadAsync(new MagazineData
                 {
                     spawnable = gun.defaultMagazine.spawnable,
@@ -263,7 +264,6 @@ namespace KeepInventory.Utilities
 
                 void something()
                 {
-                    gun.MagazineState.SetCartridge(rounds);
                     callback?.Invoke();
                 }
 

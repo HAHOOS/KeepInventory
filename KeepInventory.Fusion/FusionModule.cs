@@ -22,7 +22,7 @@ namespace KeepInventory.Fusion
 
         protected override void OnModuleRegistered()
         {
-            logger = LoggerInstance;
+            Logger = LoggerInstance;
             MsgFusionPrefix("Registering ShareSaveMessage");
             ModuleMessageManager.RegisterHandler<ShareSaveMessage>();
         }
@@ -31,9 +31,9 @@ namespace KeepInventory.Fusion
 
         public static event Action OnRigCreated;
 
-        internal static MelonLogger.Instance backupLogger;
+        internal static MelonLogger.Instance BackupLogger { get; private set; }
 
-        internal static ModuleLogger logger;
+        internal static ModuleLogger Logger { get; private set; }
 
         private static void RigCreated(RigManager manager)
         {
@@ -42,7 +42,7 @@ namespace KeepInventory.Fusion
 
         public static void Setup(MelonLogger.Instance _logger)
         {
-            backupLogger = _logger;
+            BackupLogger = _logger;
 
             LocalPlayer.OnLocalRigCreated -= RigCreated;
 
@@ -57,28 +57,28 @@ namespace KeepInventory.Fusion
 
         internal static void MsgFusionPrefix(string message)
         {
-            if (logger == null && backupLogger == null) return;
-            if (logger != null) logger.Log(message);
+            if (Logger == null && BackupLogger == null) return;
+            if (Logger != null) Logger.Log(message);
             else MsgPrefix("Fusion", message, "#00FFFF");
         }
 
         internal static void Warn(string message)
         {
-            if (logger == null && backupLogger == null) return;
-            if (logger != null) logger.Warn(message);
-            else backupLogger.Warning($"[Fusion] {message}");
+            if (Logger == null && BackupLogger == null) return;
+            if (Logger != null) Logger.Warn(message);
+            else BackupLogger.Warning($"[Fusion] {message}");
         }
 
         internal static void Error(string message)
         {
-            if (logger == null && backupLogger == null) return;
-            if (logger != null) logger.Error(message);
-            else backupLogger.Warning($"[Fusion] {message}");
+            if (Logger == null && BackupLogger == null) return;
+            if (Logger != null) Logger.Error(message);
+            else BackupLogger.Warning($"[Fusion] {message}");
         }
 
         internal static void MsgPrefix(string prefix, string message, string hex)
         {
-            backupLogger.Msg($"[{prefix.Pastel(hex)}] {message}");
+            BackupLogger.Msg($"[{prefix.Pastel(hex)}] {message}");
         }
     }
 }

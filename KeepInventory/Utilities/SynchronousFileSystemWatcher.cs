@@ -7,7 +7,7 @@ using MelonLoader;
 
 namespace KeepInventory.Utilities
 {
-    public class SynchronousFileSystemWatcher : IDisposable
+    public sealed class SynchronousFileSystemWatcher : IDisposable
     {
         private readonly FileSystemWatcher _watcher = new();
 

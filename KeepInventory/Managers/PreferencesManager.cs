@@ -10,6 +10,7 @@ using MelonLoader.Utils;
 
 namespace KeepInventory.Managers
 {
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Critical Code Smell", "S2223:Non-constant static fields should not be visible", Justification = "<Pending>")]
     internal static class PreferencesManager
     {
         public readonly static string KI_PreferencesDirectory = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory");

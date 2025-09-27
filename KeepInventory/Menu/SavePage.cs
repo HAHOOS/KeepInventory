@@ -114,7 +114,7 @@ namespace KeepInventory.Menu
                 return;
 
             if (Page == null)
-                throw new ArgumentNullException(nameof(Page));
+                return;
 
             Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
             Clear();
@@ -343,7 +343,7 @@ namespace KeepInventory.Menu
         internal void SetupAmmo()
         {
             if (AmmoPage == null)
-                throw new ArgumentNullException(nameof(AmmoPage));
+                return;
 
             AmmoPage.RemoveAll();
             int id = GetIncrementDecrement();

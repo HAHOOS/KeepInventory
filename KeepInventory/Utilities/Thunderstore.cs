@@ -12,7 +12,7 @@ namespace KeepInventory.Utilities
     public class Thunderstore
     {
         public readonly string UserAgent;
-        public bool IsV1Deprecated = false;
+        public bool IsV1Deprecated { get; set; }
 
         public Thunderstore(string userAgent)
         {
@@ -51,13 +51,13 @@ namespace KeepInventory.Utilities
             }
         }
 
-        public Package GetPackage(string @namespace, string name)
+        public Package GetPackage(string @namespace, string name, string version = null)
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", this.UserAgent);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
 
-            var request = client.GetAsync($"https://thunderstore.io/api/experimental/package/{@namespace}/{name}/");
+            var request = client.GetAsync($"https://thunderstore.io/api/experimental/package/{@namespace}/{name}/{version ?? string.Empty}");
             request.Wait();
             var result = request?.Result;
             if (request != null && result != null && request.IsCompletedSuccessfully)
@@ -88,7 +88,7 @@ namespace KeepInventory.Utilities
                     {
                         if (IsPackageNotFound(result))
                         {
-                            throw new ThunderstorePackageNotFoundException($"Thunderstore could not find a package with name '{name}' & namespace '{@namespace}'", @namespace, name, result);
+                            throw new ThunderstorePackageNotFoundException($"Thunderstore could not find a package with name '{name}' & namespace '{@namespace}'{(version != null ? $" & version {version}" : string.Empty)}", @namespace, name, result);
                         }
                         else
                         {
@@ -134,50 +134,6 @@ namespace KeepInventory.Utilities
                         if (IsPackageNotFound(result))
                         {
                             throw new ThunderstorePackageNotFoundException($"Thunderstore could not find a package with name '{name}' & namespace '{@namespace}'", @namespace, name, result);
-                        }
-                        else
-                        {
-                            throw new ThunderstoreErrorException("Thunderstore API has thrown an unexpected error!", result);
-                        }
-                    }
-                    else
-                    {
-                        result.EnsureSuccessStatusCode();
-                    }
-                }
-            }
-            return null;
-        }
-
-        public PackageVersion GetPackage(string @namespace, string name, string version)
-        {
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", this.UserAgent);
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
-
-            var request = client.GetAsync($"https://thunderstore.io/api/experimental/package/{@namespace}/{name}/{version}");
-            request.Wait();
-            var result = request?.Result;
-            if (request != null && result != null && request.IsCompletedSuccessfully)
-            {
-                if (result.IsSuccessStatusCode)
-                {
-                    var content = result.Content.ReadAsStringAsync();
-                    content.Wait();
-                    var result2 = content?.Result;
-                    if (content != null && result2 != null && content.IsCompletedSuccessfully)
-                    {
-                        var json = JsonSerializer.Deserialize<PackageVersion>(result2);
-                        return json;
-                    }
-                }
-                else
-                {
-                    if (IsThunderstoreError(result))
-                    {
-                        if (IsPackageNotFound(result))
-                        {
-                            throw new ThunderstorePackageNotFoundException($"Thunderstore could not find a package with name '{name}', namespace '{@namespace}' & version '{version}'", @namespace, name, version, result);
                         }
                         else
                         {
@@ -448,27 +404,27 @@ namespace KeepInventory.Utilities
         [JsonInclude]
         public string ReviewStatusString
         {
-            get { return ReviewStatus.ToString(); }
+            get { return ReviewStatusValue.ToString(); }
             internal set
             {
                 if (value == null) { throw new ArgumentNullException(nameof(value)); }
                 else
                 {
-                    if (string.Equals(value, "unreviewed", StringComparison.OrdinalIgnoreCase)) ReviewStatus = ReviewStatusEnum.UNREVIEWED;
-                    else if (string.Equals(value, "approved", StringComparison.OrdinalIgnoreCase)) ReviewStatus = ReviewStatusEnum.APPROVED;
-                    else if (string.Equals(value, "rejected", StringComparison.OrdinalIgnoreCase)) ReviewStatus = ReviewStatusEnum.REJECTED;
+                    if (string.Equals(value, "unreviewed", StringComparison.OrdinalIgnoreCase)) ReviewStatusValue = ReviewStatus.UNREVIEWED;
+                    else if (string.Equals(value, "approved", StringComparison.OrdinalIgnoreCase)) ReviewStatusValue = ReviewStatus.APPROVED;
+                    else if (string.Equals(value, "rejected", StringComparison.OrdinalIgnoreCase)) ReviewStatusValue = ReviewStatus.REJECTED;
                 }
             }
         }
 
         [JsonIgnore]
-        public ReviewStatusEnum ReviewStatus { get; internal set; }
+        public ReviewStatus ReviewStatusValue { get; internal set; }
 
-        public enum ReviewStatusEnum
+        public enum ReviewStatus
         {
-            UNREVIEWED,
-            APPROVED,
-            REJECTED
+            UNREVIEWED = 0,
+            APPROVED = 1,
+            REJECTED = 2
         }
     }
 

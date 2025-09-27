@@ -52,7 +52,7 @@ namespace KeepInventory.Saves.V2
         }
 
         [JsonIgnore]
-        public UnityEngine.Color DrawingColor = UnityEngine.Color.white;
+        public Color DrawingColor { get; set; } = UnityEngine.Color.white;
 
         [JsonPropertyName("Color")]
         public float[] Color
@@ -182,7 +182,7 @@ namespace KeepInventory.Saves.V2
             this._inventorySlots = InventorySlots;
 
             if (string.IsNullOrWhiteSpace(_id))
-                throw new Exception("ID cannot be null or empty");
+                throw new ArgumentNullException(nameof(ID), "ID cannot be null or empty");
         }
 
         public Save(string id, string name, Color color, V1.Save v1save)
@@ -247,6 +247,32 @@ namespace KeepInventory.Saves.V2
             if (this.LightAmmo != save.LightAmmo) this.LightAmmo = save.LightAmmo;
         }
 
+        internal void Update(string path)
+        {
+            SaveManager.IgnoredFilePaths.Add(FilePath);
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(nameof(path));
+            if (!File.Exists(path)) throw new FileNotFoundException($"Save file at '{path}' could be found");
+            var text = SaveManager.ReadAllTextUsedFile(path);
+            if (string.IsNullOrWhiteSpace(text) || !SaveManager.IsJSON(text))
+            {
+                Core.Logger.Error($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
+                throw new InvalidDataException($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
+            }
+            else
+            {
+                var save = JsonSerializer.Deserialize<Save>(text, SaveManager.SerializeOptions);
+                if (save != null)
+                {
+                    Update(save);
+                }
+                else
+                {
+                    Core.Logger.Error($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
+                    throw new InvalidDataException($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
+                }
+            }
+        }
+
         internal bool Saving = false;
 
         public void SaveToFile(bool printMessage = true)
@@ -299,32 +325,6 @@ namespace KeepInventory.Saves.V2
             catch (Exception)
             {
                 return false;
-            }
-        }
-
-        internal void Update(string path)
-        {
-            SaveManager.IgnoredFilePaths.Add(FilePath);
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentNullException(nameof(path));
-            if (!File.Exists(path)) throw new FileNotFoundException($"Save file at '{path}' could be found");
-            var text = SaveManager.ReadAllTextUsedFile(path);
-            if (string.IsNullOrWhiteSpace(text) || !SaveManager.IsJSON(text))
-            {
-                Core.Logger.Error($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
-                throw new Exception($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
-            }
-            else
-            {
-                var save = JsonSerializer.Deserialize<Save>(text, SaveManager.SerializeOptions);
-                if (save != null)
-                {
-                    Update(save);
-                }
-                else
-                {
-                    Core.Logger.Error($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
-                    throw new Exception($"A save file at '{path}' was changed and the content are no longer suitable for loading as a save. This means that the save at runtime will not be overwritten by new content");
-                }
             }
         }
 

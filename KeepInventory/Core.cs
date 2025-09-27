@@ -47,9 +47,7 @@ namespace KeepInventory
         public static Core Instance { get; internal set; }
 
         internal static MelonLogger.Instance Logger { get; private set; }
-
-        internal static FunctionElement statusElement;
-        internal static LevelInfo levelInfo;
+        public static LevelInfo LevelInfo { get; private set; }
         public static bool HasFusion => FindMelon("LabFusion", "Lakatrazz") != null;
         public static bool IsFusionLibraryInitialized { get; internal set; } = false;
         public static bool FailedFLLoad { get; internal set; } = false;
@@ -84,17 +82,16 @@ namespace KeepInventory
                     FailedFLLoad = true;
             }
 
-            if (!HasFusion)
-                Hooking.OnLevelLoaded += LevelLoadedEvent;
-            else
-                Utilities.Fusion.TargetLevelLoadEvent(() => LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level)));
+            Hooking.OnLevelLoaded += (lvl) => LevelLoadedEvent(lvl);
+            if (HasFusion)
+                Utilities.Fusion.TargetLevelLoadEvent(() => LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level), true));
 
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
             if (HasFusion) Utilities.Fusion.Setup();
 
-            BlacklistManager.Add(new("default_labworks", "LABWORKS", true, [
+            System.Collections.Generic.List<Level> labworks = [
                 new("volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen"),
                 new("volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu"),
                 new("volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom"),
@@ -111,8 +108,9 @@ namespace KeepInventory
                 new("volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom"),
                 new("volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01"),
                 new("volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02")
-            ]));
-            BlacklistManager.Add(new("default_bonelab", "BONELAB", true, [
+            ];
+
+            System.Collections.Generic.List<Level> bonelab = [
                 new(CommonBarcodes.Maps.Home),
                 new(CommonBarcodes.Maps.Ascent),
                 new(CommonBarcodes.Maps.Descent),
@@ -132,7 +130,10 @@ namespace KeepInventory
                 new(CommonBarcodes.Maps.DropPit),
                 new(CommonBarcodes.Maps.NeonTrial),
                 new(CommonBarcodes.Maps.MainMenu),
-            ]));
+            ];
+
+            BlacklistManager.Add(new("default_labworks", "LABWORKS", true, labworks));
+            BlacklistManager.Add(new("default_bonelab", "BONELAB", true, bonelab));
 
             PreferencesManager.Setup();
             SaveManager.Setup();
@@ -207,7 +208,7 @@ namespace KeepInventory
         {
             if (!PreferencesManager.SaveOnLevelUnload.Value) return;
 
-            if (!IsBlacklisted(levelInfo.levelReference.Barcode))
+            if (!IsBlacklisted(LevelInfo.levelReference.Barcode))
             {
                 if (CurrentSave != null)
                     InventoryManager.SaveInventory(CurrentSave);
@@ -220,10 +221,13 @@ namespace KeepInventory
             }
         }
 
-        private void LevelLoadedEvent(LevelInfo obj)
+        private void LevelLoadedEvent(LevelInfo obj, bool triggeredByFusion = false)
         {
+            if (triggeredByFusion && !Utilities.Fusion.IsConnected)
+                return;
+
             BoneMenu.SetupPredefinedBlacklists();
-            levelInfo = obj;
+            LevelInfo = obj;
             if (InitialLoad)
             {
                 if (FailedFLLoad)
@@ -250,8 +254,8 @@ namespace KeepInventory
                     {
                         try
                         {
-                            statusElement.ElementName = "Current level is not blacklisted";
-                            statusElement.ElementColor = Color.green;
+                            BoneMenu.StatusElement.ElementName = "Current level is not blacklisted";
+                            BoneMenu.StatusElement.ElementColor = Color.green;
 
                             InventoryManager.LoadSavedInventory(CurrentSave);
                         }
@@ -266,13 +270,13 @@ namespace KeepInventory
                 {
                     LoggerInstance.Warning("Not loading inventory because level is blacklisted");
                     BLHelper.SendNotification("This level is blacklisted from loading/saving inventory", "Blacklisted", true, 5f, BoneLib.Notifications.NotificationType.Warning);
-                    statusElement.ElementName = "Current level is blacklisted";
-                    statusElement.ElementColor = Color.red;
+                    BoneMenu.StatusElement.ElementName = "Current level is blacklisted";
+                    BoneMenu.StatusElement.ElementColor = Color.red;
                 }
             }
         }
 
         private static bool IsBlacklisted(Barcode barcode)
-            => BlacklistManager.IsLevelBlacklisted(barcode) || PreferencesManager.BlacklistedLevels.Value.Contains(barcode.ID);
+            => barcode.IsLevelBlacklisted() || PreferencesManager.BlacklistedLevels.Value.Contains(barcode.ID);
     }
 }

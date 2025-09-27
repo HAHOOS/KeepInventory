@@ -31,6 +31,8 @@ namespace KeepInventory.Menu
         public static bool IsSetup { get; private set; }
         public static bool RemoveSavesOnPress { get; private set; }
 
+        internal static FunctionElement StatusElement { get; private set; }
+
         internal static void Setup()
         {
             AuthorPage = Page.Root.CreatePage("HAHOOS", Color.white);
@@ -54,7 +56,7 @@ namespace KeepInventory.Menu
             BlacklistViewPage = BlacklistPage.CreatePage("View All", Color.magenta);
             SetupBlacklistView();
 
-            Core.statusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
+            StatusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
             {
                 if (BlacklistManager.IsCurrentLevelInBlacklist())
                 {
@@ -63,17 +65,17 @@ namespace KeepInventory.Menu
                 }
 
                 List<string> blacklistList = PreferencesManager.BlacklistedLevels.Value;
-                if (blacklistList.Contains(Core.levelInfo.barcode))
+                if (blacklistList.Contains(Core.LevelInfo.barcode))
                 {
                     try
                     {
-                        int item = blacklistList.IndexOf(Core.levelInfo.barcode);
+                        int item = blacklistList.IndexOf(Core.LevelInfo.barcode);
                         if (item != -1)
                         {
                             blacklistList.RemoveAt(item);
-                            Core.statusElement.ElementName = "Current Level is not blacklisted";
-                            Core.statusElement.ElementColor = Color.green;
-                            BLHelper.SendNotification("Success", $"Successfully unblacklisted current level ({Core.levelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                            StatusElement.ElementName = "Current Level is not blacklisted";
+                            StatusElement.ElementColor = Color.green;
+                            BLHelper.SendNotification("Success", $"Successfully unblacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
                         }
                     }
                     catch (Exception ex)
@@ -86,10 +88,10 @@ namespace KeepInventory.Menu
                 {
                     try
                     {
-                        blacklistList.Add(Core.levelInfo.barcode);
-                        Core.statusElement.ElementName = "Current Level is blacklisted";
-                        Core.statusElement.ElementColor = Color.red;
-                        BLHelper.SendNotification("Success", $"Successfully blacklisted current level ({Core.levelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                        blacklistList.Add(Core.LevelInfo.barcode);
+                        StatusElement.ElementName = "Current Level is blacklisted";
+                        StatusElement.ElementColor = Color.red;
+                        BLHelper.SendNotification("Success", $"Successfully blacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
                     }
                     catch (Exception ex)
                     {
@@ -193,10 +195,10 @@ namespace KeepInventory.Menu
                 {
                     PreferencesManager.BlacklistedLevels.Value.Remove(level);
                     BlacklistViewPage.Remove(element);
-                    if (Core.levelInfo.barcode == level)
+                    if (Core.LevelInfo.barcode == level)
                     {
-                        Core.statusElement.ElementName = "Current level is not blacklisted";
-                        Core.statusElement.ElementColor = Color.green;
+                        StatusElement.ElementName = "Current level is not blacklisted";
+                        StatusElement.ElementColor = Color.green;
                     }
                 });
             }
