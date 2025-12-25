@@ -64,7 +64,7 @@ namespace KeepInventory.Helper
             if (callback != null)
             {
                 var awaiter = task.GetAwaiter();
-                awaiter.OnCompleted((Il2CppSystem.Action)(() => callback?.Invoke(receiver._slottedWeapon.GetComponentInParent<Poolee>()?.gameObject)));
+                awaiter.OnCompleted((Il2CppSystem.Action)(() => callback?.Invoke(receiver?._slottedWeapon?.GetComponentInParent<Poolee>()?.gameObject)));
             }
         }
     }

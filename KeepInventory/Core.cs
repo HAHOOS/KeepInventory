@@ -82,9 +82,10 @@ namespace KeepInventory
                     FailedFLLoad = true;
             }
 
-            Hooking.OnLevelLoaded += (lvl) => LevelLoadedEvent(lvl);
             if (HasFusion)
-                Utilities.Fusion.TargetLevelLoadEvent(() => LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level), true));
+                Utilities.Fusion.TargetLevelLoadEvent(() => LevelLoadedEvent(new LevelInfo(SceneStreamer.Session.Level)));
+            else
+                Hooking.OnLevelLoaded += (lvl) => LevelLoadedEvent(lvl);
 
             Hooking.OnLevelUnloaded += LevelUnloadedEvent;
 
@@ -221,11 +222,8 @@ namespace KeepInventory
             }
         }
 
-        private void LevelLoadedEvent(LevelInfo obj, bool triggeredByFusion = false)
+        private void LevelLoadedEvent(LevelInfo obj)
         {
-            if (triggeredByFusion && !Utilities.Fusion.IsConnected)
-                return;
-
             BoneMenu.SetupPredefinedBlacklists();
             LevelInfo = obj;
             if (InitialLoad)
