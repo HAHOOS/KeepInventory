@@ -14,6 +14,8 @@ namespace KeepInventory.Helper
     {
         public static Dictionary<string, string> Aliases { get; } = new() { { "HeadSlotContainer", "Head" } };
 
+        internal static Dictionary<InventorySlotReceiver, Il2CppSystem.Action> Callback = [];
+
         public static List<InventorySlotReceiver> GetAllSlots(this RigManager rigManager)
         {
             return rigManager?.GetComponentsInChildren<InventorySlotReceiver>().ToList();
@@ -64,7 +66,11 @@ namespace KeepInventory.Helper
             if (callback != null)
             {
                 var awaiter = task.GetAwaiter();
-                awaiter.OnCompleted((Il2CppSystem.Action)(() => callback?.Invoke(receiver?._slottedWeapon?.GetComponentInParent<Poolee>()?.gameObject)));
+                Il2CppSystem.Action action = (Il2CppSystem.Action)(() => callback?.Invoke(receiver?._slottedWeapon?.GetComponentInParent<Poolee>()?.gameObject));
+                if (!Utilities.Fusion.IsConnected)
+                    awaiter.OnCompleted(action);
+                else
+                    Callback.Add(receiver, action);
             }
         }
     }
