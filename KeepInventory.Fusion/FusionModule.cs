@@ -78,7 +78,7 @@ namespace KeepInventory.Fusion
 
         internal static void MsgPrefix(string prefix, string message, string hex)
         {
-            BackupLogger.Msg($"[{prefix.Pastel(hex)}] {message}");
+            BackupLogger.MsgPastel($"[{prefix.Pastel(hex)}] {message}");
         }
     }
 }

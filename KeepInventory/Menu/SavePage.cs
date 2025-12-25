@@ -258,7 +258,7 @@ namespace KeepInventory.Menu
 
                     slotPage.CreateLabel(slot.Barcode, Color.white);
                     slotPage.CreateLabel("Slot: " + slot.SlotName, Color.white);
-                    var gunInfoPage = slotPage.SubPages.FirstOrDefault(x => x.Name == "Gun Info") ?? slotPage.CreatePage("Gun Info", Color.yellow, 0, false);
+                    var gunInfoPage = slotPage.IndexPages.FirstOrDefault(x => x.Name == "Gun Info") ?? slotPage.CreatePage("Gun Info", Color.yellow, 0, false);
                     if (slot.GunInfo != null)
                     {
                         slotPage.CreatePageLink(gunInfoPage);

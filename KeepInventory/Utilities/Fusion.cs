@@ -288,7 +288,7 @@ namespace KeepInventory.Utilities
 
         internal static void MsgPrefix(string prefix, string message, UnityEngine.Color color)
         {
-            Core.Logger.Msg($"[{prefix.Pastel(color.ToHEX())}] {message}");
+            Core.Logger.MsgPastel($"[{prefix.Pastel(color.ToHEX())}] {message}");
         }
     }
 
