@@ -78,6 +78,8 @@ namespace KeepInventory.Menu
 
         public List<byte> SelectedPlayers { get; } = [];
 
+        private const string WHITE = "FFFFFF";
+
         public void Clear()
         {
             Page?.RemoveAll();
@@ -116,7 +118,7 @@ namespace KeepInventory.Menu
             if (Page == null)
                 return;
 
-            Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
+            Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? WHITE}>{CurrentSave.Name}</color>";
             Clear();
             Core.DefaultSaveChanged += Setup;
             CurrentSave.OnPropertyChanged += PropertyChanged;
@@ -126,7 +128,7 @@ namespace KeepInventory.Menu
             {
                 CurrentSave.Name = value;
                 CurrentSave.TrySaveToFile(false);
-                Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
+                Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? WHITE}>{CurrentSave.Name}</color>";
                 BoneMenu.UpdatePresetsPage();
             });
             Name.Value = CurrentSave.Name;
@@ -289,7 +291,7 @@ namespace KeepInventory.Menu
 
         private void SetupColor()
         {
-            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>", Color.white, null);
+            var preview = ColorPage.CreateFunction($"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? WHITE}>{CurrentSave.Name}</color>", Color.white, null);
 
             const float increment = 0.05f;
 
@@ -302,7 +304,7 @@ namespace KeepInventory.Menu
             void apply()
             {
                 CurrentSave.Color = Color.HSVToRGB(H, S, V).ToArray();
-                preview.ElementName = $"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? "FFFFFF"}>{CurrentSave.Name}</color>";
+                preview.ElementName = $"Preview: <color=#{CurrentSave.DrawingColor.ToHEX() ?? WHITE}>{CurrentSave.Name}</color>";
                 CurrentSave.TrySaveToFile(false);
                 BoneMenu.UpdatePresetsPage();
                 BoneLib.BoneMenu.Menu.OpenPage(ColorPage);
