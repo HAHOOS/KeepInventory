@@ -70,7 +70,7 @@ namespace KeepInventory.Helper
                 if (!Utilities.Fusion.IsConnected)
                     awaiter.OnCompleted(action);
                 else
-                    Callback.Add(receiver, action);
+                    Callback[receiver] = action;
             }
         }
     }
