@@ -23,7 +23,7 @@ namespace KeepInventory
 {
     public class Core : MelonMod
     {
-        public const string Version = "1.3.1";
+        public const string Version = "1.3.2";
 
         public static Saves.V2.Save CurrentSave
         {
