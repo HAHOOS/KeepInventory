@@ -30,6 +30,8 @@ namespace KeepInventory.Patches
             if (!InventoryHelper.Callback.TryGetValue(__instance, out var action))
                 return;
 
+            InventoryHelper.Callback.Remove(__instance);
+
             action?.Invoke();
         }
     }
