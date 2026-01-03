@@ -14,7 +14,7 @@ namespace KeepInventory.Helper
     {
         public static Dictionary<string, string> Aliases { get; } = new() { { "HeadSlotContainer", "Head" } };
 
-        internal static Dictionary<InventorySlotReceiver, Il2CppSystem.Action> Callback = [];
+        internal readonly static Dictionary<InventorySlotReceiver, Il2CppSystem.Action> Callback = [];
 
         public static List<InventorySlotReceiver> GetAllSlots(this RigManager rigManager)
         {
