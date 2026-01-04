@@ -54,7 +54,7 @@ namespace KeepInventory.Managers
                             if (poolee != null)
                             {
                                 var barcode = poolee.SpawnableCrate.Barcode;
-                                Core.Logger.Msg($"[{name}] Saving slot: {RemoveUnityRichText(poolee.SpawnableCrate.Title)} ({barcode})");
+                                Core.Logger.Msg($"[{name}] Saving slot: {RemoveUnityRichText(poolee.SpawnableCrate.Title)} ({barcode.ID})");
                                 if (gunInfo != null && PreferencesManager.SaveGunData.Value && poolee.SpawnableCrate.Barcode != new Barcode(CommonBarcodes.Misc.SpawnGun))
                                     save.InventorySlots.Add(new SaveSlot(name, barcode, gunInfo));
                                 else
