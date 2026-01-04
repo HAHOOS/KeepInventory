@@ -220,7 +220,7 @@ namespace KeepInventory.Utilities
                     if (gunExt == null)
                         return;
 
-                    var socketExtender = gunExt.GetExtender<LabFusion.Entities.AmmoSocketExtender>();
+                    var socketExtender = gunExt.GetExtender<LabFusion.Marrow.Extenders.AmmoSocketExtender>();
                     var mag = spawn.Spawned.GetComponent<Magazine>();
 
                     if (socketExtender == null || mag == null)
