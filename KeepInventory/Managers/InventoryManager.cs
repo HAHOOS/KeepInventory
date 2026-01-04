@@ -137,18 +137,18 @@ namespace KeepInventory.Managers
                                         {
                                             foreach (var gun in obj.GetComponents<Gun>())
                                             {
-                                                Core.Logger.Msg($"[{item.SlotName}] Applying gun info for item: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
+                                                Core.Logger.Msg($"[{item.SlotName}] Applying gun info for item: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode.ID})");
                                                 gun.UpdateProperties(item.GunInfo);
                                             }
                                         }
                                     }
 
-                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
+                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode.ID})");
                                     slot.SpawnInSlot(crate.Crate.Barcode, action);
                                 }
                                 else
                                 {
-                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode})");
+                                    Core.Logger.Msg($"[{item.SlotName}] Spawning item in slot: {RemoveUnityRichText(crate.Crate.Title)} ({crate.Crate.Barcode.ID})");
                                     slot.SpawnInSlot(crate.Crate.Barcode);
                                 }
                             }
