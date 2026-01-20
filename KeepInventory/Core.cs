@@ -18,6 +18,7 @@ using MelonLoader;
 using Semver;
 
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace KeepInventory
 {
@@ -53,8 +54,6 @@ namespace KeepInventory
         public static bool FailedFLLoad { get; internal set; } = false;
         private bool InitialLoad = true;
         internal static Thunderstore ThunderstoreInstance { get; private set; }
-        internal static bool IsLatestVersion { get; private set; } = true;
-        internal static Package ThunderstorePackage { get; private set; }
 
         internal static bool Deinit { get; private set; } = false;
 
@@ -66,12 +65,11 @@ namespace KeepInventory
 
             LoggerInstance.Msg("Setting up KeepInventory");
 
-            CheckVersion();
+            ThunderstoreInstance = new Thunderstore($"KeepInventory / {Version} A BONELAB MelonLoader Mod");
+            ThunderstoreInstance.BL_FetchPackage("KeepInventory", "HAHOOS", Version, LoggerInstance);
 
             if (!HasFusion)
-            {
                 LoggerInstance.Warning("Could not find LabFusion, the mod will not use any of Fusion's functionality");
-            }
 
             if (HasFusion)
             {
@@ -92,7 +90,7 @@ namespace KeepInventory
             if (IsFusionLibraryInitialized) Utilities.Fusion.SetupFusionLibrary();
             if (HasFusion) Utilities.Fusion.Setup();
 
-            System.Collections.Generic.List<Level> labworks = [
+            List<Level> labworks = [
                 new("volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen"),
                 new("volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu"),
                 new("volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom"),
@@ -111,7 +109,7 @@ namespace KeepInventory
                 new("volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02")
             ];
 
-            System.Collections.Generic.List<Level> bonelab = [
+            List<Level> bonelab = [
                 new(CommonBarcodes.Maps.Home),
                 new(CommonBarcodes.Maps.Ascent),
                 new(CommonBarcodes.Maps.Descent),
@@ -161,50 +159,6 @@ namespace KeepInventory
             });
         }
 
-        private void CheckVersion()
-        {
-            ThunderstoreInstance = new Thunderstore($"KeepInventory / {Version} A BONELAB MelonLoader Mod");
-
-            try
-            {
-                ThunderstorePackage = ThunderstoreInstance.GetPackage("HAHOOS", "KeepInventory");
-                if (ThunderstorePackage != null)
-                {
-                    if (ThunderstorePackage.Latest != null && !string.IsNullOrWhiteSpace(ThunderstorePackage.Latest.Version))
-                    {
-                        IsLatestVersion = ThunderstorePackage.IsLatestVersion(Version);
-                        if (!IsLatestVersion)
-                        {
-                            LoggerInstance.Warning($"A new version of KeepInventory is available: v{ThunderstorePackage.Latest.Version} while the current is v{Version}. It is recommended that you update");
-                        }
-                        else
-                        {
-                            if (SemVersion.Parse(Version) == ThunderstorePackage.Latest.SemanticVersion)
-                            {
-                                LoggerInstance.Msg($"Latest version of KeepInventory is installed! --> v{Version}");
-                            }
-                            else
-                            {
-                                LoggerInstance.Msg($"Beta release of KeepInventory is installed (v{ThunderstorePackage.Latest.Version} is newest, v{Version} is installed)");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        LoggerInstance.Warning("Latest version could not be found or the version is empty");
-                    }
-                }
-                else
-                {
-                    LoggerInstance.Warning("Could not find thunderstore package for KeepInventory");
-                }
-            }
-            catch (Exception e)
-            {
-                LoggerInstance.Error("An unexpected error has occurred while trying to check if KeepInventory is the latest version", e);
-            }
-        }
-
         private void LevelUnloadedEvent()
         {
             if (!PreferencesManager.SaveOnLevelUnload.Value) return;
@@ -233,15 +187,7 @@ namespace KeepInventory
                     BLHelper.SendNotification("Failure", "The Fusion Library has failed to load, which will cause the Sharing feature to not work. If this occurs again, create an issue on Github or DM the developer (@hahoos)", true, 10f, BoneLib.Notifications.NotificationType.Error);
                     IsFusionLibraryInitialized = false;
                 }
-                if (!IsLatestVersion && ThunderstorePackage != null)
-                {
-                    BLHelper.SendNotification(
-                        "Update!",
-                        new NotificationText($"There is a new version of KeepInventory. Go to Thunderstore and download the latest version which is <color=#00FF00>v{ThunderstorePackage.Latest.Version}</color>", Color.white, true),
-                        true,
-                        5f,
-                        NotificationType.Warning);
-                }
+                ThunderstoreInstance.BL_SendNotification();
                 InitialLoad = false;
             }
             if (CurrentSave != null)

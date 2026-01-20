@@ -1,22 +1,24 @@
 ﻿// Ignore Spelling: Unregister
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-using Tomlet;
-using Tomlet.Models;
+using KeepInventory.Helper;
+using KeepInventory.Menu;
+using KeepInventory.Saves.V2;
+using KeepInventory.Utilities;
 
 using MelonLoader.Utils;
 
-using KeepInventory.Helper;
-using KeepInventory.Saves.V2;
-using KeepInventory.Utilities;
-using KeepInventory.Menu;
+using Newtonsoft.Json;
+
+using Tomlet;
+using Tomlet.Models;
 
 namespace KeepInventory.Managers
 {
@@ -38,7 +40,7 @@ namespace KeepInventory.Managers
 
         public static ReadOnlyCollection<Save> Saves => _Saves.AsReadOnly();
 
-        internal static SynchronousFileSystemWatcher FileSystemWatcher { get; private set; }
+        internal static UnityFileSystemWatcher FileSystemWatcher { get; private set; }
 
         internal static void Setup()
         {
@@ -48,7 +50,7 @@ namespace KeepInventory.Managers
                 Core.Logger.Msg("Created save directory");
                 SavesDirectory = directory.FullName;
                 CreateFileWatcher();
-                var files = directory.GetFiles();
+                var files = directory.GetFiles("*.json");
                 if (files?.Length > 0)
                 {
                     foreach (var item in files)
@@ -168,10 +170,11 @@ namespace KeepInventory.Managers
                 string path = Path.Combine(SavesDirectory, $"{save.ID}.json");
                 if (!File.Exists(path))
                 {
-                    IgnoredFilePaths.Add(path);
+                    Core.Logger.Msg("Saving to file");
+                    IgnoredFilePaths.TryAdd(path);
                     var file = File.Open(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
                     save.FilePath = path;
-                    var serialized = JsonSerializer.Serialize(save, SerializeOptions);
+                    var serialized = JsonConvert.SerializeObject(save);
                     file.Write(Encoding.UTF8.GetBytes(serialized));
                     file.Flush();
                     file.Position = 0;
@@ -196,7 +199,7 @@ namespace KeepInventory.Managers
                 }
                 else
                 {
-                    var save = JsonSerializer.Deserialize<Save>(text, SerializeOptions);
+                    var save = JsonConvert.DeserializeObject<Save>(text);
                     if (save != null)
                     {
                         save.FilePath = filePath;
@@ -249,34 +252,39 @@ namespace KeepInventory.Managers
             {
                 try
                 {
-                    var save = JsonSerializer.Deserialize<Save>(text, SerializeOptions);
-                    if (save != null)
-                    {
-                        if (!string.IsNullOrWhiteSpace(save.ID))
-                        {
-                            if (Saves.Any(x => x.ID == save.ID && x.FilePath != path))
-                            {
-                                Core.Logger.Error("The ID is already used in another save");
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            Core.Logger.Error($"The ID '{save.ID}' is null or empty");
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        Core.Logger.Error("Deserialized save is null");
-                        return false;
-                    }
+                    return DeserializeAndCheck(path, text);
                 }
                 catch (Exception ex)
                 {
                     Core.Logger.Error("An unexpected error has occurred while deserializing save", ex);
                     return false;
                 }
+            }
+        }
+
+        private static bool DeserializeAndCheck(string path, string text)
+        {
+            var save = JsonConvert.DeserializeObject<Save>(text);
+            if (save != null)
+            {
+                if (!string.IsNullOrWhiteSpace(save.ID))
+                {
+                    if (Saves.Any(x => x.ID == save.ID && x.FilePath != path))
+                    {
+                        Core.Logger.Error("The ID is already used in another save");
+                        return false;
+                    }
+                }
+                else
+                {
+                    Core.Logger.Error($"The ID '{save.ID}' is null or empty");
+                    return false;
+                }
+            }
+            else
+            {
+                Core.Logger.Error("Deserialized save is null");
+                return false;
             }
             return true;
         }
@@ -295,13 +303,13 @@ namespace KeepInventory.Managers
             if (!LastWrite.ContainsKey(file))
             {
                 LastWrite.Add(file, write);
-                return false;
+                return IsIgnored(file);
             }
             else
             {
                 bool equal = LastWrite[file] == write;
                 LastWrite[file] = write;
-                return equal;
+                return equal || IsIgnored(file);
             }
         }
 
@@ -312,7 +320,7 @@ namespace KeepInventory.Managers
             if (!IgnoredFilePaths.Any())
                 return false;
 
-            bool pass = IgnoredFilePaths.Any(x =>
+            return IgnoredFilePaths.Any(x =>
             {
                 var _path = Path.GetFullPath(x);
                 bool equal = _path == fullPath;
@@ -321,72 +329,108 @@ namespace KeepInventory.Managers
                 return equal;
             }
             );
-
-            return pass;
         }
 
         internal static void CreateFileWatcher()
         {
             LastWrite.Clear();
             FileSystemWatcher?.Dispose();
-            FileSystemWatcher = new SynchronousFileSystemWatcher(SavesDirectory) { EnableRaisingEvents = true };
+            FileSystemWatcher = new(SavesDirectory) { EnableRaisingEvents = true, Filter = "*.json" };
             FileSystemWatcher.Error += (x, y) => Core.Logger.Error("An unexpected error was thrown by the file watcher for the saves", y.GetException());
-            FileSystemWatcher.Deleted += (x, y) =>
+            FileSystemWatcher.Deleted += Event_DeletedFile;
+            FileSystemWatcher.Created += Event_CreatedFile;
+            FileSystemWatcher.Changed += Event_ModifiedFile;
+            FileSystemWatcher.Renamed += Event_RenamedFile;
+        }
+
+        private static void Event_DeletedFile(object sender, FileSystemEventArgs args)
+        {
+            if (IsIgnored(args.FullPath)) return;
+            LastWrite.Remove(args.FullPath);
+            Core.Logger.Msg($"{args.Name} has been deleted, unregistering save");
+            var save = Saves.FirstOrDefault(x => x.FilePath == args.FullPath);
+            if (save != null)
+                UnregisterSave(save.ID, false);
+            BoneMenu.SetupSaves();
+        }
+
+        private static void Event_CreatedFile(object sender, FileSystemEventArgs args)
+        {
+            if (IsIgnored(args.FullPath)) return;
+            if (Check(args.FullPath))
             {
-                if (IsIgnored(y.FullPath)) return;
-                LastWrite.Remove(y.FullPath);
-                if (y.FullPath.EndsWith(".json"))
-                {
-                    Core.Logger.Msg($"{y.Name} has been deleted, unregistering save");
-                    var saves = Saves.Where(x => x.FilePath == y.FullPath);
-                    saves.ForEach(x => UnregisterSave(x.ID));
-                }
-            };
-            FileSystemWatcher.Created += (x, y) =>
+                Core.Logger.Msg($"{args.Name} has been created, registering save");
+                RegisterSave(args.FullPath);
+            }
+            BoneMenu.SetupSaves();
+        }
+
+        private static void Event_ModifiedFile(object sender, FileSystemEventArgs args)
+        {
+            if (!File.Exists(args.FullPath))
+                return;
+
+            if (PreventDoubleTrigger(args.FullPath)) return;
+            if (Check(args.FullPath))
             {
-                if (IsIgnored(y.FullPath)) return;
-                if (y.FullPath.EndsWith(".json") && Check(y.FullPath))
+                if (!Update(args.FullPath, x => x.Update(args.FullPath), true))
                 {
-                    Core.Logger.Msg($"{y.Name} has been created, registering save");
-                    RegisterSave(y.FullPath);
+                    Core.Logger.Msg($"{args.Name} has been modified, but wasn't registered. Registering save");
+                    RegisterSave(args.FullPath);
                 }
-            };
-            FileSystemWatcher.Changed += (x, y) =>
+                else
+                {
+                    Core.Logger.Msg($"{args.Name} has been modified, updating");
+                }
+                var saves = Saves.Where(x => x.AutoUpdate(args.FullPath));
+                saves.ForEach(x => x.Update(args.FullPath));
+            }
+            else
             {
-                if (PreventDoubleTrigger(y.FullPath)) return;
-                if (IsIgnored(y.FullPath)) return;
-                if (y.FullPath.EndsWith(".json"))
-                {
-                    if (Check(y.FullPath))
-                    {
-                        Core.Logger.Msg($"{y.Name} has been modified, updating");
-                        var saves = Saves.Where(x => x.FilePath == y.FullPath && x.IsFileWatcherEnabled);
-                        saves.ForEach(x => x.Update(y.FullPath));
-                    }
-                    else
-                    {
-                        Core.Logger.Error($"{y.Name} was updated, but is not suitable to be a save");
-                        var saves = Saves.Where(x => x.FilePath == y.FullPath && x.IsFileWatcherEnabled);
-                        saves.ForEach(x => UnregisterSave(x.ID));
-                    }
-                }
-            };
-            FileSystemWatcher.Renamed += (x, y) =>
+                Core.Logger.Error($"{args.Name} was updated, but is not suitable to be a save");
+                var save = Saves.FirstOrDefault(x => x.FilePath == args.FullPath);
+                if (save != null)
+                    UnregisterSave(save.FilePath);
+            }
+            BoneMenu.SetupSaves();
+        }
+
+        private static void Event_RenamedFile(object sender, RenamedEventArgs args)
+        {
+            if (IsIgnored(args.FullPath)) return;
+            if (LastWrite.ContainsKey(args.OldFullPath))
             {
-                if (IsIgnored(y.FullPath)) return;
-                if (LastWrite.ContainsKey(y.OldFullPath))
-                {
-                    var old = LastWrite[y.OldFullPath];
-                    LastWrite.Remove(y.OldFullPath);
-                    LastWrite.Add(y.FullPath, old);
-                }
-                if (y.FullPath.EndsWith(".json"))
-                {
-                    Core.Logger.Msg($"{y.OldName} has been renamed to {y.Name}, updating information");
-                    var saves = Saves.Where(x => x.FilePath == y.OldFullPath);
-                    saves.ForEach(x => x.FilePath = y.FullPath);
-                }
-            };
+                var old = LastWrite[args.OldFullPath];
+                LastWrite.Remove(args.OldFullPath);
+                LastWrite.Add(args.FullPath, old);
+            }
+            Core.Logger.Msg($"{args.OldName} has been renamed to {args.Name}, updating information");
+            if (!Update(args.OldFullPath, x => x.FilePath = args.FullPath) && Check(args.FullPath))
+            {
+                Core.Logger.Msg($"{args.Name} has been renamed to {args.Name}, but wasn't registered. Registering save");
+                RegisterSave(args.FullPath);
+            }
+            else
+            {
+                Core.Logger.Msg($"{args.OldName} has been renamed to {args.Name}, updating information");
+            }
+            BoneMenu.SetupSaves();
+        }
+
+        internal static bool Update(string filePath, Action<Save> action, bool requireFileWatcherOption = false)
+        {
+            var saves = Saves.Where(x => x.FilePath == filePath);
+            if (saves.Any() && requireFileWatcherOption && saves.ToList().TrueForAll(x => !x.IsFileWatcherEnabled))
+                return true;
+
+            if (saves.Any())
+            {
+                foreach (var config in saves)
+                    action(config);
+
+                return true;
+            }
+            return false;
         }
 
         internal static bool IsJSON(string text)
@@ -396,7 +440,7 @@ namespace KeepInventory.Managers
                 using var jsonDoc = JsonDocument.Parse(text);
                 return true;
             }
-            catch (JsonException)
+            catch (System.Text.Json.JsonException)
             {
                 return false;
             }

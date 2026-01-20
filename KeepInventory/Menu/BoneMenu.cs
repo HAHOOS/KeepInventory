@@ -124,8 +124,7 @@ namespace KeepInventory.Menu
                 }
             });
 
-            var modVersion = ModPage.CreateFunction(Core.IsLatestVersion || Core.ThunderstorePackage == null ? $"Current Version: v{Core.Version}" : $"Current Version: v{Core.Version}<br><color=#00FF00>(Update available!)</color>", Color.white, () => Core.Logger.Msg($"The current version is v{Core.Version}!!!!"));
-            modVersion.SetProperty(ElementProperties.NoBorder);
+            Core.ThunderstoreInstance.BL_CreateMenuLabel(ModPage, true);
             IsSetup = true;
         }
 

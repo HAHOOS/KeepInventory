@@ -43,6 +43,9 @@
 		<Reference Include="Tomlet">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Tomlet.dll</HintPath>
 		</Reference>
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(BONELAB_DIR)\MelonLoader\net6\Newtonsoft.Json.dll</HintPath>
+		</Reference>
 		<Reference Include="UnityEngine.CoreModule">
 			<HintPath>$(BONELAB_DIR)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
 		</Reference>
@@ -52,6 +55,5 @@
 	</ItemGroup>
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="ECHO Copying $(TargetName).dll to Mods folder&#xD;&#xA; COPY &quot;$(TargetPath)&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
-		<Exec Command="ECHO Copying $(TargetName).pdb to Mods folder&#xD;&#xA; COPY &quot;$(TargetDir)$(TargetName).pdb&quot; &quot;$(BONELAB_DIR)\Mods&quot;" />
 	</Target>
 </Project>

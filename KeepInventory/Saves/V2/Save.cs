@@ -1,9 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 using KeepInventory.Helper;
 using KeepInventory.Managers;
@@ -12,19 +11,15 @@ using UnityEngine;
 
 namespace KeepInventory.Saves.V2
 {
-    [JsonSourceGenerationOptions(WriteIndented = true,
-            IncludeFields = true,
-            IgnoreReadOnlyFields = false,
-            IgnoreReadOnlyProperties = false)]
     public class Save
     {
-        [JsonPropertyName("Version")]
+        [JsonProperty("Version")]
         public readonly int Version = 2;
 
         [JsonIgnore]
         private string _name;
 
-        [JsonPropertyName("Name")]
+        [JsonProperty(nameof(Name))]
         public string Name
         {
             get { return _name; }
@@ -39,7 +34,7 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         private string _id;
 
-        [JsonPropertyName("ID")]
+        [JsonProperty(nameof(ID))]
         public string ID
         {
             get { return _id; }
@@ -54,7 +49,7 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         public Color DrawingColor { get; set; } = UnityEngine.Color.white;
 
-        [JsonPropertyName("Color")]
+        [JsonProperty(nameof(Color))]
         public float[] Color
         {
             get => [DrawingColor.r * 255, DrawingColor.g * 255, DrawingColor.b * 255];
@@ -94,7 +89,7 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         private int _lightAmmo = -1;
 
-        [JsonPropertyName("LightAmmo")]
+        [JsonProperty(nameof(LightAmmo))]
         public int LightAmmo
         {
             get { return _lightAmmo; }
@@ -109,7 +104,7 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         private int _mediumAmmo = -1;
 
-        [JsonPropertyName("MediumAmmo")]
+        [JsonProperty(nameof(MediumAmmo))]
         public int MediumAmmo
         {
             get { return _mediumAmmo; }
@@ -124,7 +119,7 @@ namespace KeepInventory.Saves.V2
         [JsonIgnore]
         private int _heavyAmmo = -1;
 
-        [JsonPropertyName("HeavyAmmo")]
+        [JsonProperty(nameof(HeavyAmmo))]
         public int HeavyAmmo
         {
             get { return _heavyAmmo; }
@@ -138,7 +133,7 @@ namespace KeepInventory.Saves.V2
 
         private List<SaveSlot> _inventorySlots;
 
-        [JsonPropertyName("InventorySlots")]
+        [JsonProperty(nameof(InventorySlots))]
         public List<SaveSlot> InventorySlots
         {
             get { return _inventorySlots; }
@@ -164,25 +159,6 @@ namespace KeepInventory.Saves.V2
             _mediumAmmo = old.MediumAmmo;
             _heavyAmmo = old.HeavyAmmo;
             _inventorySlots = [.. old.InventorySlots];
-        }
-
-        public Save(int Version, string Name, string ID, float[] Color, int LightAmmo, int MediumAmmo, int HeavyAmmo, List<SaveSlot> InventorySlots)
-        {
-            if (Version != 2)
-            {
-                throw new ArgumentException($"The V2 save object is not made for saves with version '{Version}'");
-            }
-            this.Version = Version;
-            this._name = Name;
-            this._id = ID;
-            this.Color = Color;
-            this._lightAmmo = LightAmmo;
-            this._mediumAmmo = MediumAmmo;
-            this._heavyAmmo = HeavyAmmo;
-            this._inventorySlots = InventorySlots;
-
-            if (string.IsNullOrWhiteSpace(_id))
-                throw new ArgumentNullException(nameof(ID), "ID cannot be null or empty");
         }
 
         public Save(string id, string name, Color color, V1.Save v1save)
@@ -218,6 +194,8 @@ namespace KeepInventory.Saves.V2
         }
 
         public event Action<string, object, object> OnPropertyChanged;
+
+        internal bool AutoUpdate(string path) => FilePath == path && IsFileWatcherEnabled;
 
         internal void Update(Save save)
         {
@@ -260,7 +238,7 @@ namespace KeepInventory.Saves.V2
             }
             else
             {
-                var save = JsonSerializer.Deserialize<Save>(text, SaveManager.SerializeOptions);
+                var save = JsonConvert.DeserializeObject<Save>(text);
                 if (save != null)
                 {
                     Update(save);
@@ -273,45 +251,57 @@ namespace KeepInventory.Saves.V2
             }
         }
 
-        internal bool Saving = false;
-
         public void SaveToFile(bool printMessage = true)
         {
             if (!string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath))
             {
-                Saving = true;
-                if (printMessage) Core.Logger.Msg($"Saving '{ID}' to file...");
+                SaveManager.IgnoredFilePaths.TryAdd(FilePath);
+                LoggerMsg($"Saving '{ID}' to file...", printMessage);
                 try
                 {
-                    var serialized = JsonSerializer.Serialize<Save>(this, SaveManager.SerializeOptions);
+                    var serialized = JsonConvert.SerializeObject(this, Formatting.Indented);
                     var file = File.Create(FilePath);
                     using var writer = new StreamWriter(file) { AutoFlush = true };
                     file.Position = 0;
                     writer.Write(serialized);
                     writer.DisposeAsync().AsTask().ContinueWith((task) =>
-                     {
-                         if (task.IsCompletedSuccessfully)
-                         {
-                             if (printMessage) Core.Logger.Msg($"Saved '{ID}' to file successfully!");
-                         }
-                         else
-                         {
-                             if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file", task.Exception);
-                         }
-                         Saving = false;
-                     });
+                    {
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            LoggerMsg($"Saved '{ID}' to file successfully!", printMessage);
+                        }
+                        else
+                        {
+                            LoggerError($"Failed to save '{ID}' to file", task.Exception, printMessage);
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
-                    if (printMessage) Core.Logger.Error($"Failed to save '{ID}' to file", ex);
-                    Saving = false;
+                    LoggerError($"Failed to save '{ID}' to file", ex, printMessage);
                     throw;
                 }
             }
             else
             {
-                if (printMessage) Core.Logger.Error($"Save '{ID}' does not have a file set or it doesn't exist!");
+                LoggerError($"Save '{ID}' does not have a file set or it doesn't exist!", print: printMessage);
                 throw new FileNotFoundException("Save does not have a file!");
+            }
+        }
+
+        private static void LoggerMsg(string message, bool print = false)
+        {
+            if (print) Core.Logger.Msg(message);
+        }
+
+        private static void LoggerError(string message, Exception ex = null, bool print = false)
+        {
+            if (print)
+            {
+                if (ex != null)
+                    Core.Logger.Error(message, ex);
+                else
+                    Core.Logger.Error(message);
             }
         }
 
