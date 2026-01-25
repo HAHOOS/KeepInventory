@@ -158,7 +158,12 @@ namespace KeepInventory.Utilities
 
         public T SendRequest<T>(string url)
         {
-            var client = new HttpClient();
+            var handler = new HttpClientHandler()
+            {
+                ClientCertificateOptions = ClientCertificateOption.Manual,
+                ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+            };
+            var client = new HttpClient(handler);
             client.DefaultRequestHeaders.Add("User-Agent", this.UserAgent);
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             var request = client.GetAsync(url);

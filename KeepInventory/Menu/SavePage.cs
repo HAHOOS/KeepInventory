@@ -33,8 +33,6 @@ namespace KeepInventory.Menu
             }
             set
             {
-                if (_save != null)
-                    _save.OnPropertyChanged -= PropertyChanged;
                 _save = value;
                 Setup();
             }
@@ -104,11 +102,7 @@ namespace KeepInventory.Menu
             LoadInventoryFunction = null;
 
             Core.DefaultSaveChanged -= Setup;
-            CurrentSave.OnPropertyChanged -= PropertyChanged;
         }
-
-        private void PropertyChanged(string name, object oldVal, object newVal)
-            => Setup();
 
         public void Setup()
         {
@@ -121,7 +115,6 @@ namespace KeepInventory.Menu
             Page.Name = $"<color=#{CurrentSave.DrawingColor.ToHEX() ?? WHITE}>{CurrentSave.Name}</color>";
             Clear();
             Core.DefaultSaveChanged += Setup;
-            CurrentSave.OnPropertyChanged += PropertyChanged;
 
             ID = Page.CreateLabel($"ID: {CurrentSave.ID}", Color.white);
             Name = Page.CreateString("Name", Color.cyan, CurrentSave.Name, (value) =>

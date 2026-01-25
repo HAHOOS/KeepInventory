@@ -66,7 +66,7 @@ namespace KeepInventory.Fusion.Managers
             };
             using var writer = NetWriter.Create();
             writer.SerializeValue(ref messageData);
-            using NetMessage msg = NetMessage.ModuleCreate<ShareSaveMessage>(writer, new MessageRoute(target, NetworkChannel.Reliable));
+            using NetMessage msg = NetMessage.ModuleCreate<ShareSaveMessage>(writer, new MessageRoute(target, NetworkChannel.Reliable), PlayerIDManager.LocalSmallID);
             MessageSender.BroadcastMessageExceptSelf(NetworkChannel.Reliable, msg);
         }
 

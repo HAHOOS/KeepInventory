@@ -131,6 +131,7 @@ namespace KeepInventory.Saves.V2
             }
         }
 
+        [JsonIgnore]
         private List<SaveSlot> _inventorySlots;
 
         [JsonProperty(nameof(InventorySlots))]

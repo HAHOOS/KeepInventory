@@ -39,7 +39,7 @@ namespace KeepInventory.Menu
             ModPage = AuthorPage.CreatePage("KeepInventory", Color.yellow);
 
             SetupSaves();
-            Core.DefaultSaveChanged += UpdatePresetsPage;
+            Core.DefaultSaveChanged += SetupSaves;
 
             EventsPage = ModPage.CreatePage("Events", Color.yellow);
             EventsPage.CreateBoolPref("Save on Level Unload", Color.red, ref PreferencesManager.SaveOnLevelUnload, prefDefaultValue: true);
@@ -203,8 +203,6 @@ namespace KeepInventory.Menu
             }
         }
 
-        private static readonly List<Element> defaultSaveElements = [];
-
         internal static void SetupSharing()
         {
             SharingPage ??= ModPage.CreatePage("Sharing", Color.cyan);
@@ -259,7 +257,7 @@ namespace KeepInventory.Menu
             SavesPage.RemoveAll();
 
             var nameElement = SavesPage.CreateString("Name", Color.white, string.Empty, null);
-            var createElement = SavesPage.CreateFunction("<color=#00FF00>Create</color>", Color.white, () =>
+            SavesPage.CreateFunction("<color=#00FF00>Create</color>", Color.white, () =>
             {
                 SaveManager.RegisterSave(new Saves.V2.Save()
                 {
@@ -284,17 +282,9 @@ namespace KeepInventory.Menu
                 RemoveSavesOnPress = false;
             };
 
-            var refresh = SavesPage.CreateFunction("Refresh", Color.yellow, () => SetupSaves());
+            SavesPage.CreateFunction("Refresh", Color.yellow, () => SetupSaves());
 
-            var blank = SavesPage.CreateBlank();
-            if (defaultSaveElements.Count == 0)
-            {
-                defaultSaveElements.Add(nameElement);
-                defaultSaveElements.Add(createElement);
-                defaultSaveElements.Add(refresh);
-                defaultSaveElements.Add(func.Element);
-                defaultSaveElements.Add(blank.Element);
-            }
+            SavesPage.CreateBlank();
 
             UpdatePresetsPage();
         }
@@ -305,10 +295,6 @@ namespace KeepInventory.Menu
         {
             if (SavesPage == null)
                 return;
-
-            SavesPage.RemoveAll();
-
-            defaultSaveElements.ForEach(SavesPage.Add);
 
             foreach (var save in SaveManager.Saves)
             {
