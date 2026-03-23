@@ -42,6 +42,7 @@ namespace KeepInventory.Managers
 
         internal static UnityFileSystemWatcher FileSystemWatcher { get; private set; }
 
+        // TODO: fix this shit (reduce the complexity)
         internal static void Setup()
         {
             var directory = Directory.CreateDirectory(Path.Combine(PreferencesManager.KI_PreferencesDirectory, "Saves"));

@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 
+using BoneLib;
 using BoneLib.BoneMenu;
 
-using UnityEngine;
+using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
 using KeepInventory.Managers;
 using KeepInventory.Saves.V2;
 
-using Il2CppSLZ.Marrow.Warehouse;
+using UnityEngine;
 
 using static Il2CppSLZ.Marrow.Gun;
 
@@ -164,11 +165,7 @@ namespace KeepInventory.Menu
                 if (Core.CurrentSave != CurrentSave)
                 {
                     Core.CurrentSave = CurrentSave;
-                    BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.Color}>{CurrentSave}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
-                }
-                else
-                {
-                    BLHelper.SendNotification("Warning", $"<color=#{CurrentSave.Color}>{CurrentSave}</color> is already default!", true, 2f, BoneLib.Notifications.NotificationType.Warning);
+                    BLHelper.SendNotification("Success", $"Successfully set '<color=#{CurrentSave.Color}>{CurrentSave.Name}</color>' as default!", true, 2f, BoneLib.Notifications.NotificationType.Success);
                 }
             }) : Page.CreateLabel("Save is default", Color.white);
             SaveInventoryFunction = Page.CreateFunction("Save inventory to save", Color.cyan, () =>
@@ -262,23 +259,26 @@ namespace KeepInventory.Menu
                     slotPage.CreateBlank();
                     slotPage.CreateFunction("Remove", Color.red, () =>
                     {
-                        BoneLib.BoneMenu.Menu.DisplayDialog("Destructive action", "You are about to delete an inventory slot which after done, cannot be reversed. Are you sure?", Dialog.WarningIcon, () =>
-                        {
-                            var index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName);
-                            if (index == -1)
-                            {
-                                BLHelper.SendNotification("Failure", "Cannot remove inventory slot, because it was not found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
-                            }
-                            else
-                            {
-                                CurrentSave.InventorySlots.RemoveAt(index);
-                                CurrentSave.TrySaveToFile(false);
-                                SetupSlots();
-                                BoneLib.BoneMenu.Menu.OpenPage(SlotsPage);
-                            }
-                        });
+                        BoneLib.BoneMenu.Menu.DisplayDialog("Destructive action", "You are about to delete an inventory slot which after done, cannot be reversed. Are you sure?", Dialog.WarningIcon,
+                        () => RemoveSlot(slot));
                     });
                 }
+            }
+        }
+
+        private void RemoveSlot(SaveSlot slot)
+        {
+            var index = CurrentSave.InventorySlots.FindIndex(x => x.SlotName == slot.SlotName);
+            if (index == -1)
+            {
+                BLHelper.SendNotification("Failure", "Cannot remove inventory slot, because it was not found!", true, 3f, BoneLib.Notifications.NotificationType.Error);
+            }
+            else
+            {
+                CurrentSave.InventorySlots.RemoveAt(index);
+                CurrentSave.TrySaveToFile(false);
+                SetupSlots();
+                BoneLib.BoneMenu.Menu.OpenPage(SlotsPage);
             }
         }
 
@@ -394,49 +394,51 @@ namespace KeepInventory.Menu
                 {
                     SharePage?.RemoveAll();
                     SharePage.CreateFunction("Refresh", Color.yellow, () => SetupShare());
-                    SharePage.CreateFunction("Share", Color.cyan, () =>
-                    {
-                        if (SelectedPlayers == null || SelectedPlayers.Count == 0)
-                            return;
-
-                        try
-                        {
-                            SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));
-                        }
-                        catch (Exception ex)
-                        {
-                            BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
-                            Core.Logger.Error("An unexpected error has occurred while trying to share save", ex);
-                        }
-                    });
+                    SharePage.CreateFunction("Share", Color.cyan, ShareSave);
                     SharePage.CreateBlank();
                     var waitElement = SharePage.CreateLabel("Checking for players...", Color.white);
                     var players = Utilities.Fusion.GetShareablePlayers();
 
                     SharePage.Remove(waitElement);
                     players.RemoveAll(x => x.SmallID == Utilities.Fusion.GetLocalPlayerSmallID());
+
                     if (players.Count == 0)
                     {
                         SharePage.CreateLabel("You can't share the save /w anyone :(", Color.white);
+                        return;
                     }
-                    else
-                    {
-                        foreach (var player in players)
-                        {
-                            SharePage.CreateToggleFunction(player.DisplayName, Color.white, new Color(0, 1, 0), (elem) =>
-                            {
-                                if (elem.IsRunning)
-                                    SelectedPlayers.Add(player.SmallID);
-                                else
-                                    SelectedPlayers.Remove(player.SmallID);
-                            }, SelectedPlayers.Contains(player.SmallID));
-                        }
-                    }
+
+                    foreach (var player in players)
+                        SharePage.CreateToggleFunction(player.DisplayName, Color.white, new Color(0, 1, 0), (elem) => SelectPlayer(elem, player), SelectedPlayers.Contains(player.SmallID));
                 }
                 catch (Exception ex)
                 {
                     Core.Logger.Error("An unexpected error occurred while setting up share page", ex);
                 }
+            }
+        }
+
+        private void SelectPlayer(ToggleFunctionElement elem, Utilities.FusionPlayer player)
+        {
+            if (elem.IsRunning)
+                SelectedPlayers.Add(player.SmallID);
+            else
+                SelectedPlayers.Remove(player.SmallID);
+        }
+
+        private void ShareSave()
+        {
+            if (SelectedPlayers == null || SelectedPlayers.Count == 0)
+                return;
+
+            try
+            {
+                SelectedPlayers?.ForEach(player => KeepInventory.Utilities.Fusion.ShareSave(player, _save));
+            }
+            catch (Exception ex)
+            {
+                BLHelper.SendNotification("Failure", "Failed to share save, check console or logs for more information", true, 2, BoneLib.Notifications.NotificationType.Error);
+                Core.Logger.Error("An unexpected error has occurred while trying to share save", ex);
             }
         }
     }

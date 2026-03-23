@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
-
-using UnityEngine;
+using System.Linq;
 
 using BoneLib.BoneMenu;
+
+using Il2CppSLZ.Marrow.Warehouse;
 
 using KeepInventory.Helper;
 using KeepInventory.Managers;
 
-using Il2CppSLZ.Marrow.Warehouse;
+using UnityEngine;
 
 namespace KeepInventory.Menu
 {
@@ -42,8 +42,8 @@ namespace KeepInventory.Menu
             Core.DefaultSaveChanged += SetupSaves;
 
             EventsPage = ModPage.CreatePage("Events", Color.yellow);
-            EventsPage.CreateBoolPref("Save on Level Unload", Color.red, ref PreferencesManager.SaveOnLevelUnload, prefDefaultValue: true);
-            EventsPage.CreateBoolPref("Load on Level Load", Color.green, ref PreferencesManager.LoadOnLevelLoad, prefDefaultValue: true);
+            EventsPage.CreateBoolPref("Save on Level Unload", Color.red, ref PreferencesManager.SaveOnLevelUnload);
+            EventsPage.CreateBoolPref("Load on Level Load", Color.green, ref PreferencesManager.LoadOnLevelLoad);
 
             if (Core.HasFusion && Core.IsFusionLibraryInitialized)
                 SetupSharing();
@@ -56,58 +56,15 @@ namespace KeepInventory.Menu
             BlacklistViewPage = BlacklistPage.CreatePage("View All", Color.magenta);
             SetupBlacklistView();
 
-            StatusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, () =>
-            {
-                if (BlacklistManager.IsCurrentLevelInBlacklist())
-                {
-                    BLHelper.SendNotification("Failure", "The current level is already in a predefined blacklist. Use the predefined blacklist to blacklist this level instead", true, 4f, BoneLib.Notifications.NotificationType.Error);
-                    return;
-                }
-
-                List<string> blacklistList = PreferencesManager.BlacklistedLevels.Value;
-                if (blacklistList.Contains(Core.LevelInfo.barcode))
-                {
-                    try
-                    {
-                        int item = blacklistList.IndexOf(Core.LevelInfo.barcode);
-                        if (item != -1)
-                        {
-                            blacklistList.RemoveAt(item);
-                            StatusElement.ElementName = "Current Level is not blacklisted";
-                            StatusElement.ElementColor = Color.green;
-                            BLHelper.SendNotification("Success", $"Successfully unblacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Core.Logger.Error("An unexpected error has occurred while unblacklisting the current level", ex);
-                        BLHelper.SendNotification("Failure", "An unexpected error has occurred while unblacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        blacklistList.Add(Core.LevelInfo.barcode);
-                        StatusElement.ElementName = "Current Level is blacklisted";
-                        StatusElement.ElementColor = Color.red;
-                        BLHelper.SendNotification("Success", $"Successfully blacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
-                    }
-                    catch (Exception ex)
-                    {
-                        Core.Logger.Error("An unexpected error has occurred while removing the current level from blacklist", ex);
-                        BLHelper.SendNotification("Failure", "An unexpected error has occurred while blacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
-                    }
-                }
-            });
+            StatusElement = BlacklistPage.CreateFunction("Blacklist Level from Saving/Loading", Color.red, ToggleBlacklist);
 
             SavingConfigPage = ModPage.CreatePage("Saving Config", Color.yellow, 4);
-            SavingConfigPage.CreateBoolPref("Save Items", Color.white, ref PreferencesManager.ItemSaving, prefDefaultValue: true);
-            SavingConfigPage.CreateBoolPref("Save Ammo", Color.white, ref PreferencesManager.AmmoSaving, prefDefaultValue: true);
-            SavingConfigPage.CreateBoolPref("Save Gun Data", Color.white, ref PreferencesManager.SaveGunData, prefDefaultValue: true);
+            SavingConfigPage.CreateBoolPref("Save Items", Color.white, ref PreferencesManager.ItemSaving);
+            SavingConfigPage.CreateBoolPref("Save Ammo", Color.white, ref PreferencesManager.AmmoSaving);
+            SavingConfigPage.CreateBoolPref("Save Gun Data", Color.white, ref PreferencesManager.SaveGunData);
 
             OtherPage = ModPage.CreatePage("Other", Color.white);
-            OtherPage.CreateBoolPref("Show Notifications", Color.green, ref PreferencesManager.ShowNotifications, prefDefaultValue: true);
+            OtherPage.CreateBoolPref("Show Notifications", Color.green, ref PreferencesManager.ShowNotifications);
             OtherPage.CreateBoolPref("Holster Held Weapons on Death", Color.magenta, ref PreferencesManager.HolsterHeldWeaponsOnDeath);
             OtherPage.CreateFunction("Clear Inventory", Color.yellow, InventoryManager.ClearInventory);
 
@@ -129,6 +86,51 @@ namespace KeepInventory.Menu
         }
 
         private static readonly Dictionary<string, Page> PredefinedBlacklistPages = [];
+
+        internal static void ToggleBlacklist()
+        {
+            if (BlacklistManager.IsCurrentLevelInBlacklist())
+            {
+                BLHelper.SendNotification("Failure", "The current level is already in a predefined blacklist. Use the predefined blacklist to blacklist this level instead", true, 4f, BoneLib.Notifications.NotificationType.Error);
+                return;
+            }
+
+            List<string> blacklistList = PreferencesManager.BlacklistedLevels.Value;
+            if (blacklistList.Contains(Core.LevelInfo.barcode))
+            {
+                try
+                {
+                    int item = blacklistList.IndexOf(Core.LevelInfo.barcode);
+                    if (item != -1)
+                    {
+                        blacklistList.RemoveAt(item);
+                        StatusElement.ElementName = "Current Level is not blacklisted";
+                        StatusElement.ElementColor = Color.green;
+                        BLHelper.SendNotification("Success", $"Successfully unblacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Core.Logger.Error("An unexpected error has occurred while unblacklisting the current level", ex);
+                    BLHelper.SendNotification("Failure", "An unexpected error has occurred while unblacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                }
+            }
+            else
+            {
+                try
+                {
+                    blacklistList.Add(Core.LevelInfo.barcode);
+                    StatusElement.ElementName = "Current Level is blacklisted";
+                    StatusElement.ElementColor = Color.red;
+                    BLHelper.SendNotification("Success", $"Successfully blacklisted current level ({Core.LevelInfo.title}) from having the inventory saved and/or loaded!", true, 2.5f, BoneLib.Notifications.NotificationType.Success);
+                }
+                catch (Exception ex)
+                {
+                    Core.Logger.Error("An unexpected error has occurred while removing the current level from blacklist", ex);
+                    BLHelper.SendNotification("Failure", "An unexpected error has occurred while blacklisting the current level, check the console or logs for more details", true, 3f, BoneLib.Notifications.NotificationType.Error);
+                }
+            }
+        }
 
         internal static void SetupPredefinedBlacklists()
         {
@@ -298,14 +300,10 @@ namespace KeepInventory.Menu
 
             foreach (var save in SaveManager.Saves)
             {
-                if (save == null)
+                if (string.IsNullOrWhiteSpace(save?.ID))
                 {
-                    Core.Logger.Error("Save is null, cannot generate element");
+                    Core.Logger.Error("Save (or it's ID) is null or empty, cannot generate element");
                     continue;
-                }
-                if (string.IsNullOrWhiteSpace(save.ID))
-                {
-                    Core.Logger.Error("ID is null or empty, cannot generate element");
                 }
                 Page page = null;
                 var savePage = SavePages.FirstOrDefault(x => x.CurrentSave == save && x.Page != null);
@@ -327,25 +325,32 @@ namespace KeepInventory.Menu
                 {
                     if (RemoveSavesOnPress)
                     {
-                        BoneLib.BoneMenu.Menu.DisplayDialog("Destructive action", "You are about to delete a save file which after done, cannot be reversed. Are you sure?", Dialog.WarningIcon, () =>
-                        {
-                            try
-                            {
-                                SaveManager.UnregisterSave(save.ID, true);
-                                SavesPage.Remove(link);
-                            }
-                            catch (Exception ex)
-                            {
-                                BLHelper.SendNotification("Error", "Failed to remove save, check logs or console for more information", true, 2f, BoneLib.Notifications.NotificationType.Error);
-                                Core.Logger.Error("An unexpected error has occurred while attempting to remove save", ex);
-                            }
-                        }, () => Core.Logger.Msg("Save removal denied"));
+                        BoneLib.BoneMenu.Menu.DisplayDialog(
+                            "Destructive action",
+                            "You are about to delete a save file which after done, cannot be reversed. Are you sure?",
+                            Dialog.WarningIcon,
+                            () => RemoveSave(save.ID, link),
+                            () => Core.Logger.Msg("Save removal denied"));
                     }
                     else
                     {
                         BoneLib.BoneMenu.Menu.OpenPage(page);
                     }
                 });
+            }
+        }
+
+        internal static void RemoveSave(string id, FunctionElement link)
+        {
+            try
+            {
+                SaveManager.UnregisterSave(id, true);
+                SavesPage.Remove(link);
+            }
+            catch (Exception ex)
+            {
+                BLHelper.SendNotification("Error", "Failed to remove save, check logs or console for more information", true, 2f, BoneLib.Notifications.NotificationType.Error);
+                Core.Logger.Error("An unexpected error has occurred while attempting to remove save", ex);
             }
         }
     }

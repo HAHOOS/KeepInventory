@@ -2,8 +2,6 @@
 using System.Linq;
 
 using BoneLib;
-using BoneLib.BoneMenu;
-using BoneLib.Notifications;
 
 using Il2CppSLZ.Marrow.Warehouse;
 using Il2CppSLZ.Marrow.SceneStreaming;
@@ -14,8 +12,6 @@ using KeepInventory.Managers;
 using KeepInventory.Utilities;
 
 using MelonLoader;
-
-using Semver;
 
 using UnityEngine;
 using System.Collections.Generic;

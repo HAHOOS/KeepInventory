@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 using Newtonsoft.Json;
 
 using KeepInventory.Helper;
@@ -268,13 +269,9 @@ namespace KeepInventory.Saves.V2
                     writer.DisposeAsync().AsTask().ContinueWith((task) =>
                     {
                         if (task.IsCompletedSuccessfully)
-                        {
                             LoggerMsg($"Saved '{ID}' to file successfully!", printMessage);
-                        }
                         else
-                        {
                             LoggerError($"Failed to save '{ID}' to file", task.Exception, printMessage);
-                        }
                     });
                 }
                 catch (Exception ex)

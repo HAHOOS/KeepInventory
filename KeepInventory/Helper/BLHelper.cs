@@ -19,18 +19,11 @@ namespace KeepInventory.Helper
 
         private readonly static MelonPreferences_Category prefs = PreferencesManager.PrefsCategory;
 
-        public static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, int increment, int minValue, int maxValue, MelonPreferences_Category category = null, Action<int> callback = null, string prefName = null, int prefDefaultValue = default)
+        public static IntElement CreateIntPref(this Page page, string name, Color color, ref MelonPreferences_Entry<int> value, NumberProperties<int> properties, MelonPreferences_Category category = null, Action<int> callback = null)
         {
             category ??= prefs;
-            if (value == null || !category.HasEntry(value.Identifier))
-            {
-                prefName ??= name;
-
-                if (!category.HasEntry(prefName))
-                    value = category.CreateEntry(prefName, prefDefaultValue);
-            }
             MelonPreferences_Entry<int> val = value;
-            var element = page.CreateInt(name, color, val.Value, increment, minValue, maxValue, (x) =>
+            var element = page.CreateInt(name, color, val.Value, properties.Increment, properties.Min, properties.Max, (x) =>
             {
                 val.Value = x;
                 category.SaveToFile(false);
@@ -39,18 +32,11 @@ namespace KeepInventory.Helper
             return element;
         }
 
-        public static FloatElement CreateFloatPref(this Page page, string name, Color color, ref MelonPreferences_Entry<float> value, float increment, float minValue, float maxValue, MelonPreferences_Category category = null, Action<float> callback = null, string prefName = null, float prefDefaultValue = default)
+        public static FloatElement CreateFloatPref(this Page page, string name, Color color, ref MelonPreferences_Entry<float> value, NumberProperties<float> properties, MelonPreferences_Category category = null, Action<float> callback = null)
         {
             category ??= prefs;
-            if (value == null || !category.HasEntry(value.Identifier))
-            {
-                prefName ??= name;
-
-                if (!category.HasEntry(prefName))
-                    value = category.CreateEntry(prefName, prefDefaultValue);
-            }
             MelonPreferences_Entry<float> val = value;
-            var element = page.CreateFloat(name, color, val.Value, increment, minValue, maxValue, (x) =>
+            var element = page.CreateFloat(name, color, val.Value, properties.Increment, properties.Min, properties.Max, (x) =>
             {
                 val.Value = x;
                 category.SaveToFile(false);
@@ -59,16 +45,9 @@ namespace KeepInventory.Helper
             return element;
         }
 
-        public static BoolElement CreateBoolPref(this Page page, string name, Color color, ref MelonPreferences_Entry<bool> value, MelonPreferences_Category category = null, Action<bool> callback = null, string prefName = null, bool prefDefaultValue = default)
+        public static BoolElement CreateBoolPref(this Page page, string name, Color color, ref MelonPreferences_Entry<bool> value, MelonPreferences_Category category = null, Action<bool> callback = null)
         {
             category ??= prefs;
-            if (value == null || !category.HasEntry(value.Identifier))
-            {
-                prefName ??= name;
-
-                if (!category.HasEntry(prefName))
-                    value = category.CreateEntry(prefName, prefDefaultValue);
-            }
             MelonPreferences_Entry<bool> val = value;
             var element = page.CreateBool(name, color, val.Value, (x) =>
             {
@@ -79,16 +58,9 @@ namespace KeepInventory.Helper
             return element;
         }
 
-        public static EnumElement CreateEnumPref<T>(this Page page, string name, Color color, ref MelonPreferences_Entry<T> value, MelonPreferences_Category category = null, Action<Enum> callback = null, string prefName = null, Enum prefDefaultValue = default) where T : Enum
+        public static EnumElement CreateEnumPref<T>(this Page page, string name, Color color, ref MelonPreferences_Entry<T> value, MelonPreferences_Category category = null, Action<Enum> callback = null) where T : Enum
         {
             category ??= prefs;
-            if (value == null || !category.HasEntry(value.Identifier))
-            {
-                prefName ??= name;
-
-                if (!category.HasEntry(prefName))
-                    value = category.CreateEntry(prefName, (T)prefDefaultValue);
-            }
             MelonPreferences_Entry<T> val = value;
             var element = page.CreateEnum(name, color, val.Value, (x) =>
             {
@@ -99,16 +71,9 @@ namespace KeepInventory.Helper
             return element;
         }
 
-        public static StringElement CreateStringPref(this Page page, string name, Color color, ref MelonPreferences_Entry<string> value, MelonPreferences_Category category = null, Action<string> callback = null, string prefName = null, string prefDefaultValue = default)
+        public static StringElement CreateStringPref(this Page page, string name, Color color, ref MelonPreferences_Entry<string> value, MelonPreferences_Category category = null, Action<string> callback = null)
         {
             category ??= prefs;
-            if (value == null || !category.HasEntry(value.Identifier))
-            {
-                prefName ??= name;
-
-                if (!category.HasEntry(prefName))
-                    value = category.CreateEntry(prefName, prefDefaultValue);
-            }
             MelonPreferences_Entry<string> val = value;
             StringElement element = page.CreateString(name, color, val.Value, (x) =>
             {
@@ -189,5 +154,12 @@ namespace KeepInventory.Helper
         }
 
         #endregion Notifications
+    }
+
+    internal struct NumberProperties<T>(T min, T max, T increment)
+    {
+        public T Min = min;
+        public T Max = max;
+        public T Increment = increment;
     }
 }

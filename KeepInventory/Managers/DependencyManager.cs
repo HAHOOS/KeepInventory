@@ -1,63 +1,55 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
-using System.Collections.Generic;
+using System.Reflection;
 
 namespace KeepInventory.Managers
 {
     internal static class DependencyManager
     {
-        internal static bool TryLoadDependency(string name)
+        internal static bool TryLoadDependency(string name, bool log = true)
         {
             try
             {
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-                if (assembly != null)
-                {
-                    var assemblyInfo = assembly.GetName();
-                    if (assemblyInfo != null)
-                    {
-                        var _path = $"{assemblyInfo.Name}.Embedded.Dependencies.{name}.dll";
-                        var names = assembly.GetManifestResourceNames();
-                        if (names == null || names.Length == 0 || !names.Contains(_path))
-                        {
-                            Core.Logger.Error($"There were no embedded resources or dependency was not found in the list of embedded resources, cannot not load {name}");
-                            return false;
-                        }
-                        else
-                        {
-                            var stream = assembly.GetManifestResourceStream(_path);
-                            if (stream?.Length > 0)
-                            {
-                                List<byte> bytes = [];
-                                while (true)
-                                {
-                                    var _byte = stream.ReadByte();
-                                    if (_byte == -1)
-                                        break;
+                Log($"Attempting to load dependency: {name}", Core.Logger.Msg, log);
 
-                                    bytes.Add((byte)_byte);
-                                }
-                                System.Reflection.Assembly.Load([.. bytes]);
-                                Core.Logger.Msg($"Loaded {name}");
-                            }
-                            else
-                            {
-                                Core.Logger.Error($"Could not get stream of {name}, cannot not load it");
-                                return false;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Core.Logger.Error($"Assembly Info was not found, cannot not load {name}");
-                        return false;
-                    }
-                }
-                else
+                var assembly = Assembly.GetExecutingAssembly();
+
+                if (assembly == null)
                 {
-                    Core.Logger.Error($"Executing assembly was somehow not found, cannot not load {name}");
+                    Log($"Executing assembly was somehow not found, cannot not load {name}", Core.Logger.Error, log);
                     return false;
                 }
+
+                var assemblyInfo = assembly.GetName();
+
+                if (assemblyInfo == null)
+                {
+                    Log($"Assembly Info was not found, cannot not load {name}", Core.Logger.Error, log);
+                    return false;
+                }
+
+                var _path = $"{assemblyInfo.Name}.Embedded.Dependencies.{name}.dll";
+                var names = assembly.GetManifestResourceNames();
+                if (names?.Contains(_path) != true)
+                {
+                    if (log) Core.Logger.Error($"There were no embedded resources or dependency was not found in the list of embedded resources, cannot not load {name}");
+                    return false;
+                }
+
+                var stream = assembly.GetManifestResourceStream(_path);
+                if (stream == null || stream.Length == 0)
+                {
+                    Log($"Could not get stream of {name}, cannot not load it", Core.Logger.Error, log);
+                    return false;
+                }
+
+                stream.Position = 0;
+
+                var bytes = stream.ToByteArray();
+                Assembly.Load(bytes);
+
+                Log($"Loaded {name}", Core.Logger.Msg, log);
             }
             catch (Exception ex)
             {
@@ -65,6 +57,19 @@ namespace KeepInventory.Managers
                 return false;
             }
             return true;
+        }
+
+        internal static void Log(string message, Action<string> action, bool print = true)
+        {
+            if (print)
+                action(message);
+        }
+
+        internal static byte[] ToByteArray(this Stream stream)
+        {
+            using MemoryStream ms = new();
+            stream.CopyTo(ms);
+            return ms.ToArray();
         }
     }
 }
