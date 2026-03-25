@@ -11,43 +11,30 @@ using LabFusion.Network.Serialization;
 using LabFusion.Player;
 using LabFusion.SDK.Modules;
 
-using MelonLoader.Pastel;
-
 namespace KeepInventory.Fusion.Messages
 {
     public class ShareSaveMessageData : INetSerializable
     {
-        private byte _sender;
+        public byte Sender { get; set; }
 
-        // I have no clue how to resolve this warning, tried everything, so I'm just gonna disable it here
-#pragma warning disable S2292 // Trivial properties should be auto-implemented
-
-        public byte Sender
-        {
-            get => _sender;
-            set => _sender = value;
-        }
-
-        private string _data;
-
-        public string Data
-        {
-            get => _data;
-            set => _data = value;
-        }
-
-#pragma warning restore S2292 // Trivial properties should be auto-implemented
+        public string Data { get; set; }
 
         public Save Save => JsonSerializer.Deserialize<Save>(Data, SaveManager.SerializeOptions);
 
         public void Serialize(INetSerializer serializer)
         {
+            byte _sender = Sender;
+            string _data = Data;
+
             serializer.SerializeValue(ref _sender);
             serializer.SerializeValue(ref _data);
+
+            Sender = _sender;
+            Data = _data;
         }
 
         public static ShareSaveMessageData Create(byte sender, string data)
-            => new() { Sender = sender, _data = data };
+            => new() { Sender = sender, Data = data };
     }
 
     public class ShareSaveMessage : ModuleMessageHandler

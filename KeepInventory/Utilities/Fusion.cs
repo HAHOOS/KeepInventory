@@ -89,14 +89,10 @@ namespace KeepInventory.Utilities
             => KeepInventory.Fusion.Managers.ShareManager.Entry_SharingEnabled?.Value ?? false;
 
         private static void OnJoinLeave()
-        {
-            BoneMenu.SetupSaves();
-        }
+            => BoneMenu.SetupSaves();
 
         internal static bool Internal_IsConnected()
-        {
-            return LabFusion.Network.NetworkInfo.HasServer;
-        }
+            => LabFusion.Network.NetworkInfo.HasServer;
 
         internal static void Internal_ShareSave(byte SmallID, Save save)
         {
@@ -272,24 +268,16 @@ namespace KeepInventory.Utilities
         }
 
         internal static void MsgFusionPrefix(string message)
-        {
-            MsgPrefix("Fusion", message, UnityEngine.Color.cyan);
-        }
+            => MsgPrefix("Fusion", message, UnityEngine.Color.cyan);
 
         internal static void Warn(string message)
-        {
-            Core.Logger.Warning($"[Fusion] {message}");
-        }
+            => Core.Logger.Warning($"[Fusion] {message}");
 
         internal static void Error(string message)
-        {
-            Core.Logger.Warning($"[Fusion] {message}");
-        }
+            => Core.Logger.Warning($"[Fusion] {message}");
 
         internal static void MsgPrefix(string prefix, string message, UnityEngine.Color color)
-        {
-            Core.Logger.Msg($"[{prefix.Pastel(color.ToHEX())}] {message}");
-        }
+            => Core.Logger.Msg($"[{prefix.Pastel(color.ToHEX())}] {message}");
     }
 
     public class FusionPlayer(byte SmallID, ulong PlatformID, string displayName)

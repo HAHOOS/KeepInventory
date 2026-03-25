@@ -87,22 +87,22 @@ namespace KeepInventory
             if (HasFusion) Utilities.Fusion.Setup();
 
             List<Level> labworks = [
-                new("volx4.LabWorksBoneworksPort.Level.BoneworksLoadingScreen"),
-                new("volx4.LabWorksBoneworksPort.Level.BoneworksMainMenu"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks01Breakroom"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks02Museum"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks03Streets"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks04Runoff"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks05Sewers"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks06Warehouse"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks07CentralStation"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks08Tower"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks09TimeTower"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks10Dungeon"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks11Arena"),
-                new("volx4.LabWorksBoneworksPort.Level.Boneworks12ThroneRoom"),
-                new("volx4.LabWorksBoneworksPort.Level.BoneworksCutscene01"),
-                new("volx4.LabWorksBoneworksPort.Level.sceneTheatrigonMovie02")
+                Labworks("BoneworksLoadingScreen"),
+                Labworks("BoneworksMainMenu"),
+                Labworks("Boneworks01Breakroom"),
+                Labworks("Boneworks02Museum"),
+                Labworks("Boneworks03Streets"),
+                Labworks("Boneworks04Runoff"),
+                Labworks("Boneworks05Sewers"),
+                Labworks("Boneworks06Warehouse"),
+                Labworks("Boneworks07CentralStation"),
+                Labworks("Boneworks08Tower"),
+                Labworks("Boneworks09TimeTower"),
+                Labworks("Boneworks10Dungeon"),
+                Labworks("Boneworks11Arena"),
+                Labworks("Boneworks12ThroneRoom"),
+                Labworks("BoneworksCutscene01"),
+                Labworks("sceneTheatrigonMovie02")
             ];
 
             List<Level> bonelab = [
@@ -141,6 +141,9 @@ namespace KeepInventory
             AmmoManager.Init();
             LoggerInstance.Msg("Initialized.");
         }
+
+        private static Level Labworks(string levelName)
+            => new($"volx4.LabWorksBoneworksPort.Level.{levelName}");
 
         public override void OnDeinitializeMelon()
         {

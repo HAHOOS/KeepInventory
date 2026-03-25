@@ -47,9 +47,7 @@ namespace KeepInventory.Fusion.Managers
         }
 
         private static void InitialMetadata()
-        {
-            LocalPlayer.Metadata.Metadata.TrySetMetadata(SHARING_KEY, Entry_SharingEnabled.Value.ToString());
-        }
+            => LocalPlayer.Metadata.Metadata.TrySetMetadata(SHARING_KEY, Entry_SharingEnabled.Value.ToString());
 
         public static void Share(Save save, byte target)
         {
@@ -84,9 +82,7 @@ namespace KeepInventory.Fusion.Managers
         }
 
         public static bool VerifyData(string data)
-        {
-            return !string.IsNullOrWhiteSpace(data) && IsJson(data);
-        }
+            => !string.IsNullOrWhiteSpace(data) && IsJson(data);
 
         public static bool IsPlayerAllowed(PlayerID playerId)
         {
@@ -118,22 +114,22 @@ namespace KeepInventory.Fusion.Managers
 
             List<byte> result = [];
 
-            if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(x =>
-            {
-                var id = PlayerIDManager.GetPlayerID(x);
-                return id != null && Entry_SharingBlacklist.Value.Contains(id.PlatformID);
-            }))
-            {
+            if (Entry_SharingBlacklist.Value.Count > 0 && Entry_SharingBlacklist.Value.TrueForAll(IsEveryoneBlacklisted))
                 return [];
-            }
 
-            LabFusion.Player.PlayerIDManager.PlayerIDs.ForEach(id =>
+            PlayerIDManager.PlayerIDs.ForEach(id =>
             {
                 if (id.Metadata.Metadata.TryGetMetadata(SHARING_KEY, out string val) && val == bool.TrueString)
                     result.Add(id.SmallID);
             });
 
             return result;
+        }
+
+        internal static bool IsEveryoneBlacklisted(ulong player)
+        {
+            var id = PlayerIDManager.GetPlayerID(player);
+            return id != null && Entry_SharingBlacklist.Value.Contains(id.PlatformID);
         }
     }
 }

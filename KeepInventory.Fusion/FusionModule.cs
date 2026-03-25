@@ -5,7 +5,6 @@ using Il2CppSLZ.Marrow;
 using KeepInventory.Fusion.Messages;
 
 using LabFusion.Player;
-using LabFusion.Scene;
 using LabFusion.SDK.Modules;
 
 using MelonLoader;
