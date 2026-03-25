@@ -42,7 +42,6 @@ namespace KeepInventory.Managers
 
         internal static UnityFileSystemWatcher FileSystemWatcher { get; private set; }
 
-        // TODO: fix this shit (reduce the complexity)
         internal static void Setup()
         {
             var directory = Directory.CreateDirectory(Path.Combine(PreferencesManager.KI_PreferencesDirectory, "Saves"));
@@ -54,93 +53,23 @@ namespace KeepInventory.Managers
                 var files = directory.GetFiles("*.json");
                 if (files?.Length > 0)
                 {
-                    foreach (var item in files)
-                    {
-                        try
-                        {
-                            if (Check(item.FullName)) RegisterSave(item.FullName);
-                            else Core.Logger.Error($"Attempted to load {item.Name}, but it failed the check");
-                        }
-                        catch (Exception ex)
-                        {
-                            Core.Logger.Error($"An unexpected error has occurred while loading '{item.Name}'", ex);
-                        }
-                    }
+                    LoadFromDirectory(files);
                 }
-                else
+            }
+        }
+
+        internal static void LoadFromDirectory(FileInfo[] files)
+        {
+            foreach (var item in files)
+            {
+                try
                 {
-                    Core.Logger.Msg("Found no saves, checking if can migrate old one");
-                    TomlDocument oldSave = null;
-                    try
-                    {
-                        var path1 = Path.Combine(PreferencesManager.KI_PreferencesDirectory, "Save.cfg");
-                        var path2 = Path.Combine(MelonEnvironment.UserDataDirectory, "KeepInventory_Save.cfg");
-                        int correct = -1;
-
-                        if (File.Exists(path1))
-                        {
-                            oldSave = TomlParser.ParseFile(path1);
-                            correct = 0;
-                        }
-                        else if (File.Exists(path2))
-                        {
-                            oldSave = TomlParser.ParseFile(path2);
-                            correct = 1;
-                        }
-                        if (oldSave != null && correct != -1)
-                        {
-                            Core.Logger.Msg("Found old save file, migrating...");
-                            try
-                            {
-                                TomlValue subTable = null;
-                                lock (oldSave)
-                                {
-                                    subTable = oldSave.GetSubTable(correct == 1 ? "HAHOOS_KeepInventory_Save" : "KeepInventory_Save");
-                                }
-                                if (subTable != null)
-                                {
-                                    Type type = correct == 0 ? typeof(Saves.V1.Save) : typeof(Saves.V0.Save);
-                                    var _value = TomletMain.To(type, subTable);
-
-                                    if (correct == 1)
-                                    {
-                                        if ((Saves.V0.Save)_value == null)
-                                        {
-                                            Core.Logger.Error("Could not retrieve the value from old save!");
-                                            return;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if ((Saves.V1.Save)_value == null)
-                                        {
-                                            Core.Logger.Error("Could not retrieve the value from old save!");
-                                            return;
-                                        }
-                                    }
-                                    Save save = null;
-                                    if (correct == 1) save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, (Saves.V0.Save)_value);
-                                    else save = new Save($"migrated-{GenerateRandomID(6)}", "Migrated", UnityEngine.Color.cyan, (Saves.V1.Save)_value);
-                                    RegisterSave(save, true);
-                                    if (File.Exists(path1) && correct == 0) File.Delete(path1);
-                                    if (File.Exists(path2) && correct == 1) File.Delete(path2);
-                                    Core.Logger.Msg("Successfully migrated old save file");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Core.Logger.Error("An unexpected error occurred while migrating old save file", ex);
-                            }
-                        }
-                        else
-                        {
-                            Core.Logger.Warning("Could not find an old save file");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Core.Logger.Error("An unexpected error has occurred while attempting to check and migrate an old save file", ex);
-                    }
+                    if (Check(item.FullName)) RegisterSave(item.FullName);
+                    else Core.Logger.Error($"Attempted to load {item.Name}, but it failed the check");
+                }
+                catch (Exception ex)
+                {
+                    Core.Logger.Error($"An unexpected error has occurred while loading '{item.Name}'", ex);
                 }
             }
         }
