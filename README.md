@@ -5,6 +5,9 @@
 <a align="center" href="https://github.com/HAHOOS/KeepInventory/blob/master/LICENSE"><img alt="GitHub License" src="https://img.shields.io/github/license/HAHOOS/KeepInventory?style=for-the-badge"></a>
 </div>
 
+> [!WARNING]
+> This is an experimental branch where I intend to fix most of the issues /w KeepInventory. Some changes might be unstable
+
 /gamerule keepInventory true
 
 A BONELAB Code Mod that allows you to save your inventory for future use. It features:
