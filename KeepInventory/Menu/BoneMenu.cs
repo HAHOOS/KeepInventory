@@ -293,6 +293,7 @@ namespace KeepInventory.Menu
 
         private static readonly List<SavePage> SavePages = [];
 
+        // TODO: have a singular page for saves instead of creating a new one for each save
         internal static void UpdatePresetsPage()
         {
             if (SavesPage == null)

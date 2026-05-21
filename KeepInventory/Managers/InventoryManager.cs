@@ -99,6 +99,8 @@ namespace KeepInventory.Managers
             }
         }
 
+        private static bool _clearedInv = false;
+
         internal static void SpawnSavedItems(Save save)
         {
             if (save == null)
@@ -146,10 +148,17 @@ namespace KeepInventory.Managers
                 Core.Logger.Error("An error occurred while loading the inventory", ex);
                 BLHelper.SendNotification("Failure", "Failed to load the inventory, check the logs or console for more details", true, 5f, BoneLib.Notifications.NotificationType.Error);
             }
+            finally
+            {
+                _clearedInv = false;
+            }
         }
 
         internal static void HandleSpawn(SaveSlot item, InventorySlotReceiver slot)
         {
+            if (!_clearedInv)
+                ClearInventory();
+
             var crate = new SpawnableCrateReference(item.Barcode);
             if (item.Type == SaveSlot.SpawnableType.Gun && PreferencesManager.SaveGunData.Value && item.Barcode != CommonBarcodes.Misc.SpawnGun)
             {
